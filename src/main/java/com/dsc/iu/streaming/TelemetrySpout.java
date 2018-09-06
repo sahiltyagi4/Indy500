@@ -62,41 +62,42 @@ public class TelemetrySpout extends BaseRichSpout implements MqttCallback {
 
 	public void open(Map arg0, TopologyContext arg1, SpoutOutputCollector arg2) {
 		// TODO Auto-generated method stub
-//		try {
-//			
-//			MqttConnectOptions conn = connectToMqtt();
-//			MqttClient mqttClient = new MqttClient(connectstring, MqttClient.generateClientId());
-//			mqttClient.setCallback(this);
-//			mqttClient.connect(conn);
-//			mqttClient.subscribe(dataTopic, 2);
-//			
-//		} catch(MqttException e) {
-//			e.printStackTrace();
-//		}
+		try {
+			
+			MqttConnectOptions conn = connectToMqtt();
+			MqttClient mqttClient = new MqttClient(connectstring, MqttClient.generateClientId());
+			mqttClient.setCallback(this);
+			mqttClient.connect(conn);
+			mqttClient.subscribe(dataTopic, 2);
+			
+		} catch(MqttException e) {
+			e.printStackTrace();
+		}
 		
 		//in pub/sub broker mechanism, the queue is read off record wise in messageArrived(T..) method
 		nbqueue = new ConcurrentLinkedQueue<String>();
 		this.spoutcollector = arg2;
-		try {
-			
-			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream
-					("/Users/sahiltyagi/Downloads/eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
-
+//		try {
 			manualpublish = OnlineLearningUtils.getPublisher();
 			Sensor<ObservableSensor<String[]>> sensor = Sensor.create(
 													ObservableSensor::create, 
 													SensorParams.create(Keys::obs, new Object[] { "kakkerot", manualpublish }));
 			
-			String line;
-			line = rdr.readLine(); line = rdr.readLine();			//skip line 1 and 2
-			while((line=rdr.readLine()) != null) {
-				//second condition to remove malformed time values in eRP log (or maybe these records hold different context! --to be verified)
-				//replace split str by \u00A6 when running on cluster
-				if(line.startsWith("$P") && line.split("�")[2].length() >9) {
-					
-					nbqueue.add("5/28/17 " + line.split("�")[2] + "," + line.split("�")[line.split("�").length -3]);
-				}
-			}
+//			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream
+//					("/Users/sahiltyagi/Downloads/eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
+//
+//			String line;
+//			line = rdr.readLine(); line = rdr.readLine();			//skip line 1 and 2
+//			while((line=rdr.readLine()) != null) {
+//				//second condition to remove malformed time values in eRP log (or maybe these records hold different context! --to be verified)
+//				//replace split str by \u00A6 when running on cluster
+//				if(line.startsWith("$P") && line.split("�")[2].length() >9) {
+//					
+//					nbqueue.add("5/28/17 " + line.split("�")[2] + "," + line.split("�")[line.split("�").length -3]);
+//				}
+//			}
+			
+			
 			
 			Parameters p = OnlineLearningUtils.getLearningParameters();
 			p = p.union(OnlineLearningUtils.getNetworkLearningEncoderParams());
@@ -109,11 +110,11 @@ public class TelemetrySpout extends BaseRichSpout implements MqttCallback {
 					.add(new SpatialPooler())
 					.add(sensor)));
 			
-			rdr.close();
+//			rdr.close();
 			network.start();
-		} catch(IOException e) {
-			e.printStackTrace();
-		} 
+//		} catch(IOException e) {
+//			e.printStackTrace();
+//		} 
 		
 	}
 
@@ -131,7 +132,7 @@ public class TelemetrySpout extends BaseRichSpout implements MqttCallback {
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
 		// TODO Auto-generated method stub
 		
-		//nbqueue.add(message.getPayload());
+		nbqueue.add(new String(message.getPayload()));
 	}
 
 	public void deliveryComplete(IMqttDeliveryToken token) {
