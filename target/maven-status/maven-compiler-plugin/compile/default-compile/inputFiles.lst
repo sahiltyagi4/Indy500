@@ -1,9 +1,0 @@
-/Users/sahiltyagi/Documents/IUB/Indycar500/src/main/java/com/dsc/iu/streaming/AnomalyDetectionTest.java
-/Users/sahiltyagi/Documents/IUB/Indycar500/src/main/java/com/dsc/iu/utils/TelemetryPublisher.java
-/Users/sahiltyagi/Documents/IUB/Indycar500/src/main/java/com/dsc/iu/utils/MongoDBToPubSub.java
-/Users/sahiltyagi/Documents/IUB/Indycar500/src/main/java/com/dsc/iu/utils/Sample.java
-/Users/sahiltyagi/Documents/IUB/Indycar500/src/main/java/com/dsc/iu/utils/OnlineLearningUtils.java
-/Users/sahiltyagi/Documents/IUB/Indycar500/src/main/java/com/dsc/iu/streaming/TelemetrySpout.java
-/Users/sahiltyagi/Documents/IUB/Indycar500/src/main/java/com/dsc/iu/App.java
-/Users/sahiltyagi/Documents/IUB/Indycar500/src/main/java/com/dsc/iu/utils/AnomalyLatency.java
-/Users/sahiltyagi/Documents/IUB/Indycar500/src/main/java/com/dsc/iu/streaming/TelemetryTestSpout.java
