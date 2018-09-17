@@ -29,8 +29,9 @@ public class TelemetryTestSpout extends BaseRichSpout {
 		nbqueue = new ConcurrentLinkedQueue<String>();
 		this.spoutcollector = collector;
 		try {
-			BufferedReader bfrdr = new BufferedReader(new InputStreamReader
-					(new FileInputStream("/scratch_ssd/sahil/eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
+//			BufferedReader bfrdr = new BufferedReader(new InputStreamReader
+//					(new FileInputStream("/scratch_ssd/sahil/eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
+			BufferedReader bfrdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/erp.log")));
 			String record;
 			//need to skip first 2 lines here?
 			while((record=bfrdr.readLine()) != null) {
@@ -55,6 +56,7 @@ public class TelemetryTestSpout extends BaseRichSpout {
 		}
 		
 		//set input rate to 10 msg/sec
+		//index $6
 		try {
 			Thread.sleep(100);
 			

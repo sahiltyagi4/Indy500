@@ -9,7 +9,7 @@
   <url>http://maven.apache.org</url>
   <build>
   	<plugins>
-    	<plugin>
+    		<plugin>
       		<artifactId>maven-assembly-plugin</artifactId>
       		<configuration>
         		<archive>
@@ -21,7 +21,7 @@
           			<descriptorRef>jar-with-dependencies</descriptorRef>
         		</descriptorRefs>
       		</configuration>
-    	</plugin>
+    		</plugin>
     		<plugin>
     		<groupId>org.apache.maven.plugins</groupId>
     		<artifactId>maven-compiler-plugin</artifactId>
@@ -51,17 +51,19 @@
       	<version>1.0.2</version>
       	<scope>provided</scope>
     </dependency>
-    <!--https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
-	<!--<dependency>
-    		<groupId>org.mongodb</groupId>
-    		<artifactId>mongo-java-driver</artifactId>
-    		<version>2.6.1</version>
-	</dependency> -->
-	<!-- https://mvnrepository.com/artifact/org.numenta/htm.java -->
+    <!-- added library from htm.java -->
+    <dependency>
+			<groupId>io.reactivex</groupId>
+			<artifactId>rxjava</artifactId>
+			<version>1.0.10</version>
+			<scope />
+	</dependency>
 	<dependency>
-    		<groupId>org.numenta</groupId>
+    		<groupId>org.numenta.iub</groupId>
     		<artifactId>htm.java</artifactId>
-    		<version>0.6.12</version>
-	</dependency>	
+    		<version>0.6.13</version>
+    		<scope>system</scope>
+    		<systemPath>/Users/sahiltyagi/Documents/IUB/htm.java/target/htm.java-0.6.13-jar-with-dependencies.jar</systemPath>
+    </dependency>
   </dependencies>
 </project>

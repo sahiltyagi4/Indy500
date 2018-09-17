@@ -28,11 +28,15 @@ import rx.Subscriber;
 public class Sample {
 	public Network network;
 	public Publisher manualpublish;
+	//int subscriberIndex=0;
+	
 	public static void main(String[] args) {
+		long startTS = System.currentTimeMillis();
 		Sample sample = new Sample();
 		sample.runHTMNetwork();
 		sample.explicitFileRead();
 		System.out.println("completed running HTM code");
+		System.out.println(System.currentTimeMillis() - startTS + " milliseconds");
 		
 	}
 	
@@ -72,17 +76,16 @@ public class Sample {
 			network =  Network.create("Network API Demo", p)
 					.add(Network.createRegion("Region 1")
 					.add(Network.createLayer("Layer 2/3", p)
-					.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
+					//.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
 					.add(Anomaly.create())
 					.add(new TemporalMemory())
 					.add(new SpatialPooler())
 					.add(sensor)));
 			
-//			File outfile = new File("/Users/sahiltyagi/Desktop/htmsample.txt");
-			File outfile = new File("/scratch_ssd/sahil/htmsample.txt");
+			File outfile = new File("/Users/sahiltyagi/Desktop/htmsample.txt");
+//			File outfile = new File("/scratch_ssd/sahil/htmsample.txt");
 			PrintWriter pw = new PrintWriter(new FileWriter(outfile));
 			network.observe().subscribe(getSubscriber(outfile, pw));
-			
 			
 			network.start();
 			
@@ -112,8 +115,14 @@ public class Sample {
 	private void writeToFileAnomalyOnly(Inference infer, String classifierField, PrintWriter pw) {
         try {
             if(infer.getRecordNum() > 0) {
+            		//subscriberIndex++;
                 double actual = (Double)infer.getClassifierInput()
                         .get(classifierField).get("inputValue");
+//                StringBuilder sb = new StringBuilder()
+//                        .append(infer.getRecordNum()).append(",")
+//                        .append(String.format("%3.2f", actual)).append(",")
+//                        .append(infer.getAnomalyScore()).append(",")
+//                        .append(System.currentTimeMillis());
                 StringBuilder sb = new StringBuilder()
                         .append(infer.getRecordNum()).append(",")
                         .append(String.format("%3.2f", actual)).append(",")
@@ -121,7 +130,12 @@ public class Sample {
                         .append(System.currentTimeMillis());
                 pw.println(sb.toString());
                 //pw.flush();
-                //System.out.println(sb.toString());
+                sb.append(",").append(infer.getPredictiveCells().size()).append(",").append(infer.getPreviousPredictiveCells().size())
+                .append(",").append(infer.getActiveCells().size()).append(",").append(infer.getFeedForwardActiveColumns().length)
+                .append(",").append(infer.getFeedForwardSparseActives().length).append(",").append(infer.getEncoding().length)
+                .append(",").append(infer.getSDR().length);
+                
+                System.out.println(sb.toString());
             }
         } catch(Exception e) {
             e.printStackTrace();
@@ -131,23 +145,17 @@ public class Sample {
 	
 	private void explicitFileRead() {
 		try {
-			
-			//BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/sample.csv")));
-			///scratch_ssd/sahil/
-			BufferedReader rdr = new BufferedReader(new InputStreamReader(
-								new FileInputStream("/scratch_ssd/sahil/eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
-//			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream
-//					("/Users/sahiltyagi/Desktop/Indy500/eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
+//			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/erp.log")));
+			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/erp.log")));
 			
 			//performance measurement
-//			File f = new File("/Users/sahiltyagi/Desktop/Indy500/executionTime.txt");
-			File f = new File("/scratch_ssd/sahil/executionTime.txt");
+			File f = new File("/Users/sahiltyagi/Desktop/executionTime.txt");
+//			File f = new File("/scratch_ssd/sahil/executionTime.txt");
 			PrintWriter p = new PrintWriter(f);
 			int i=0;
 			
 			String line;
-			line = rdr.readLine(); line = rdr.readLine();			//skip line 1 and 2
-			manualpublish.onNext("5/28/17 00:00:00.000, 0.0");
+			manualpublish.onNext("5/28/17 16:05:54.260,0");		//added to make htmsample and executiontime .txt files coherent
 			while((line=rdr.readLine()) != null) {
 				//second condition to remove malformed time values in eRP log (or maybe these records hold different context)
 				if(line.startsWith("$P") && line.split("�")[2].length() >9) {
@@ -157,21 +165,18 @@ public class Sample {
 					//performance measurement
 					i++;
 					String val_pub = "5/28/17 " + line.split("�")[2] + "," + line.split("�")[line.split("�").length -3];
-					String val_p = line.split("�")[line.split("�").length -3] + "," + System.currentTimeMillis();
-					p.println(i + "," + val_p);
+					p.println(i + "," + line.split("�")[line.split("�").length -3] + "," + System.currentTimeMillis());
 					manualpublish.onNext(val_pub);
 					
-					//input rate of 5 msg/sec
+					//input rate of 10 msg/sec
 					try {
-						Thread.sleep(200);
+						Thread.sleep(100);
 						
 					} catch(InterruptedException e) {
 						e.printStackTrace();
 					}
 					
 				}
-				
-				//manualpublish.onNext(line);
 			}
 			
 			p.close();

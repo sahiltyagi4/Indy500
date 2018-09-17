@@ -37,6 +37,7 @@ public class HTMBolt extends BaseRichBolt {
 	Network network;
 	private int subscriberIndex=0;
 	private int executeTupleIndex=0;
+	private long subscriberTStamp;
 
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -58,7 +59,7 @@ public class HTMBolt extends BaseRichBolt {
 		network =  Network.create("Network API Demo", p)
 				.add(Network.createRegion("Region 1")
 				.add(Network.createLayer("Layer 2/3", p)
-				.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
+				//.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
 				.add(Anomaly.create())
 				.add(new TemporalMemory())
 				.add(new SpatialPooler())
@@ -93,15 +94,16 @@ public class HTMBolt extends BaseRichBolt {
 	Subscriber<Inference> getSubscriber() {
         return new Subscriber<Inference>() {
             @Override public void onCompleted() {
-                System.out.println("***********************HTM anomaly detection stream completed");
+                System.out.println("***********************HTM anomaly detection stream completed***********************");
             }
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference i) {
             		subscriberIndex++;
+            		subscriberTStamp = System.currentTimeMillis();
             		double actual = (Double)i.getClassifierInput()
             					.get("consumption").get("inputValue");
             		System.out.println("###################," + subscriberIndex + "," 
-            					+ actual + "," + i.getAnomalyScore() + "," + System.currentTimeMillis());
+            					+ actual + "," + i.getAnomalyScore() + "," + subscriberTStamp);
             	}
         };
     }
