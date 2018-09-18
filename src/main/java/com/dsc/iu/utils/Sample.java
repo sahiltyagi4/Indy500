@@ -73,11 +73,20 @@ public class Sample {
 			//Network network = OnlineLearningUtils.createBasicLearningNetwork(manualpublish);
 			Parameters p = OnlineLearningUtils.getLearningParameters();
 			p = p.union(OnlineLearningUtils.getNetworkLearningEncoderParams());
+//			network =  Network.create("Network API Demo", p)
+//					.add(Network.createRegion("Region 1")
+//					.add(Network.createLayer("Layer 2/3", p)
+//					//.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
+//					.add(Anomaly.create())
+//					.add(new TemporalMemory())
+//					.add(new SpatialPooler())
+//					.add(sensor)));
+			
 			network =  Network.create("Network API Demo", p)
 					.add(Network.createRegion("Region 1")
 					.add(Network.createLayer("Layer 2/3", p)
 					//.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
-					.add(Anomaly.create())
+					.add(Anomaly.callCustomAnomaly())
 					.add(new TemporalMemory())
 					.add(new SpatialPooler())
 					.add(sensor)));
@@ -130,11 +139,11 @@ public class Sample {
                         .append(System.currentTimeMillis());
                 pw.println(sb.toString());
                 //pw.flush();
-                sb.append(",").append(infer.getPredictiveCells().size()).append(",").append(infer.getPreviousPredictiveCells().size())
-                .append(",").append(infer.getActiveCells().size()).append(",").append(infer.getFeedForwardActiveColumns().length)
-                .append(",").append(infer.getFeedForwardSparseActives().length).append(",").append(infer.getEncoding().length)
-                .append(",").append(infer.getSDR().length);
-                
+//                sb.append(",").append(infer.getPredictiveCells().size()).append(",").append(infer.getPreviousPredictiveCells().size())
+//                .append(",").append(infer.getActiveCells().size()).append(",").append(infer.getFeedForwardActiveColumns().length)
+//                .append(",").append(infer.getFeedForwardSparseActives().length).append(",").append(infer.getEncoding().length)
+//                .append(",").append(infer.getSDR().length);
+//                
                 System.out.println(sb.toString());
             }
         } catch(Exception e) {
