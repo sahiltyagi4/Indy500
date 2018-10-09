@@ -12,7 +12,8 @@ public class AnomalyDetectionTest {
 		TopologyBuilder builder = new TopologyBuilder();
 		
 		builder.setSpout("eRPlog", new TelemetryTestSpout());
-		builder.setBolt("htmbolt", new HTMBolt(), 2).shuffleGrouping("eRPlog");
+		//builder.setBolt("htmbolt", new HTMBolt(), 2).shuffleGrouping("eRPlog");
+		builder.setBolt("htmbolt", new HTMBolt()).shuffleGrouping("eRPlog");
 		
 		Config config = new Config();
 		//run across 3 workers

@@ -29,17 +29,20 @@ public class TelemetryTestSpout extends BaseRichSpout {
 		nbqueue = new ConcurrentLinkedQueue<String>();
 		this.spoutcollector = collector;
 		try {
-//			BufferedReader bfrdr = new BufferedReader(new InputStreamReader
-//					(new FileInputStream("/scratch_ssd/sahil/eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
-			BufferedReader bfrdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/erp.log")));
+			BufferedReader bfrdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/dixon_indy34000.log")));
 			String record;
-			//need to skip first 2 lines here?
+			
+//			while((record=bfrdr.readLine()) != null) {
+//				if(record.startsWith("$P") && record.split("�")[2].length() >9) {
+//					//o/p format eg: 5/28/17 00:00.00,202
+//					nbqueue.add("5/28/17 " + record.split("�")[2] + "," + record.split("�")[record.split("�").length -3]);
+//				}
+//			}
+			
 			while((record=bfrdr.readLine()) != null) {
-				if(record.startsWith("$P") && record.split("�")[2].length() >9) {
-					//o/p format eg: 5/28/17 00:00.00,202
-					nbqueue.add("5/28/17 " + record.split("�")[2] + "," + record.split("�")[record.split("�").length -3]);
-				}
+				nbqueue.add(record);
 			}
+			
 			bfrdr.close();
 			
 		} catch(IOException e) {
@@ -56,7 +59,6 @@ public class TelemetryTestSpout extends BaseRichSpout {
 		}
 		
 		//set input rate to 10 msg/sec
-		//index $6
 		try {
 			Thread.sleep(100);
 			

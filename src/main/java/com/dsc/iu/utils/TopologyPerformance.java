@@ -19,10 +19,10 @@ public class TopologyPerformance {
 //			System.out.println(q.substring(q.lastIndexOf("]")+1, q.length()));
 			
 			
-			File f = new File("/Users/sahiltyagi/Desktop/execution.txt");
+			File f = new File("/Users/sahiltyagi/Desktop/out.csv");
 			PrintWriter pw = new PrintWriter(f);
 			
-			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/recordindex.txt")));
+			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/executionTime.txt")));
 			Map<String, Long> exectimemap = new HashMap<String, Long>();
 			String st,s;
 			while((st=rdr.readLine()) != null) {
@@ -35,15 +35,24 @@ public class TopologyPerformance {
 			}
 			rdr.close();
 			
-			rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/htmoutput.txt")));
+			rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/htmsample.txt")));
 			while((st=rdr.readLine()) != null) {
 				s = st.substring(st.lastIndexOf("]")+1, st.length()).trim();
-				String index = s.split(",")[1] + "_" + String.valueOf(Double.parseDouble(s.split(",")[2]));
+				String input = s.split(",")[2];
+				if(input.length() ==6) {
+					input = input + "0";
+				}
+				
+				if(input.length() ==5) {
+					input = input + "00";
+				}
+				
+				//String index = s.split(",")[1] + "_" + String.valueOf(Double.parseDouble(s.split(",")[2]));
+				String index = s.split(",")[1] + "_" + input;
 				//System.out.println(index);
 				Long ts = Long.parseLong(s.split(",")[4]);
 				//handle redundancy of partially running experiments causing mismatch of # records flushed to each file
 				if(exectimemap.containsKey(index)) {
-					
 					pw.println(index.split("_")[0] + "," + (ts - exectimemap.get(index)));
 				}
 			}
