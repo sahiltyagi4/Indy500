@@ -98,6 +98,7 @@ public class OnlineLearningUtils {
     }
 	
 	public static Map<String, Map<String, Object>> getNetworkDemoFieldEncodingMap() {
+		System.out.println("##################### in getNetworkDemoFieldEncodingMap() method ###################");
         Map<String, Map<String, Object>> fieldEncodings = setupMap(
                 null,
                 0, // n
@@ -108,7 +109,7 @@ public class OnlineLearningUtils {
                 fieldEncodings, 
                 50, 
                 21, 
-                0, 400, 0, 0.1, null, Boolean.TRUE, null, 
+                -50, 300, 0, 0.1, null, Boolean.TRUE, null, 
                 "consumption", "float", "ScalarEncoder");
         
         fieldEncodings.get("timestamp").put(KEY.DATEFIELD_TOFD.getFieldName(), new Tuple(21,9.5)); // Time of day

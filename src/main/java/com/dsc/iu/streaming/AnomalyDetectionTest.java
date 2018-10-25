@@ -13,11 +13,12 @@ public class AnomalyDetectionTest {
 		
 		builder.setSpout("eRPlog", new TelemetryTestSpout());
 		//builder.setBolt("htmbolt", new HTMBolt(), 2).shuffleGrouping("eRPlog");
-		builder.setBolt("htmbolt", new HTMBolt()).shuffleGrouping("eRPlog");
+		builder.setBolt("htmbolt", new HTMBolt(), 1).shuffleGrouping("eRPlog");
 		
 		Config config = new Config();
-		//run across 3 workers
-		config.setNumWorkers(1);
+		config.setNumWorkers(2);
+		config.put(Config.WORKER_CHILDOPTS, "-Xmn32768m");
+		config.put(Config.WORKER_HEAP_MEMORY_MB, 32768);
 		
 //		LocalCluster cluster = new LocalCluster();
 //		cluster.submitTopology("indy500", config, builder.createTopology());

@@ -10,6 +10,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
+/*
+ * generates the telemetry data for a single car from the eRP log file. In the current use case, car #9-> scott dixon
+ * */
 public class SingleInputSource {
 	
 	public static void main(String[] args) {

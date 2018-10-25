@@ -29,11 +29,11 @@ import com.dsc.iu.utils.OnlineLearningUtils;
 public class Sample {
 	public Network network;
 	public Publisher manualpublish;
-	//int subscriberIndex=0;
+	static Sample sample;
 	
 	public static void main(String[] args) {
 		long startTS = System.currentTimeMillis();
-		Sample sample = new Sample();
+		sample = new Sample();
 		sample.runHTMNetwork();
 		sample.explicitFileRead();
 		System.out.println("completed running HTM code");
@@ -77,7 +77,7 @@ public class Sample {
 			network =  Network.create("Network API Demo", p)
 					.add(Network.createRegion("Region 1")
 					.add(Network.createLayer("Layer 2/3", p)
-					//.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
+					.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
 					.add(Anomaly.create())
 					.add(new TemporalMemory())
 					.add(new SpatialPooler())
@@ -93,7 +93,8 @@ public class Sample {
 //					.add(sensor)));
 			
 //			File outfile = new File("/Users/sahiltyagi/Desktop/htmsample.txt");
-			File outfile = new File("/scratch_ssd/sahil/htmsample.txt");
+//			File outfile = new File("/scratch_ssd/sahil/htmsample.txt");
+			File outfile = new File("/N/u/styagi/htmsample.txt");
 			PrintWriter pw = new PrintWriter(new FileWriter(outfile));
 			network.observe().subscribe(getSubscriber(outfile, pw));
 			
@@ -135,11 +136,11 @@ public class Sample {
 //                        .append(System.currentTimeMillis());
                 StringBuilder sb = new StringBuilder()
                         .append(infer.getRecordNum()).append(",")
-                        .append(String.format("%3.2f", actual)).append(",")
+                        .append(actual).append(",")
                         .append(infer.getAnomalyScore()).append(",")
                         .append(System.currentTimeMillis());
                 pw.println(sb.toString());
-                //pw.flush();
+                pw.flush();
 //                sb.append(",").append(infer.getPredictiveCells().size()).append(",").append(infer.getPreviousPredictiveCells().size())
 //                .append(",").append(infer.getActiveCells().size()).append(",").append(infer.getFeedForwardActiveColumns().length)
 //                .append(",").append(infer.getFeedForwardSparseActives().length).append(",").append(infer.getEncoding().length)
@@ -227,23 +228,22 @@ public class Sample {
 	
 	private void explicitFileRead() {
 		try {
-			///scratch_ssd/sahil/
-			
-//			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/dixon_indycar.log")));
-			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/dixon_indy34000.log")));
-//			File f = new File("/Users/sahiltyagi/Desktop/executionTime.txt");
-			File f = new File("/scratch_ssd/sahil/executionTime.txt");
+//			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/N/u/styagi/dixon_indycar.log")));
+			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/N/u/styagi/anomalyInject1.log")));
+			File f = new File("/N/u/styagi/executionTime.txt");
 			PrintWriter p = new PrintWriter(f);
 			String line; int index=0;
-			manualpublish.onNext("5/28/17 16:05:54.260,0");
+			manualpublish.onNext("5/28/17 16:05:54.260,200.000");
+			System.out.println("%%%%start timestamp is:"+System.currentTimeMillis());
 			while((line=rdr.readLine()) != null) {
 				index++;
 				p.println(index + "," + line.split(",")[1] + "," + System.currentTimeMillis());
-				manualpublish.onNext(line.trim());
+				//manualpublish.onNext(line.trim());
+				sample.measure(index, line);
 				
-				//10 msg/sec
+				//20 msg/sec
 				try {
-					Thread.sleep(100);
+					Thread.sleep(50);
 				} catch(InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -254,5 +254,10 @@ public class Sample {
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	
+	public void measure(int index, String line) {
+		manualpublish.onNext(line.trim());
 	}
 }
