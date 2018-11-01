@@ -58,14 +58,6 @@
 			<version>1.0.10</version>
 			<scope />
 	</dependency>
-	<!-- <dependency>
-    		<groupId>org.numenta.iub</groupId>
-    		<artifactId>htm.java</artifactId>
-    		<version>0.6.13</version>
-    		<scope>system</scope>
-    		<systemPath>/Users/sahiltyagi/Documents/IUB/htm.java/target/htm.java-0.6.13-jar-with-dependencies.jar</systemPath>
-    </dependency> -->
-    
     <!-- https://mvnrepository.com/artifact/org.numenta/htm.java -->
 	<dependency>
     		<groupId>org.numenta</groupId>
