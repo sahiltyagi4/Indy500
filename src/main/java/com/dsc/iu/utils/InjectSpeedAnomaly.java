@@ -1,4 +1,4 @@
-package com.dsc.iu.report;
+package com.dsc.iu.utils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * inserts anomalous data points at random indexes for a fixed seed value in indycar data corresponding to a particular car. 
  * The fraction of anomaly set to 5% => 850 points in 17000 indycar #9 dataset
  * */
-public class InsertAnomalyIndyCar {
+public class InjectSpeedAnomaly {
 	
 	public static void main(String[] args) {
 		try {
@@ -51,23 +51,13 @@ public class InsertAnomalyIndyCar {
 					line = rdr.readLine();
 				}
 				
-				line = rdr.readLine();
-				String time = line.split(",")[0];
 				//System.out.println("anomalous record at index " + i + ":" + time + "," + "50.000" +"\n");
-//				if(anomalydatamap.containsKey(record_num)) {
-//					System.out.println("duplicate key present:"+record_num);
-//				} else {
-//					anomalydatamap.put(record_num, time + "," + "0.000" +"\n");
-//				}
-				
 				if(anomalydatamap.containsKey(record_num)) {
 					System.out.println("duplicate key present:"+record_num);
 				} else {
-					double scalar_input = ThreadLocalRandom.current().nextDouble(-50.000, 20.000);
-					//System.out.println("input is:"+scalar_input);
-					System.out.println(time.split(" ")[1]);
-					anomalydatamap.put(record_num, time + "," + scalar_input +"\n");
+					anomalydatamap.put(record_num, "0.000" +"\n");
 				}
+				
 				rdr.close();
 			}
 			
@@ -85,7 +75,7 @@ public class InsertAnomalyIndyCar {
 			rdr.close();
 			wrtr.close();
 			
-			System.out.println("end InsertAnomalyIndyCar");
+			System.out.println("end Injecting speed anomaly of 0.000 mph in input datalogs");
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
