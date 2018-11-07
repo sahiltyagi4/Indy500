@@ -14,6 +14,7 @@ import java.util.Map;
 import org.numenta.nupic.Parameters;
 import org.numenta.nupic.Parameters.KEY;
 import org.numenta.nupic.algorithms.Anomaly;
+import org.numenta.nupic.algorithms.CLAClassifier;
 import org.numenta.nupic.algorithms.Classifier;
 import org.numenta.nupic.algorithms.SDRClassifier;
 import org.numenta.nupic.algorithms.SpatialPooler;
@@ -52,7 +53,7 @@ public class SingleMetricAnomaly {
 		network.start();
 		System.out.println("started the HTM network");
 		try {
-			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_speed.log")));
+			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_speed_zero.log")));
 			String record;
 			manualPublisher.onNext("4.000");
 			while((record = logreader.readLine()) != null) {
@@ -113,7 +114,8 @@ public class SingleMetricAnomaly {
         p.set(KEY.SYN_PERM_ACTIVE_INC, 0.0001);
         p.set(KEY.SYN_PERM_INACTIVE_DEC, 0.0005);
         p.set(KEY.MAX_BOOST, 1.0);
-        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap("consumption", SDRClassifier.class));
+//        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap("consumption", SDRClassifier.class));
+        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap("consumption", CLAClassifier.class));
         
         p.set(KEY.MAX_NEW_SYNAPSE_COUNT, 20);
         p.set(KEY.INITIAL_PERMANENCE, 0.21);
