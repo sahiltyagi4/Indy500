@@ -92,9 +92,9 @@ public class Sample {
 //					.add(new SpatialPooler())
 //					.add(sensor)));
 			
-//			File outfile = new File("/Users/sahiltyagi/Desktop/htmsample.txt");
+			File outfile = new File("/Users/sahiltyagi/Desktop/htmsample.txt");
 //			File outfile = new File("/scratch_ssd/sahil/htmsample.txt");
-			File outfile = new File("/N/u/styagi/htmsample.txt");
+//			File outfile = new File("/N/u/styagi/htmsample.txt");
 			PrintWriter pw = new PrintWriter(new FileWriter(outfile));
 			network.observe().subscribe(getSubscriber(outfile, pw));
 			
@@ -229,8 +229,8 @@ public class Sample {
 	private void explicitFileRead() {
 		try {
 //			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/N/u/styagi/dixon_indycar.log")));
-			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/N/u/styagi/anomalyInject1.log")));
-			File f = new File("/N/u/styagi/executionTime.txt");
+			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/speed_zero.log")));
+			File f = new File("/Users/sahiltyagi/Desktop/executionTime.txt");
 			PrintWriter p = new PrintWriter(f);
 			String line; int index=0;
 			manualpublish.onNext("5/28/17 16:05:54.260,200.000");
@@ -241,12 +241,12 @@ public class Sample {
 				//manualpublish.onNext(line.trim());
 				sample.measure(index, line);
 				
-				//20 msg/sec
-				try {
-					Thread.sleep(50);
-				} catch(InterruptedException e) {
-					e.printStackTrace();
-				}
+//				//20 msg/sec
+//				try {
+//					Thread.sleep(50);
+//				} catch(InterruptedException e) {
+//					e.printStackTrace();
+//				}
 			}
 			
 			p.close();

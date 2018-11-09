@@ -28,16 +28,15 @@ import org.numenta.nupic.network.sensor.SensorParams.Keys;
 import rx.Subscriber;
 
 /*
- * anomaly detection on just the scalar encoder 'vehicle_speed' and removing 'time_of_day' parameter
+ * combining multiple metrics for anomaly detection
  * */
-public class SingleMetricAnomaly {
-	
+public class TwoMetricsDetection {
 	public static void main(String[] args) {
-		Publisher manualPublisher = Publisher.builder().addHeader("vehicle_speed").addHeader("float").addHeader("B").build();
-		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, new Object[] { "kakkerot", manualPublisher }));
+		Publisher manualPublisher = Publisher.builder().addHeader("speed,rpm").addHeader("float,float").addHeader("B").build();
+		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, new Object[] { "speed_and_rpm_sensor", manualPublisher }));
 		Parameters params = getParams();
 		params = params.union(getNetworkLearningEncoderParams());
-		Network network = Network.create("single_metric_anomaly_detection", params).add(Network.createRegion("region1").add(Network.createLayer("layer2/3", params)
+		Network network = Network.create("speed_rpm_anomalies", params).add(Network.createRegion("region1").add(Network.createLayer("layer2/3", params)
 						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE).add(Anomaly.create()).add(new TemporalMemory()).add(new SpatialPooler()).add(sensor)));
 		
 		File output = new File("/Users/sahiltyagi/Desktop/htmoutput.txt");
@@ -51,9 +50,9 @@ public class SingleMetricAnomaly {
 		network.start();
 		System.out.println("started the HTM network");
 		try {
-			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/speed_zero.log")));
+			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/dixon_SPEED_RPM.log")));
 			String record;
-			manualPublisher.onNext("4.000");
+			manualPublisher.onNext("0.000,0");
 			while((record = logreader.readLine()) != null) {
 				manualPublisher.onNext(record);
 			}
@@ -62,6 +61,7 @@ public class SingleMetricAnomaly {
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
+		
 	}
 	
 	private static Parameters getParams() {
@@ -112,7 +112,7 @@ public class SingleMetricAnomaly {
         p.set(KEY.SYN_PERM_ACTIVE_INC, 0.0001);
         p.set(KEY.SYN_PERM_INACTIVE_DEC, 0.0005);
         p.set(KEY.MAX_BOOST, 1.0);
-        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap("asdfghj", SDRClassifier.class));
+        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap());
         
         p.set(KEY.MAX_NEW_SYNAPSE_COUNT, 20);
         p.set(KEY.INITIAL_PERMANENCE, 0.21);
@@ -127,15 +127,14 @@ public class SingleMetricAnomaly {
         return p;
     }
 	
-	private static Map<String, Class<? extends Classifier>> getInferredFieldsMap(String field, Class<? extends Classifier> classifier) {
-        Map<String, Class<? extends Classifier>> inferredFieldsMap = new HashMap<>();
-        inferredFieldsMap.put(field, classifier);
-        return inferredFieldsMap;
-    }
-	
 	private static Map<String, Map<String, Object>> getNetworkDemoFieldEncodingMap() {
-		//float to double
-        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, 0, 250, 0, 0.1, null, Boolean.TRUE, null, "vehicle_speed", "float", "ScalarEncoder");
+		/*
+		 * changed the periodic and clip boolean metrics from the initial  single metric
+		 * changed n and w for RPM input metric
+		 * */
+        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, 0, 250, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "speed", "float", "ScalarEncoder");
+        fieldEncodings = setupMap(fieldEncodings, 100, 41, 0, 12500, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
+        
         return fieldEncodings;
     }
 	
@@ -169,6 +168,14 @@ public class SingleMetricAnomaly {
         return map;
     }
 	
+	private static Map<String, Class<? extends Classifier>> getInferredFieldsMap() {
+        Map<String, Class<? extends Classifier>> inferredFieldsMap = new HashMap<>();
+        inferredFieldsMap.put("speed", SDRClassifier.class);
+        inferredFieldsMap.put("rpm", SDRClassifier.class);
+        
+        return inferredFieldsMap;
+    }
+	
 	private static Subscriber<Inference> getSubscriber(File outputFile, PrintWriter pw) {
         return new Subscriber<Inference>() {
             @Override public void onCompleted() {
@@ -182,15 +189,17 @@ public class SingleMetricAnomaly {
             }
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference i) {
-            		writeToFileAnomaly(i, "vehicle_speed", pw); 
+            		writeToFileAnomaly(i, pw); 
             	}
         };
     }
 	
-	private static void writeToFileAnomaly(Inference infer, String classifierField, PrintWriter pw) {
+	private static void writeToFileAnomaly(Inference infer, PrintWriter pw) {
 		if(infer.getRecordNum() > 0) {
-			double actual_val = (Double)infer.getClassifierInput().get(classifierField).get("inputValue");
-			 StringBuilder sb = new StringBuilder().append(infer.getRecordNum()).append(",").append(String.format("%3.2f", actual_val)).append(",").append(infer.getAnomalyScore()).append(",")
+			double speed = (Double)infer.getClassifierInput().get("speed").get("inputValue");
+			double rpm = (Double)infer.getClassifierInput().get("rpm").get("inputValue");
+			 StringBuilder sb = new StringBuilder().append(infer.getRecordNum()).append(",").append(String.format("%3.2f", speed)).append(",")
+					 			.append(String.format("%3.2f", rpm)).append(",").append(infer.getAnomalyScore()).append(",")
                      			.append(System.currentTimeMillis());
              pw.println(sb.toString());
              pw.flush();
