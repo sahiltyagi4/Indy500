@@ -3,6 +3,10 @@ package com.dsc.iu.utils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+<<<<<<< HEAD
+=======
+import java.io.FileReader;
+>>>>>>> desktop
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -33,14 +37,22 @@ import rx.Subscriber;
 public class SingleMetricAnomaly {
 	
 	public static void main(String[] args) {
+<<<<<<< HEAD
 		Publisher manualPublisher = Publisher.builder().addHeader("vehicle_speed").addHeader("float").addHeader("B").build();
+=======
+		Publisher manualPublisher = Publisher.builder().addHeader("consumption").addHeader("float").addHeader("B").build();
+>>>>>>> desktop
 		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, new Object[] { "kakkerot", manualPublisher }));
 		Parameters params = getParams();
 		params = params.union(getNetworkLearningEncoderParams());
 		Network network = Network.create("single_metric_anomaly_detection", params).add(Network.createRegion("region1").add(Network.createLayer("layer2/3", params)
 						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE).add(Anomaly.create()).add(new TemporalMemory()).add(new SpatialPooler()).add(sensor)));
 		
+<<<<<<< HEAD
 		File output = new File("/Users/sahiltyagi/Desktop/htmoutput.txt");
+=======
+		File output = new File("D:\\\\anomalydetection\\htmoutput.txt");
+>>>>>>> desktop
 		try {
 			PrintWriter pw = new PrintWriter(new FileWriter(output));
 			network.observe().subscribe(getSubscriber(output, pw));
@@ -51,7 +63,11 @@ public class SingleMetricAnomaly {
 		network.start();
 		System.out.println("started the HTM network");
 		try {
+<<<<<<< HEAD
 			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/speed_zero.log")));
+=======
+			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_speed.log")));
+>>>>>>> desktop
 			String record;
 			manualPublisher.onNext("4.000");
 			while((record = logreader.readLine()) != null) {
@@ -112,7 +128,11 @@ public class SingleMetricAnomaly {
         p.set(KEY.SYN_PERM_ACTIVE_INC, 0.0001);
         p.set(KEY.SYN_PERM_INACTIVE_DEC, 0.0005);
         p.set(KEY.MAX_BOOST, 1.0);
+<<<<<<< HEAD
         p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap("asdfghj", SDRClassifier.class));
+=======
+        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap("consumption", SDRClassifier.class));
+>>>>>>> desktop
         
         p.set(KEY.MAX_NEW_SYNAPSE_COUNT, 20);
         p.set(KEY.INITIAL_PERMANENCE, 0.21);
@@ -134,8 +154,12 @@ public class SingleMetricAnomaly {
     }
 	
 	private static Map<String, Map<String, Object>> getNetworkDemoFieldEncodingMap() {
+<<<<<<< HEAD
 		//float to double
         Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, 0, 250, 0, 0.1, null, Boolean.TRUE, null, "vehicle_speed", "float", "ScalarEncoder");
+=======
+        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, 0, 250, 0, 0.1, null, Boolean.TRUE, null, "consumption", "float", "ScalarEncoder");
+>>>>>>> desktop
         return fieldEncodings;
     }
 	
@@ -182,7 +206,11 @@ public class SingleMetricAnomaly {
             }
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference i) {
+<<<<<<< HEAD
             		writeToFileAnomaly(i, "vehicle_speed", pw); 
+=======
+            		writeToFileAnomaly(i, "consumption", pw); 
+>>>>>>> desktop
             	}
         };
     }
