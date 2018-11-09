@@ -39,13 +39,22 @@ public class IndycarERPMetrics {
 		//two metrics: <rpm,speed>
 		try {
 			System.out.println("going to start");
-			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("D:\\\\anomalydetection\\dixon_SPEED_RPM.log")));
-			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
+//			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("D:\\\\anomalydetection\\dixon_SPEED_RPM.log")));
+//			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
+			
+			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/Users/sahiltyagi/Desktop/dixon_SPEED_RPM.log")));
+			BufferedReader rdr = new BufferedReader(new InputStreamReader(
+								new FileInputStream("/Users/sahiltyagi/Desktop/Indy500/eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
 			String record;
 			while((record = rdr.readLine()) != null) {
-				if(record.startsWith("$P") && record.split("\\u00A6")[2].length() >9 && record.split("\\u00A6")[1].equals("9")) {
-						System.out.println("VEHICLE_SPEED IS: " + record.split("\\u00A6")[4] + " AND ENGINE_RPM:" + record.split("\\u00A6")[5]);
-						wrtr.write(record.split("\\u00A6")[4] + "," + record.split("\\u00A6")[5] + "\n");
+//				if(record.startsWith("$P") && record.split("\\u00A6")[2].length() >9 && record.split("\\u00A6")[1].equals("9")) {
+//						System.out.println("VEHICLE_SPEED IS: " + record.split("\\u00A6")[4] + " AND ENGINE_RPM:" + record.split("\\u00A6")[5]);
+//						wrtr.write(record.split("\\u00A6")[4] + "," + record.split("\\u00A6")[5] + "\n");
+//				}
+				
+				if(record.startsWith("$P") && record.split("�")[2].length() >9 && record.split("�")[1].equals("9") && !record.split("�")[4].equals("0.000")) {
+					System.out.println("VEHICLE_SPEED IS: " + record.split("�")[4] + " AND ENGINE_RPM:" + record.split("�")[5]);
+					wrtr.write(record.split("�")[4] + "," + record.split("�")[5] + "\n");
 				}
 			}
 			
