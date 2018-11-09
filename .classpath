@@ -22,6 +22,5 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/sahiltyagi/Documents/IUB/htm.java/target/htm.java-0.6.13-jar-with-dependencies.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

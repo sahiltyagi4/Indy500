@@ -50,7 +50,7 @@ public class TwoMetricsDetection {
 		network.start();
 		System.out.println("started the HTM network");
 		try {
-			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_SPEED_RPM.log")));
+			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\speed_rpm.log")));
 			String record;
 			manualPublisher.onNext("0.000,0");
 			while((record = logreader.readLine()) != null) {
@@ -132,8 +132,10 @@ public class TwoMetricsDetection {
 		 * changed the periodic and clip boolean metrics from the initial  single metric
 		 * changed n and w for RPM input metric
 		 * */
+		//setupMap(null, 50, 21, 0, 250, 0, 0.1, null, Boolean.TRUE, null, "consumption", "float", "ScalarEncoder");		//used in single metric
+		//setupMap(null, 50, 21, 0, 250, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "speed", "float", "ScalarEncoder");
         Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, 0, 250, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "speed", "float", "ScalarEncoder");
-        fieldEncodings = setupMap(fieldEncodings, 100, 41, 0, 12500, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
+        fieldEncodings = setupMap(fieldEncodings, 50, 21, 0, 12500, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
         
         return fieldEncodings;
     }
