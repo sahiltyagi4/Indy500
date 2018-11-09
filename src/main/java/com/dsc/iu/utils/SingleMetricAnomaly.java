@@ -17,6 +17,7 @@ import java.util.Map;
 import org.numenta.nupic.Parameters;
 import org.numenta.nupic.Parameters.KEY;
 import org.numenta.nupic.algorithms.Anomaly;
+import org.numenta.nupic.algorithms.CLAClassifier;
 import org.numenta.nupic.algorithms.Classifier;
 import org.numenta.nupic.algorithms.SDRClassifier;
 import org.numenta.nupic.algorithms.SpatialPooler;
@@ -64,9 +65,13 @@ public class SingleMetricAnomaly {
 		System.out.println("started the HTM network");
 		try {
 <<<<<<< HEAD
+<<<<<<< HEAD
 			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/speed_zero.log")));
 =======
 			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_speed.log")));
+>>>>>>> desktop
+=======
+			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_speed_zero.log")));
 >>>>>>> desktop
 			String record;
 			manualPublisher.onNext("4.000");

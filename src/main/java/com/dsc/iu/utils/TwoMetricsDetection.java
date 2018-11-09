@@ -40,6 +40,7 @@ public class TwoMetricsDetection {
 						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE).add(Anomaly.create()).add(new TemporalMemory()).add(new SpatialPooler()).add(sensor)));
 		
 		File output = new File("/Users/sahiltyagi/Desktop/htmoutput.txt");
+//		File output = new File("D:\\\\anomalydetection\\htmoutput.txt");
 		try {
 			PrintWriter pw = new PrintWriter(new FileWriter(output));
 			network.observe().subscribe(getSubscriber(output, pw));
@@ -51,6 +52,7 @@ public class TwoMetricsDetection {
 		System.out.println("started the HTM network");
 		try {
 			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/dixon_SPEED_RPM.log")));
+//			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_SPEED_RPM.log")));
 			String record;
 			manualPublisher.onNext("0.000,0");
 			while((record = logreader.readLine()) != null) {
