@@ -14,15 +14,15 @@ public class SingleInputSource {
 	
 	public static void main(String[] args) {
 		try {
-			FileWriter fw = new FileWriter("D:\\\\anomalydetection\\dixon_indycar2.log");
+			FileWriter fw = new FileWriter("D:\\\\anomalydetection\\normailzed2metric.log");
 			PrintWriter pw =new PrintWriter(fw);
 			BufferedReader rdr = new BufferedReader(new InputStreamReader(
 							new FileInputStream("D:\\\\anomalydetection\\eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
 			String line;
 			while((line=rdr.readLine()) != null) {
-				if(line.startsWith("$P") && line.split("ï¿½")[2].length() >9 && line.split("ï¿½")[1].equals("9")) {
+				if(line.startsWith("$P") && line.split("¦")[2].length() >9 && line.split("¦")[1].equals("9")) {
 //					pw.println("5/28/17 " + line.split("ï¿½")[2] + "," + line.split("ï¿½")[line.split("ï¿½").length -3]);
-					pw.println("5/28/17 " + line.split("ï¿½")[2] + "," + (Integer.parseInt(line.split("ï¿½")[4])*0.02));
+					pw.println("5/28/17 " + line.split("¦")[2] + "," + (Double.parseDouble(line.split("¦")[4])*0.02));
 					//System.out.println(line);
 				}
 			}

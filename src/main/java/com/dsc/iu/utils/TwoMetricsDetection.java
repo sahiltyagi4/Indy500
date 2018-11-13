@@ -54,7 +54,10 @@ public class TwoMetricsDetection {
 			String record;
 			manualPublisher.onNext("0.000,0");
 			while((record = logreader.readLine()) != null) {
-				manualPublisher.onNext(record);
+//				String newrec = record.split(",")[0] + "," + String.valueOf((Double.parseDouble(record.split(",")[1])/2));
+				String newrec = record.split(",")[0] + "," + String.valueOf((Double.parseDouble(record.split(",")[1])*0.02));
+				System.out.println(newrec);
+				manualPublisher.onNext(newrec);
 			}
 			
 			logreader.close();
@@ -135,7 +138,7 @@ public class TwoMetricsDetection {
 		//setupMap(null, 50, 21, 0, 250, 0, 0.1, null, Boolean.TRUE, null, "consumption", "float", "ScalarEncoder");		//used in single metric
 		//setupMap(null, 50, 21, 0, 250, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "speed", "float", "ScalarEncoder");
         Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, 0, 250, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "speed", "float", "ScalarEncoder");
-        fieldEncodings = setupMap(fieldEncodings, 50, 21, 0, 12500, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
+        fieldEncodings = setupMap(fieldEncodings, 50, 21, 0, 250, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
         
         return fieldEncodings;
     }
