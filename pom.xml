@@ -51,6 +51,19 @@
       	<version>1.0.2</version>
       	<scope>provided</scope>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.apache.storm/flux-core-->
+	<dependency>
+      <groupId>org.apache.storm</groupId>
+      <artifactId>flux-core</artifactId>
+      <version>1.0.2</version>
+	</dependency>
+	
+	<!-- https://mvnrepository.com/artifact/org.apache.storm/flux-wrappers-->
+	<dependency>
+      <groupId>org.apache.storm</groupId>
+      <artifactId>flux-wrappers</artifactId>
+      <version>1.0.2</version>
+	</dependency>
     <!-- added library from htm.java -->
     <dependency>
 			<groupId>io.reactivex</groupId>
