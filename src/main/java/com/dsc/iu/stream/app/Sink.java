@@ -8,33 +8,31 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Tuple;
 
-public class HTMSingleMetricBolt extends BaseRichBolt {
-	
+public class Sink extends BaseRichBolt {
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public String metric;
-	
-	public HTMSingleMetricBolt(String metric) {
-		this.metric = metric;
-	}
 
 	@Override
 	public void execute(Tuple arg0) {
+		String carnum = arg0.getStringByField("carnum");
+		String metric = arg0.getStringByField("metric");
+		String data_val = arg0.getStringByField("dataval");
+		double score = Double.parseDouble(arg0.getStringByField("score"));
+		long ts = Long.parseLong(arg0.getStringByField("timestamp"));
 		
-		
+		System.out.println("$$$$$$$$$$,"+carnum+","+metric+","+data_val+","+score+","+ts);
 	}
 
 	@Override
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
 		
-		
 	}
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-		
 		
 	}
 
