@@ -3,13 +3,16 @@ package com.dsc.iu.streaming;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
+import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 import org.numenta.nupic.Parameters;
 import org.numenta.nupic.Parameters.KEY;
 import org.numenta.nupic.algorithms.Anomaly;
@@ -38,10 +41,16 @@ public class HTMBolt extends BaseRichBolt {
 	private int subscriberIndex=0;
 	private int executeTupleIndex=0;
 	private long subscriberTStamp;
+	
+	private List<Integer> numtasks;
+	private OutputCollector collector;
 
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		// TODO Auto-generated method stub
+		
+		this.collector = collector;
+		
 		//timestamp parameter denotes the date and time for the record in the race
 		manualpublish = Publisher.builder()
 								.addHeader("timestamp,consumption")
@@ -59,7 +68,7 @@ public class HTMBolt extends BaseRichBolt {
 		network =  Network.create("Network API Demo", p)
 				.add(Network.createRegion("Region 1")
 				.add(Network.createLayer("Layer 2/3", p)
-				//.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
+				.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
 				.add(Anomaly.create())
 				.add(new TemporalMemory())
 				.add(new SpatialPooler())
@@ -68,6 +77,10 @@ public class HTMBolt extends BaseRichBolt {
 		network.observe().subscribe(getSubscriber());
 		network.start();
 		
+		System.out.println("********* htmbolt stats:" + context.getThisTaskId() + "," + context.getThisComponentId() + "," + context.getThisTaskIndex() 
+							+ "," + context.getThisWorkerPort() + "," + context.getComponentIds());
+		
+		//this.numtasks = context.getComponentTasks("htmbolt");
 	}
 
 	@Override
@@ -88,6 +101,7 @@ public class HTMBolt extends BaseRichBolt {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// TODO Auto-generated method stub
+		declarer.declare(new Fields("recordnum", "input", "score"));
 		
 	}
 	
@@ -102,8 +116,12 @@ public class HTMBolt extends BaseRichBolt {
             		subscriberTStamp = System.currentTimeMillis();
             		double actual = (Double)i.getClassifierInput()
             					.get("consumption").get("inputValue");
-            		System.out.println("###################," + subscriberIndex + "," 
-            					+ actual + "," + i.getAnomalyScore() + "," + subscriberTStamp);
+            		double score = i.getAnomalyScore();
+            
+//            		System.out.println("###################anomalyresults," + subscriberIndex + "," 
+//           					+ actual + "," + score + "," + subscriberTStamp);
+            		
+            		collector.emit(new Values(subscriberIndex, actual, score));
             	}
         };
     }

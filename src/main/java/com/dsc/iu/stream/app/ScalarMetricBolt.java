@@ -87,7 +87,7 @@ public class ScalarMetricBolt extends BaseRichBolt {
         parameters.set(KEY.COLUMN_DIMENSIONS, new int[] { 20 });
         parameters.set(KEY.CELLS_PER_COLUMN, 6);
         
-        //SpatialPooler specific
+        //SpatialPooler specifics
         parameters.set(KEY.POTENTIAL_RADIUS, 12);//3
         parameters.set(KEY.POTENTIAL_PCT, 0.5);//0.5
         parameters.set(KEY.GLOBAL_INHIBITION, false);
@@ -104,7 +104,7 @@ public class ScalarMetricBolt extends BaseRichBolt {
         parameters.set(KEY.MAX_BOOST, 10.0);
         parameters.set(KEY.SEED, 42);
         
-        //Temporal Memory specific
+        //Temporal Memory specifics
         parameters.set(KEY.INITIAL_PERMANENCE, 0.2);
         parameters.set(KEY.CONNECTED_PERMANENCE, 0.8);
         parameters.set(KEY.MIN_THRESHOLD, 5);
@@ -213,7 +213,6 @@ public class ScalarMetricBolt extends BaseRichBolt {
 //			 					.append(System.currentTimeMillis());
             	
             	collector.emit(new Values(carnum, metric, String.format("%3.2f", actual_val), infer.getAnomalyScore(), System.currentTimeMillis()));
-            	
             }
         };
     }

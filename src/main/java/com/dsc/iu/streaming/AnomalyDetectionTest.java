@@ -9,15 +9,18 @@ import org.apache.storm.topology.TopologyBuilder;
 public class AnomalyDetectionTest {
 	public static void main(String[] args) {
 		
+		System.out.println("going to start indycar topology");
 		TopologyBuilder builder = new TopologyBuilder();
 		
 		builder.setSpout("eRPlog", new TelemetryTestSpout());
-		//builder.setBolt("htmbolt", new HTMBolt(), 2).shuffleGrouping("eRPlog");
 		builder.setBolt("htmbolt", new HTMBolt()).shuffleGrouping("eRPlog");
+		builder.setBolt("sink", new SinkBolt()).shuffleGrouping("htmbolt");
+		
+//		builder.setBolt("htmbolt", new HTMBolt()).shuffleGrouping("eRPlog");
 		
 		Config config = new Config();
 		//run across 3 workers
-		config.setNumWorkers(1);
+		//config.setNumWorkers(1);
 		
 //		LocalCluster cluster = new LocalCluster();
 //		cluster.submitTopology("indy500", config, builder.createTopology());
@@ -31,6 +34,7 @@ public class AnomalyDetectionTest {
 		StormTopology stormTopology = builder.createTopology();
 	    try {
 			StormSubmitter.submitTopology("indy500", config, stormTopology);
+			System.out.println("job command submitted");
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

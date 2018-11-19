@@ -29,6 +29,7 @@ public class TelemetryTestSpout extends BaseRichSpout {
 		nbqueue = new ConcurrentLinkedQueue<String>();
 		this.spoutcollector = collector;
 		try {
+//			BufferedReader bfrdr = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\\\\\anomalydetection\\\\dixon_17000.log")));
 			BufferedReader bfrdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/dixon_indy34000.log")));
 			String record;
 			
@@ -38,6 +39,9 @@ public class TelemetryTestSpout extends BaseRichSpout {
 //					nbqueue.add("5/28/17 " + record.split("�")[2] + "," + record.split("�")[record.split("�").length -3]);
 //				}
 //			}
+			
+			System.out.println("$$$$$$$$$$$ telemetry spout: "+ context.getThisTaskId() + "," + context.getThisComponentId() + "," + context.getThisTaskIndex() + "," +
+								context.getThisWorkerPort() + ","+ context.getComponentIds());
 			
 			while((record=bfrdr.readLine()) != null) {
 				nbqueue.add(record);
