@@ -1,15 +1,15 @@
-package com.dsc.iu.utils;
+package com.dsc.iu.stream.app;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.topology.base.BaseRichBolt;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 import org.numenta.nupic.Parameters;
 import org.numenta.nupic.Parameters.KEY;
 import org.numenta.nupic.algorithms.Anomaly;
@@ -27,47 +27,58 @@ import org.numenta.nupic.network.sensor.SensorParams.Keys;
 
 import rx.Subscriber;
 
-/*
- * combining multiple metrics for anomaly detection
- * */
-public class TwoMetricsDetection {
-	public static void main(String[] args) {
-		Publisher manualPublisher = Publisher.builder().addHeader("speed,rpm").addHeader("float,float").addHeader("B").build();
-		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, new Object[] { "speed_and_rpm_sensor", manualPublisher }));
+public class ScalarMetricBolt extends BaseRichBolt {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private static OutputCollector collector;
+	public static String carnum, metric;
+	public static int min, max;
+	Publisher manualpublish;
+	Network network;
+	
+	public ScalarMetricBolt(String carnum, String metric, String min, String max) {
+		ScalarMetricBolt.carnum = carnum;
+		ScalarMetricBolt.metric = metric;
+		ScalarMetricBolt.min = Integer.parseInt(min);
+		ScalarMetricBolt.max = Integer.parseInt(max);
+	}
+
+	@Override
+	public void execute(Tuple arg0) {
+		//pushing to publisher values: telemtry_log_data,*metric from constructor*
+		manualpublish.onNext(arg0.getStringByField("telemetry_log_time")+","+arg0.getStringByField(metric));
+	}
+
+	@Override
+	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
+		collector = arg2;
+		manualpublish = Publisher.builder()
+						.addHeader(metric)
+						.addHeader("float")
+						.addHeader("B")
+						.build();
+		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, new Object[] {"singlemetricStreaming", manualpublish }));
 		Parameters params = getParams();
 		params = params.union(getNetworkLearningEncoderParams());
-		Network network = Network.create("speed_rpm_anomalies", params).add(Network.createRegion("region1").add(Network.createLayer("layer2/3", params)
-						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE).add(Anomaly.create()).add(new TemporalMemory()).add(new SpatialPooler()).add(sensor)));
+		Network network = Network.create("single_metric_anomaly_detection", params)
+						.add(Network.createRegion("region1")
+						.add(Network.createLayer("layer2/3", params)
+						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
+						.add(Anomaly.create())
+						.add(new TemporalMemory())
+						.add(new SpatialPooler())
+						.add(sensor)));
 		
-		File output = new File("/Users/sahiltyagi/Desktop/htmoutput.txt");
-//		File output = new File("D:\\\\anomalydetection\\htmoutput.txt");
-		try {
-			PrintWriter pw = new PrintWriter(new FileWriter(output));
-			network.observe().subscribe(getSubscriber(output, pw));
-		} catch(IOException e) {
-			e.printStackTrace();
-		}
-		
+		network.observe().subscribe(getSubscriber());
 		network.start();
-		System.out.println("started the HTM network");
-		try {
-			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/dixon_SPEED_RPM.log")));
-//			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_SPEED_RPM.log")));
+	}
 
-			String record;
-			manualPublisher.onNext("0.000,0");
-			while((record = logreader.readLine()) != null) {
-//				String newrec = record.split(",")[0] + "," + String.valueOf((Double.parseDouble(record.split(",")[1])/2));
-				String newrec = record.split(",")[0] + "," + String.valueOf((Double.parseDouble(record.split(",")[1])*0.02));
-				System.out.println(newrec);
-				manualPublisher.onNext(newrec);
-			}
-			
-			logreader.close();
-		} catch(IOException e) {
-			e.printStackTrace();
-		}
-		
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer arg0) {
+		arg0.declare(new Fields("carnum","metric","dataval","score","timestamp"));
 	}
 	
 	private static Parameters getParams() {
@@ -76,7 +87,7 @@ public class TwoMetricsDetection {
         parameters.set(KEY.COLUMN_DIMENSIONS, new int[] { 20 });
         parameters.set(KEY.CELLS_PER_COLUMN, 6);
         
-        //SpatialPooler specific
+        //SpatialPooler specifics
         parameters.set(KEY.POTENTIAL_RADIUS, 12);//3
         parameters.set(KEY.POTENTIAL_PCT, 0.5);//0.5
         parameters.set(KEY.GLOBAL_INHIBITION, false);
@@ -93,7 +104,7 @@ public class TwoMetricsDetection {
         parameters.set(KEY.MAX_BOOST, 10.0);
         parameters.set(KEY.SEED, 42);
         
-        //Temporal Memory specific
+        //Temporal Memory specifics
         parameters.set(KEY.INITIAL_PERMANENCE, 0.2);
         parameters.set(KEY.CONNECTED_PERMANENCE, 0.8);
         parameters.set(KEY.MIN_THRESHOLD, 5);
@@ -118,7 +129,7 @@ public class TwoMetricsDetection {
         p.set(KEY.SYN_PERM_ACTIVE_INC, 0.0001);
         p.set(KEY.SYN_PERM_INACTIVE_DEC, 0.0005);
         p.set(KEY.MAX_BOOST, 1.0);
-        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap());
+        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap(metric, SDRClassifier.class));
         
         p.set(KEY.MAX_NEW_SYNAPSE_COUNT, 20);
         p.set(KEY.INITIAL_PERMANENCE, 0.21);
@@ -133,19 +144,15 @@ public class TwoMetricsDetection {
         return p;
     }
 	
+	private static Map<String, Class<? extends Classifier>> getInferredFieldsMap(String field, Class<? extends Classifier> classifier) {
+        Map<String, Class<? extends Classifier>> inferredFieldsMap = new HashMap<>();
+        inferredFieldsMap.put(field, classifier);
+        return inferredFieldsMap;
+    }
+	
 	private static Map<String, Map<String, Object>> getNetworkDemoFieldEncodingMap() {
-		/*
-		 * changed the periodic and clip boolean metrics from the initial  single metric
-		 * changed n and w for RPM input metric
-		 * */
-		
-//        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, 0, 250, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "speed", "float", "ScalarEncoder");
-//        fieldEncodings = setupMap(fieldEncodings, 100, 41, 0, 12500, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
-
-        
-		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, 0, 250, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "speed", "float", "ScalarEncoder");
-	    fieldEncodings = setupMap(fieldEncodings, 50, 21, 0, 12500, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
-		return fieldEncodings;
+        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, min, max, 0, 0.1, null, Boolean.TRUE, null, metric, "float", "ScalarEncoder");
+        return fieldEncodings;
     }
 	
 	private static Map<String, Map<String, Object>> setupMap(
@@ -178,41 +185,36 @@ public class TwoMetricsDetection {
         return map;
     }
 	
-	private static Map<String, Class<? extends Classifier>> getInferredFieldsMap() {
-        Map<String, Class<? extends Classifier>> inferredFieldsMap = new HashMap<>();
-        inferredFieldsMap.put("speed", SDRClassifier.class);
-        inferredFieldsMap.put("rpm", SDRClassifier.class);
-        
-        return inferredFieldsMap;
-    }
-	
-	private static Subscriber<Inference> getSubscriber(File outputFile, PrintWriter pw) {
+	private static Subscriber<Inference> getSubscriber() {
         return new Subscriber<Inference>() {
-            @Override public void onCompleted() {
-                System.out.println("\nstream completed. see output: " + outputFile.getAbsolutePath());
-                try {
-                    pw.flush();
-                    pw.close();
-                }catch(Exception e) {
-                    e.printStackTrace();
-                }
-            }
+            @Override public void onCompleted() {}
             @Override public void onError(Throwable e) { e.printStackTrace(); }
-            @Override public void onNext(Inference i) {
-            		writeToFileAnomaly(i, pw); 
-            	}
+            @Override public void onNext(Inference infer) {
+            	//removing record num >0 condition
+            	double actual_val = (Double)infer.getClassifierInput().get(metric).get("inputValue");
+//            	 StringBuilder sb = new StringBuilder()
+//            			 			.append(infer.getRecordNum())
+//            			 			.append(",")
+//            			 			.append(String.format("%3.2f", actual_val))
+//            			 			.append(",")
+//            			 			.append(infer.getAnomalyScore())
+//            			 			.append(",")
+//            			 			.append(System.currentTimeMillis());
+            	
+//            	StringBuilder sb = new StringBuilder()
+//			 					.append(carnum)
+//			 					.append(",")
+//			 					.append(metric)
+//			 					.append(",")
+//			 					.append(String.format("%3.2f", actual_val))
+//			 					.append(",")
+//			 					.append(infer.getAnomalyScore())
+//			 					.append(",")
+//			 					.append(System.currentTimeMillis());
+            	
+            	collector.emit(new Values(carnum, metric, String.format("%3.2f", actual_val), infer.getAnomalyScore(), System.currentTimeMillis()));
+            }
         };
     }
-	
-	private static void writeToFileAnomaly(Inference infer, PrintWriter pw) {
-		if(infer.getRecordNum() > 0) {
-			double speed = (Double)infer.getClassifierInput().get("speed").get("inputValue");
-			double rpm = (Double)infer.getClassifierInput().get("rpm").get("inputValue");
-			 StringBuilder sb = new StringBuilder().append(infer.getRecordNum()).append(",").append(String.format("%3.2f", speed)).append(",")
-					 			.append(String.format("%3.2f", rpm)).append(",").append(infer.getAnomalyScore()).append(",")
-                     			.append(System.currentTimeMillis());
-             pw.println(sb.toString());
-             pw.flush();
-		}
-	}
+
 }

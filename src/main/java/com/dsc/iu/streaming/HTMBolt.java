@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.storm.daemon.acker;
@@ -14,7 +15,9 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
+import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 import org.numenta.nupic.Parameters;
 import org.numenta.nupic.Parameters.KEY;
 import org.numenta.nupic.algorithms.Anomaly;
@@ -42,21 +45,16 @@ public class HTMBolt extends BaseRichBolt {
 	private static final long serialVersionUID = 1L;
 	Publisher manualpublish;
 	Network network;
-	//private int subscriberIndex=0;
+	private int subscriberIndex=0;
 	private int executeTupleIndex=0;
-	//private long subscriberTStamp;
-//	private static PrintWriter executiontime;
-	private static boolean flag=true;
+	private long subscriberTStamp;
+	
+	private List<Integer> numtasks;
+	private OutputCollector collector;
 
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		// TODO Auto-generated method stub
-//		try {
-//			File executionfile = new File("/N/u/styagi/executionTime.txt");
-//			executiontime = new PrintWriter(executionfile);
-//			
-//			File htmfile = new File("/N/u/styagi/htmsample.txt");
-//			PrintWriter htmouput = new PrintWriter(htmfile);
 			
 			//timestamp parameter denotes the date and time for the record in the race
 			manualpublish = OnlineLearningUtils.getPublisher();
@@ -79,10 +77,39 @@ public class HTMBolt extends BaseRichBolt {
 			network.observe().subscribe(getSubscriber());
 			network.start();
 			manualpublish.onNext("5/28/17 16:05:54.260,0");
-			
-//		} catch(IOException e) {
-//			e.printStackTrace();
-//		}
+		
+		this.collector = collector;
+		
+		//timestamp parameter denotes the date and time for the record in the race
+//		manualpublish = Publisher.builder()
+//								.addHeader("timestamp,consumption")
+//								.addHeader("datetime,float")
+//								.addHeader("B")
+//								.build();
+//		
+//		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(
+//        	     ObservableSensor::create, 
+//        	         SensorParams.create(
+//        	             Keys::obs, new Object[] { "kakkerot", manualpublish }));
+//		
+//		Parameters p = getLearningParameters();
+//		p = p.union(getNetworkLearningEncoderParams());
+//		network =  Network.create("Network API Demo", p)
+//				.add(Network.createRegion("Region 1")
+//				.add(Network.createLayer("Layer 2/3", p)
+//				.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
+//				.add(Anomaly.create())
+//				.add(new TemporalMemory())
+//				.add(new SpatialPooler())
+//				.add(sensor)));
+		
+		network.observe().subscribe(getSubscriber());
+		network.start();
+		
+		System.out.println("********* htmbolt stats:" + context.getThisTaskId() + "," + context.getThisComponentId() + "," + context.getThisTaskIndex() 
+							+ "," + context.getThisWorkerPort() + "," + context.getComponentIds());
+		
+		//this.numtasks = context.getComponentTasks("htmbolt");
 	}
 
 	@Override
@@ -97,16 +124,12 @@ public class HTMBolt extends BaseRichBolt {
 //			executiontime.close();
 //		}
 		
-		if(flag) {
-			System.out.println("@@@@@@@start timestamp is:"+System.currentTimeMillis());
-			flag = false;
-		}
-		
 	}
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// TODO Auto-generated method stub
+		declarer.declare(new Fields("recordnum", "input", "score"));
 		
 	}
 	
@@ -116,12 +139,22 @@ public class HTMBolt extends BaseRichBolt {
                 System.out.println("***********************HTM anomaly detection stream completed***********************");
             }
             @Override public void onError(Throwable e) { e.printStackTrace(); }
-            @Override public void onNext(Inference infer) {
-            		if(infer.getRecordNum() >0) {
-            			double metric_value = (Double)infer.getClassifierInput().get("consumption").get("inputValue");
-            			//htmoutput.println(infer.getRecordNum() + "," + metric_value + "," + infer.getAnomalyScore() + "," + System.currentTimeMillis());
-            			System.out.println("###########," + infer.getRecordNum() + "," + metric_value + "," + infer.getAnomalyScore() + "," + System.currentTimeMillis());
-            		}
+
+//            @Override public void onNext(Inference infer) {
+//            		if(infer.getRecordNum() >0) {
+//            			double metric_value = (Double)infer.getClassifierInput().get("consumption").get("inputValue");
+//            			//htmoutput.println(infer.getRecordNum() + "," + metric_value + "," + infer.getAnomalyScore() + "," + System.currentTimeMillis());
+//            			System.out.println("###########," + infer.getRecordNum() + "," + metric_value + "," + infer.getAnomalyScore() + "," + System.currentTimeMillis());
+//            		}
+
+            @Override public void onNext(Inference i) {
+            		subscriberIndex++;
+            		subscriberTStamp = System.currentTimeMillis();
+            		double actual = (Double)i.getClassifierInput()
+            					.get("consumption").get("inputValue");
+            		double score = i.getAnomalyScore();
+            		
+            		collector.emit(new Values(subscriberIndex, actual, score));
             	}
         };
     }

@@ -38,11 +38,10 @@ public class Sample {
 		sample.explicitFileRead();
 		System.out.println("completed running HTM code");
 		System.out.println(System.currentTimeMillis() - startTS + " milliseconds");
-		
 	}
 	
 	private void runHTMNetwork() {
-//create a basic network here
+		//create a basic network here
         
         ConcurrentLinkedQueue<String> nbqueue = new ConcurrentLinkedQueue<String>();
 		try {

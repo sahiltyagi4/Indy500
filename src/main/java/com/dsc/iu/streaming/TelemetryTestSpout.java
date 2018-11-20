@@ -21,15 +21,34 @@ public class TelemetryTestSpout extends BaseRichSpout {
 	 */
 	private static final long serialVersionUID = 1L;
 	private SpoutOutputCollector spoutcollector;
-	private static BufferedReader rdr;
 	private String input;
+	private ConcurrentLinkedQueue<String> nbqueue;
 
 	@Override
 	public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
 		// TODO Auto-generated method stub
 		this.spoutcollector = collector;
 		try {
-			rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/N/u/styagi/dixon_indycar.log")));
+			nbqueue = new ConcurrentLinkedQueue<String>();
+//			rdr = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\\\\\anomalydetection\\\\dixon_17000.log")));
+			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/dixon_indy34000.log")));
+			String record;
+			
+//			while((record=bfrdr.readLine()) != null) {
+//				if(record.startsWith("$P") && record.split("�")[2].length() >9) {
+//					//o/p format eg: 5/28/17 00:00.00,202
+//					nbqueue.add("5/28/17 " + record.split("�")[2] + "," + record.split("�")[record.split("�").length -3]);
+//				}
+//			}
+			
+			System.out.println("$$$$$$$$$$$ telemetry spout: "+ context.getThisTaskId() + "," + context.getThisComponentId() + "," + context.getThisTaskIndex() + "," +
+								context.getThisWorkerPort() + ","+ context.getComponentIds());
+			
+			while((record=rdr.readLine()) != null) {
+				nbqueue.add(record);
+			}
+			
+			rdr.close();
 			
 		} catch(IOException e) {
 			e.printStackTrace();
@@ -40,17 +59,9 @@ public class TelemetryTestSpout extends BaseRichSpout {
 	public void nextTuple() {
 		// TODO Auto-generated method stub
 		
-		try {
-			while((input=rdr.readLine()) != null) {
-				spoutcollector.emit(new Values(input));
-//				Thread.sleep(100);
-			}
-		} catch(IOException e) {
-			e.printStackTrace();
-		} 
-//		catch(InterruptedException e) {
-//			e.printStackTrace();
-//		}
+		if(nbqueue.size() >0) {
+			spoutcollector.emit(new Values(nbqueue.poll()));
+		}
 	}
 
 	@Override
