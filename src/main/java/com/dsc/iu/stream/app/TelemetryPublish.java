@@ -43,17 +43,19 @@ public class TelemetryPublish implements MqttCallback {
 	public void publishToBroker() {
 		try {
 			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("/scratch_ssd/sahil/eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log"))));
-			String record;
+			String record, topic;
 			while((record=logreader.readLine()) != null) {
-				//record.split("¦")[1] denotes the car number. This acts as broker topic name specific to the log data for a given, subscribed by a dedicated spout
-				if(record.startsWith("$P") && record.split("¦")[2].length() >9) {
+				//record.split("�")[1] denotes the car number. This acts as broker topic name specific to the log data for a given, subscribed by a dedicated spout
+				if(record.startsWith("$P") && record.split("�")[2].length() >9) {
+					topic = record.split("�")[1];
 					//confirm the index for throttle metric in input logs
-					payload = "5/28/17 " + record.split("¦")[2] + "," + record.split("¦")[4] + "," + record.split("¦")[5] + "," + record.split("¦")[6];
+					payload = "5/28/17 " + record.split("�")[2] + "," + record.split("�")[4] + "," + record.split("�")[5] + "," + record.split("�")[6];
+					System.out.println(payload + " for car no.: " + topic);
 					msgobj.setQos(2);
 					msgobj.setPayload(payload.getBytes());
 					
 					//client.publish(record.split("¦")[1], msgobj);
-					client.publish("test1", msgobj);
+					client.publish(topic, msgobj);
 				}
 			}
 			

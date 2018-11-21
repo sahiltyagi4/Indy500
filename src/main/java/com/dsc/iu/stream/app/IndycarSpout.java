@@ -37,6 +37,7 @@ public class IndycarSpout extends BaseRichSpout implements MqttCallback {
 		if(nonblockingqueue.size()>0) {
 			data = nonblockingqueue.poll();
 			//telemetry_log_time,speed,RPM,throttle
+			System.out.println("@@@@@@@@@@@@@@@@@@@@indycarspout: " + data.split(",")[0] + ","+data.split(",")[1]+","+data.split(",")[2]+","+data.split(",")[3]);
 			collector.emit(new Values(data.split(",")[0],data.split(",")[1],data.split(",")[2],data.split(",")[3]));
 		}
 	}

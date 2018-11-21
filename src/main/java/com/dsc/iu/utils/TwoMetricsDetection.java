@@ -39,7 +39,7 @@ public class TwoMetricsDetection {
 		Network network = Network.create("speed_rpm_anomalies", params).add(Network.createRegion("region1").add(Network.createLayer("layer2/3", params)
 						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE).add(Anomaly.create()).add(new TemporalMemory()).add(new SpatialPooler()).add(sensor)));
 		
-		File output = new File("D:\\\\anomalydetection\\htmoutput.txt");
+		File output = new File("D:\\\\anomalydetection\\2metric.txt");
 		try {
 			PrintWriter pw = new PrintWriter(new FileWriter(output));
 			network.observe().subscribe(getSubscriber(output, pw));

@@ -32,16 +32,11 @@ public class Sample {
 	//int subscriberIndex=0;
 	
 	public static void main(String[] args) {
-		char x ='a';
-		System.out.println(x + 5);
-		
-//		long startTS = System.currentTimeMillis();
-//		Sample sample = new Sample();
-//		sample.runHTMNetwork();
-//		sample.explicitFileRead();
-//		System.out.println("completed running HTM code");
-//		System.out.println(System.currentTimeMillis() - startTS + " milliseconds");
-		
+		System.out.println("starting speed and time detection");
+		long startTS = System.currentTimeMillis();
+		Sample sample = new Sample();
+		sample.runHTMNetwork();
+		sample.explicitFileRead();
 	}
 	
 	private void runHTMNetwork() {
@@ -80,7 +75,7 @@ public class Sample {
 			network =  Network.create("Network API Demo", p)
 					.add(Network.createRegion("Region 1")
 					.add(Network.createLayer("Layer 2/3", p)
-					//.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
+					.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
 					.add(Anomaly.create())
 					.add(new TemporalMemory())
 					.add(new SpatialPooler())
@@ -96,7 +91,7 @@ public class Sample {
 //					.add(sensor)));
 			
 //			File outfile = new File("/Users/sahiltyagi/Desktop/htmsample.txt");
-			File outfile = new File("/scratch_ssd/sahil/htmsample.txt");
+			File outfile = new File("D:\\\\anomalydetection\\speedtime.csv");
 			PrintWriter pw = new PrintWriter(new FileWriter(outfile));
 			network.observe().subscribe(getSubscriber(outfile, pw));
 			
@@ -233,23 +228,23 @@ public class Sample {
 			///scratch_ssd/sahil/
 			
 //			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/dixon_indycar.log")));
-			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/dixon_indy34000.log")));
+			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_17000.log")));
 //			File f = new File("/Users/sahiltyagi/Desktop/executionTime.txt");
-			File f = new File("/scratch_ssd/sahil/executionTime.txt");
+			File f = new File("D:\\\\anomalydetection\\executionTime.txt");
 			PrintWriter p = new PrintWriter(f);
 			String line; int index=0;
-			manualpublish.onNext("5/28/17 16:05:54.260,0");
+			manualpublish.onNext("5/28/17 16:05:54.260,4.000");
 			while((line=rdr.readLine()) != null) {
 				index++;
-				p.println(index + "," + line.split(",")[1] + "," + System.currentTimeMillis());
+				//p.println(index + "," + line.split(",")[1] + "," + System.currentTimeMillis());
 				manualpublish.onNext(line.trim());
 				
-				//10 msg/sec
-				try {
-					Thread.sleep(100);
-				} catch(InterruptedException e) {
-					e.printStackTrace();
-				}
+//				//10 msg/sec
+//				try {
+//					Thread.sleep(100);
+//				} catch(InterruptedException e) {
+//					e.printStackTrace();
+//				}
 			}
 			
 			p.close();

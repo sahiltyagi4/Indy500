@@ -20,10 +20,11 @@ public class Sink extends BaseRichBolt {
 		String carnum = arg0.getStringByField("carnum");
 		String metric = arg0.getStringByField("metric");
 		String data_val = arg0.getStringByField("dataval");
-		double score = Double.parseDouble(arg0.getStringByField("score"));
-		long ts = Long.parseLong(arg0.getStringByField("timestamp"));
+		double score = arg0.getDoubleByField("score");
+		long ts = arg0.getLongByField("timestamp");
 		
-		System.out.println("$$$$$$$$$$,"+carnum+","+metric+","+data_val+","+score+","+ts);
+		//publish to pub/sub broker for correlation analysis
+		System.out.println("******************** sink data: "+carnum+","+metric+","+data_val+","+score+","+ts);
 	}
 
 	@Override
