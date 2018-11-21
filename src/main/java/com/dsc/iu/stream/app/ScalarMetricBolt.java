@@ -34,33 +34,49 @@ public class ScalarMetricBolt extends BaseRichBolt {
 	 */
 	private static final long serialVersionUID = 1L;
 	private static OutputCollector collector;
-	public static String carnum, metric;
-	public static int min, max;
+	public String carnum, metric;
+	public int min, max;
 	Publisher manualpublish;
 	Network network;
+	static String metric1, carnum1;
+	static int min1, max1;
 	
 	public ScalarMetricBolt(String carnum, String metric, String min, String max) {
-		ScalarMetricBolt.carnum = carnum;
-		ScalarMetricBolt.metric = metric;
-		ScalarMetricBolt.min = Integer.parseInt(min);
-		ScalarMetricBolt.max = Integer.parseInt(max);
+		this.carnum = carnum;
+		this.metric = metric;
+		this.min = Integer.parseInt(min);
+		this.max = Integer.parseInt(max);
 	}
 
 	@Override
 	public void execute(Tuple arg0) {
 		//pushing to publisher values: telemtry_log_data,*metric from constructor*
-		manualpublish.onNext(arg0.getStringByField("telemetry_log_time")+","+arg0.getStringByField(metric));
+		//manualpublish.onNext(arg0.getStringByField("telemetry_log_time")+","+arg0.getStringByField(metric));
+		
+		System.out.println("!!!!!!!!!!!!! going to publish object:" + arg0.getStringByField(metric1));
+		manualpublish.onNext(arg0.getStringByField(metric1));
+		
+//		System.out.println("!!!!!!!!!!!!! going to publish object:" + arg0.getStringByField(metric));
+//		manualpublish.onNext(arg0.getStringByField(metric));
 	}
 
 	@Override
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
 		collector = arg2;
+		
+		metric1 = metric;
+		carnum1 = carnum;
+		min1 = min;
+		max1 = max;
+		
+		System.out.println("^^^^^^^^^^^^^ metric evaluated: " + metric);
 		manualpublish = Publisher.builder()
-						.addHeader(metric)
-						.addHeader("float")
-						.addHeader("B")
-						.build();
-		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, new Object[] {"singlemetricStreaming", manualpublish }));
+					.addHeader(metric)
+					.addHeader("float")
+					.addHeader("B")
+					.build();
+		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, 
+													new Object[] {"singlemetricStreaming", manualpublish }));
 		Parameters params = getParams();
 		params = params.union(getNetworkLearningEncoderParams());
 		Network network = Network.create("single_metric_anomaly_detection", params)
@@ -129,7 +145,8 @@ public class ScalarMetricBolt extends BaseRichBolt {
         p.set(KEY.SYN_PERM_ACTIVE_INC, 0.0001);
         p.set(KEY.SYN_PERM_INACTIVE_DEC, 0.0005);
         p.set(KEY.MAX_BOOST, 1.0);
-        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap(metric, SDRClassifier.class));
+        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap(metric1, SDRClassifier.class));
+//      p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap(metric, SDRClassifier.class));
         
         p.set(KEY.MAX_NEW_SYNAPSE_COUNT, 20);
         p.set(KEY.INITIAL_PERMANENCE, 0.21);
@@ -151,7 +168,8 @@ public class ScalarMetricBolt extends BaseRichBolt {
     }
 	
 	private static Map<String, Map<String, Object>> getNetworkDemoFieldEncodingMap() {
-        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, min, max, 0, 0.1, null, Boolean.TRUE, null, metric, "float", "ScalarEncoder");
+//        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, min, max, 0, 0.1, null, Boolean.TRUE, null, metric, "float", "ScalarEncoder");
+		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, min1, max1, 0, 0.1, null, Boolean.TRUE, null, metric1, "float", "ScalarEncoder");
         return fieldEncodings;
     }
 	
@@ -191,7 +209,8 @@ public class ScalarMetricBolt extends BaseRichBolt {
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference infer) {
             	//removing record num >0 condition
-            	double actual_val = (Double)infer.getClassifierInput().get(metric).get("inputValue");
+//            	double actual_val = (Double)infer.getClassifierInput().get(metric).get("inputValue");
+            		double actual_val = (Double)infer.getClassifierInput().get(metric1).get("inputValue");
 //            	 StringBuilder sb = new StringBuilder()
 //            			 			.append(infer.getRecordNum())
 //            			 			.append(",")
@@ -212,7 +231,8 @@ public class ScalarMetricBolt extends BaseRichBolt {
 //			 					.append(",")
 //			 					.append(System.currentTimeMillis());
             	
-            	collector.emit(new Values(carnum, metric, String.format("%3.2f", actual_val), infer.getAnomalyScore(), System.currentTimeMillis()));
+//            	collector.emit(new Values(carnum, metric, String.format("%3.2f", actual_val), infer.getAnomalyScore(), System.currentTimeMillis()));
+            		collector.emit(new Values(carnum1, metric1, String.format("%3.2f", actual_val), infer.getAnomalyScore(), System.currentTimeMillis()));
             }
         };
     }
