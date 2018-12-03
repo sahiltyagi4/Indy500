@@ -43,7 +43,7 @@ public class SingleMetricAnomaly {
 		Network network = Network.create("single_metric_anomaly_detection", params).add(Network.createRegion("region1").add(Network.createLayer("layer2/3", params)
 						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE).add(Anomaly.create()).add(new TemporalMemory()).add(new SpatialPooler()).add(sensor)));
 		
-		File output = new File("D:\\\\anomalydetection\\1metric.csv");
+		File output = new File("C:\\Users\\styagi\\Desktop\\hpcreport\\anomalyscore11.csv");
 		try {
 			PrintWriter pw = new PrintWriter(new FileWriter(output));
 			network.observe().subscribe(getSubscriber(output, pw));
@@ -54,7 +54,7 @@ public class SingleMetricAnomaly {
 		network.start();
 		System.out.println("started the HTM network");
 		try {
-			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_speed.log")));
+			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("C:\\Users\\styagi\\Desktop\\hpcreport\\input11.log")));
 			String record;
 			manualPublisher.onNext("4.000");
 			while((record = logreader.readLine()) != null) {
@@ -185,7 +185,7 @@ public class SingleMetricAnomaly {
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference i) {
             		writeToFileAnomaly(i, "consumption", pw); 
-            	}
+            }
         };
     }
 	
