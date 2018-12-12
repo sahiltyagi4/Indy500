@@ -16,12 +16,12 @@ public class AnomalyLatency {
 		try {
 			//File f = new File("/scratch_ssd/sahil/out.csv");
 //			File f = new File("/Users/sahiltyagi/Desktop/out.csv");
-			File f = new File("C:\\Users\\styagi\\Desktop\\hpcreport\\out11.csv");
+			File f = new File("C:\\Users\\styagi\\Desktop\\hpcreport\\out_dixon.csv");
 			PrintWriter pw = new PrintWriter(f);
 			
 //			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/executionTime.txt")));
 //			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/executionTime.txt")));
-			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("C:\\Users\\styagi\\Desktop\\hpcreport\\exeutionTime11.txt")));
+			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("C:\\Users\\styagi\\Desktop\\hpcreport\\exeutionTime8.txt")));
 			Map<Integer, Long> exectimemap = new HashMap<Integer, Long>();
 			String s;
 			while((s=rdr.readLine()) != null) {
@@ -31,7 +31,7 @@ public class AnomalyLatency {
 			
 //			rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/htmsample.txt")));
 //			rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/htmsample.txt")));
-			rdr = new BufferedReader(new InputStreamReader(new FileInputStream("C:\\Users\\styagi\\Desktop\\hpcreport\\htmoutput11.txt")));
+			rdr = new BufferedReader(new InputStreamReader(new FileInputStream("C:\\Users\\styagi\\Desktop\\hpcreport\\htmoutput8.txt")));
 			
 			while((s=rdr.readLine()) != null) {
 				Integer index = Integer.parseInt(s.split(",")[0]);
