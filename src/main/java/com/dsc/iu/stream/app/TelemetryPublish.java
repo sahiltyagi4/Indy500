@@ -46,10 +46,10 @@ public class TelemetryPublish implements MqttCallback {
 			String record, topic;
 			while((record=logreader.readLine()) != null) {
 				//record.split("�")[1] denotes the car number. This acts as broker topic name specific to the log data for a given, subscribed by a dedicated spout
-				if(record.startsWith("$P") && record.split("�")[2].length() >9) {
-					topic = record.split("�")[1];
+				if(record.startsWith("$P") && record.split("\u00A6")[2].length() >9) {
+					topic = record.split("\u00A6")[1];
 					//confirm the index for throttle metric in input logs
-					payload = "5/28/17 " + record.split("�")[2] + "," + record.split("�")[4] + "," + record.split("�")[5] + "," + record.split("�")[6];
+					payload = "5/28/17 " + record.split("\u00A6")[2] + "," + record.split("\u00A6")[4] + "," + record.split("\u00A6")[5] + "," + record.split("\u00A6")[6];
 					System.out.println(payload + " for car no.: " + topic);
 					msgobj.setQos(2);
 					msgobj.setPayload(payload.getBytes());

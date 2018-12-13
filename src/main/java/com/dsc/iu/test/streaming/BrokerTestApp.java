@@ -1,4 +1,4 @@
-package com.dsc.iu.streaming;
+package com.dsc.iu.test.streaming;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;

@@ -1,4 +1,4 @@
-package com.dsc.iu.streaming;
+package com.dsc.iu.test.streaming;
 
 import java.io.File;
 import java.io.PrintWriter;

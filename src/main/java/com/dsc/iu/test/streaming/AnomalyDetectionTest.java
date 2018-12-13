@@ -1,4 +1,4 @@
-package com.dsc.iu.streaming;
+package com.dsc.iu.test.streaming;
 
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
