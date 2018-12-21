@@ -38,8 +38,10 @@ public class ScalarMetricBolt extends BaseRichBolt {
 	public int min, max;
 	Publisher manualpublish;
 	Network network;
-	static String metric1, carnum1;
+	public static String staticmetric, staticcarnum;
 	static int min1, max1;
+	//to make sure HTM starts learning and predicting on inputs from the first non-zero value. Pit stops and vehicle halts after this involved in learning.
+	boolean filterfirstzeros;
 	
 	public ScalarMetricBolt(String carnum, String metric, String min, String max) {
 		this.carnum = carnum;
@@ -53,25 +55,47 @@ public class ScalarMetricBolt extends BaseRichBolt {
 		//pushing to publisher values: telemtry_log_data,*metric from constructor*
 		//manualpublish.onNext(arg0.getStringByField("telemetry_log_time")+","+arg0.getStringByField(metric));
 		
-		System.out.println("!!!!!!!!!!!!! going to publish object:" + arg0.getStringByField(metric1));
-		manualpublish.onNext(arg0.getStringByField(metric1));
+//		if(Double.parseDouble(arg0.getStringByField(staticmetric)) > 0) {
+//			filterfirstzeros=true;
+//		}
+//		
+//		if(filterfirstzeros) {
+////			System.out.println("^^^^^^^ in tuple execute: " + staticmetric);
+////			System.out.println("!!!!!!!!!!!!! going to publish object:" + arg0.getStringByField(staticmetric));
+//			manualpublish.onNext(arg0.getStringByField(staticmetric));
+//			
+//			//setting an input rate of 500 msg/sec
+//			try {
+//				Thread.sleep(2);
+//			} catch(InterruptedException i) {
+//				i.printStackTrace();
+//			}
+//		}
 		
-//		System.out.println("!!!!!!!!!!!!! going to publish object:" + arg0.getStringByField(metric));
-//		manualpublish.onNext(arg0.getStringByField(metric));
+		manualpublish.onNext(arg0.getStringByField(staticmetric));
+		//setting an input rate of 500 msg/sec
+		try {
+			Thread.sleep(2);
+		} catch(InterruptedException i) {
+			i.printStackTrace();
+		}
 	}
 
 	@Override
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
 		collector = arg2;
+		filterfirstzeros = false;
 		
-		metric1 = metric;
-		carnum1 = carnum;
+		staticmetric = new String(metric);
+		staticcarnum = new String(carnum);
+		
 		min1 = min;
 		max1 = max;
 		
-		System.out.println("^^^^^^^^^^^^^ metric evaluated: " + metric);
+//		System.out.println("&&&&&&&&&&&&& static metric: " + staticmetric);
+//		System.out.println("^^^^^^^^^^^^^ metric evaluated: " + metric);
 		manualpublish = Publisher.builder()
-					.addHeader(metric)
+					.addHeader(staticmetric)
 					.addHeader("float")
 					.addHeader("B")
 					.build();
@@ -145,7 +169,7 @@ public class ScalarMetricBolt extends BaseRichBolt {
         p.set(KEY.SYN_PERM_ACTIVE_INC, 0.0001);
         p.set(KEY.SYN_PERM_INACTIVE_DEC, 0.0005);
         p.set(KEY.MAX_BOOST, 1.0);
-        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap(metric1, SDRClassifier.class));
+        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap(staticmetric, SDRClassifier.class));
 //      p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap(metric, SDRClassifier.class));
         
         p.set(KEY.MAX_NEW_SYNAPSE_COUNT, 20);
@@ -169,7 +193,7 @@ public class ScalarMetricBolt extends BaseRichBolt {
 	
 	private static Map<String, Map<String, Object>> getNetworkDemoFieldEncodingMap() {
 //        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, min, max, 0, 0.1, null, Boolean.TRUE, null, metric, "float", "ScalarEncoder");
-		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, min1, max1, 0, 0.1, null, Boolean.TRUE, null, metric1, "float", "ScalarEncoder");
+		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, min1, max1, 0, 0.1, null, Boolean.TRUE, null, staticmetric, "float", "ScalarEncoder");
         return fieldEncodings;
     }
 	
@@ -210,29 +234,12 @@ public class ScalarMetricBolt extends BaseRichBolt {
             @Override public void onNext(Inference infer) {
             	//removing record num >0 condition
 //            	double actual_val = (Double)infer.getClassifierInput().get(metric).get("inputValue");
-            		double actual_val = (Double)infer.getClassifierInput().get(metric1).get("inputValue");
-//            	 StringBuilder sb = new StringBuilder()
-//            			 			.append(infer.getRecordNum())
-//            			 			.append(",")
-//            			 			.append(String.format("%3.2f", actual_val))
-//            			 			.append(",")
-//            			 			.append(infer.getAnomalyScore())
-//            			 			.append(",")
-//            			 			.append(System.currentTimeMillis());
-            	
-//            	StringBuilder sb = new StringBuilder()
-//			 					.append(carnum)
-//			 					.append(",")
-//			 					.append(metric)
-//			 					.append(",")
-//			 					.append(String.format("%3.2f", actual_val))
-//			 					.append(",")
-//			 					.append(infer.getAnomalyScore())
-//			 					.append(",")
-//			 					.append(System.currentTimeMillis());
-            	
-//            	collector.emit(new Values(carnum, metric, String.format("%3.2f", actual_val), infer.getAnomalyScore(), System.currentTimeMillis()));
-            		collector.emit(new Values(carnum1, metric1, String.format("%3.2f", actual_val), infer.getAnomalyScore(), System.currentTimeMillis()));
+            		//System.out.println("%%%%%%%%%%%%%%%% in inference method: " + staticmetric);
+            		double actual_val = (Double)infer.getClassifierInput().get(staticmetric).get("inputValue");
+            		long emitTs = System.currentTimeMillis();
+            		collector.emit(new Values(staticcarnum, staticmetric, String.format("%3.2f", actual_val), infer.getAnomalyScore(), emitTs));
+            		System.out.println("***scalar metric out," + staticmetric + "," + staticcarnum + "," + String.format("%3.2f", actual_val) + "," 
+            							+ infer.getAnomalyScore() + "," + emitTs);
             }
         };
     }

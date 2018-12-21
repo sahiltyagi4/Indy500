@@ -12,7 +12,16 @@ spouts:
 
 # bolt definitions
 bolts:
-  - id: "htmbolt"
+  - id: "RPMBolt"
+    className: "com.dsc.iu.stream.app.ScalarMetricBolt"
+    parallelism: 1
+    constructorArgs:
+      - "9"
+      - "RPM"
+      - "0"
+      - "12500"
+      
+  - id: "SpeedBolt"
     className: "com.dsc.iu.stream.app.ScalarMetricBolt"
     parallelism: 1
     constructorArgs:
@@ -20,6 +29,15 @@ bolts:
       - "speed"
       - "0"
       - "250"
+      
+  - id: "ThrottleBolt"
+    className: "com.dsc.iu.stream.app.ScalarMetricBolt"
+    parallelism: 1
+    constructorArgs:
+      - "9"
+      - "throttle"
+      - "0"
+      - "30"
 
   - id: "sink"
     className: "com.dsc.iu.stream.app.Sink"
@@ -27,14 +45,38 @@ bolts:
 
 #stream definitions
 streams:
-  - name: "telemetryspout --> htmbolt"
+  - name: "telemetryspout --> RPMBolt"
     from: "telemetryspout"
-    to: "htmbolt"
+    to: "RPMBolt"
+    grouping:
+      type: SHUFFLE
+      
+  - name: "telemetryspout --> SpeedBolt"
+    from: "telemetryspout"
+    to: "SpeedBolt"
+    grouping:
+      type: SHUFFLE
+      
+  - name: "telemetryspout --> ThrottleBolt"
+    from: "telemetryspout"
+    to: "ThrottleBolt"
     grouping:
       type: SHUFFLE
      
-  - name: "htmbolt --> sink"
-    from: "htmbolt"
+  - name: "RPMBolt --> sink"
+    from: "RPMBolt"
+    to: "sink"
+    grouping:
+      type: SHUFFLE
+      
+  - name: "SpeedBolt --> sink"
+    from: "SpeedBolt"
+    to: "sink"
+    grouping:
+      type: SHUFFLE
+      
+  - name: "ThrottleBolt --> sink"
+    from: "ThrottleBolt"
     to: "sink"
     grouping:
       type: SHUFFLE

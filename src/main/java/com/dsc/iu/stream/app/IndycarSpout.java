@@ -1,5 +1,7 @@
 package com.dsc.iu.stream.app;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -37,8 +39,12 @@ public class IndycarSpout extends BaseRichSpout implements MqttCallback {
 		if(nonblockingqueue.size()>0) {
 			data = nonblockingqueue.poll();
 			//telemetry_log_time,speed,RPM,throttle
-			System.out.println("@@@@@@@@@@@@@@@@@@@@indycarspout: " + data.split(",")[0] + ","+data.split(",")[1]+","+data.split(",")[2]+","+data.split(",")[3]);
-			collector.emit(new Values(data.split(",")[0],data.split(",")[1],data.split(",")[2],data.split(",")[3]));
+//			System.out.println("@@@@@@@@@@@@@@@@@@@@indycarspout: " + data.split(",")[0] + ","+data.split(",")[1]+","+data.split(",")[2]+","+data.split(",")[3]);
+//			collector.emit(new Values(data.split(",")[0],data.split(",")[1],data.split(",")[2],data.split(",")[3]));
+			
+			//speed,rpm,throttle only
+			System.out.println("@@@@@@@@@@@@@@@@@@@@indycarspout: " + data.split(",")[0] + ","+data.split(",")[1]+","+data.split(",")[2]);
+			collector.emit(new Values(data.split(",")[0],data.split(",")[1],data.split(",")[2]));
 		}
 	}
 
@@ -48,6 +54,9 @@ public class IndycarSpout extends BaseRichSpout implements MqttCallback {
 		collector = arg2;
 		
 		MqttConnectOptions conn = new MqttConnectOptions();
+		//setting maximum # ofinflight messages
+		conn.setMaxInflight(500);
+		
 		conn.setAutomaticReconnect(true);
 		conn.setCleanSession(true);
 		conn.setConnectionTimeout(30);
@@ -56,7 +65,8 @@ public class IndycarSpout extends BaseRichSpout implements MqttCallback {
 		conn.setPassword("password".toCharArray());
 		
 		try {
-			MqttClient mqttClient = new MqttClient("tcp://127.0.0.1:61613", MqttClient.generateClientId());
+//			MqttClient mqttClient = new MqttClient("tcp://127.0.0.1:61613", MqttClient.generateClientId());
+			MqttClient mqttClient = new MqttClient("tcp://10.16.0.73:61613", MqttClient.generateClientId());
 			mqttClient.setCallback(this);
 			mqttClient.connect(conn);
 			mqttClient.subscribe(topic, 2);
@@ -65,7 +75,8 @@ public class IndycarSpout extends BaseRichSpout implements MqttCallback {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-		arg0.declare(new Fields("telemetry_log_time","speed","RPM","throttle"));
+//		arg0.declare(new Fields("telemetry_log_time","speed","RPM","throttle"));
+		arg0.declare(new Fields("speed","RPM","throttle"));
 	}
 
 	@Override

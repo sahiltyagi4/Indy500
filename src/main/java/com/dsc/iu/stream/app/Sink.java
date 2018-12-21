@@ -23,7 +23,7 @@ public class Sink extends BaseRichBolt {
 		double score = arg0.getDoubleByField("score");
 		long ts = arg0.getLongByField("timestamp");
 		
-		System.out.println("******************** sink data: "+carnum+","+metric+","+data_val+","+score+","+ts);
+		System.out.println("******************** sink data: "+metric+","+carnum+","+data_val+","+score+","+ts);
 	}
 
 	@Override

@@ -1,0 +1,41 @@
+name: "indy500-v1"
+config:
+  topology.workers: 1
+
+# spout definitions
+spouts:
+  - id: "telemetryspout"
+    className: "com.dsc.iu.stream.app.IndycarSpout"
+    parallelism: 1
+    constructorArgs:
+      - "9"
+
+# bolt definitions
+bolts:
+  - id: "SpeedBolt"
+    className: "com.dsc.iu.stream.app.ScalarMetricBolt"
+    parallelism: 1
+    constructorArgs:
+      - "9"
+      - "speed"
+      - "0"
+      - "250"
+
+#append with bolt definition string
+  - id: "sink"
+    className: "com.dsc.iu.stream.app.Sink"
+    parallelism: 1
+
+#stream definitions
+streams:
+  - name: "telemetryspout --> SpeedBolt"
+    from: "telemetryspout"
+    to: "SpeedBolt"
+    grouping:
+      type: SHUFFLE
+      
+  - name: "SpeedBolt --> sink"
+    from: "SpeedBolt"
+    to: "sink"
+    grouping:
+      type: SHUFFLE

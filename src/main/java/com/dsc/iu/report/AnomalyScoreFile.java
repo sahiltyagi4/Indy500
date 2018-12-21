@@ -16,9 +16,9 @@ public class AnomalyScoreFile {
 	public static void main(String[] args) {
 		try {
 			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(
-							new File("/Users/sahiltyagi/Desktop/htmsample.txt"))));
+							new File("/Users/sahiltyagi/Desktop/htmrpm11.txt"))));
 			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
-							new File("/Users/sahiltyagi/Desktop/anomalyscore.csv"))));
+							new File("/Users/sahiltyagi/Desktop/rpmAnomaly11.csv"))));
 			String record;
 			while((record=rdr.readLine()) != null) {
 				wrtr.write(record.split(",")[0] + "," + record.split(",")[2] + "\n");
@@ -26,7 +26,7 @@ public class AnomalyScoreFile {
 			
 			wrtr.close();
 			rdr.close();
-			System.out.println("complete anomaly score plot");
+			System.out.println("completed anomaly score report.");
 		} catch(IOException e) {
 			e.printStackTrace();
 		}

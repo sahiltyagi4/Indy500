@@ -99,21 +99,28 @@ public class OnlineLearningUtils {
 	
 	public static Map<String, Map<String, Object>> getNetworkDemoFieldEncodingMap() {
 		System.out.println("##################### in getNetworkDemoFieldEncodingMap() method ###################");
-        Map<String, Map<String, Object>> fieldEncodings = setupMap(
-                null,
-                0, // n
-                0, // w
-                0, 0, 0, 0, null, null, null,
-                "timestamp", "datetime", "DateEncoder");
-        fieldEncodings = setupMap(
-                fieldEncodings, 
-                50, 
-                21, 
-                -50, 300, 0, 0.1, null, Boolean.TRUE, null, 
-                "consumption", "float", "ScalarEncoder");
+//        Map<String, Map<String, Object>> fieldEncodings = setupMap(
+//                null,
+//                0, // n
+//                0, // w
+//                0, 0, 0, 0, null, null, null,
+//                "timestamp", "datetime", "DateEncoder");
+//        fieldEncodings = setupMap(
+//                fieldEncodings, 
+//                50, 
+//                21, 
+//                -50, 300, 0, 0.1, null, Boolean.TRUE, null, 
+//                "consumption", "float", "ScalarEncoder");
+		
+		 Map<String, Map<String, Object>> fieldEncodings = setupMap(
+	                null, 
+	                50, 
+	                21, 
+	                -50, 300, 0, 0.1, null, Boolean.TRUE, null, 
+	                "consumption", "float", "ScalarEncoder");
         
-        fieldEncodings.get("timestamp").put(KEY.DATEFIELD_TOFD.getFieldName(), new Tuple(21,9.5)); // Time of day
-        fieldEncodings.get("timestamp").put(KEY.DATEFIELD_PATTERN.getFieldName(), "MM/dd/YY HH:mm:ss.SSS");
+//        fieldEncodings.get("timestamp").put(KEY.DATEFIELD_TOFD.getFieldName(), new Tuple(21,9.5)); // Time of day
+//        fieldEncodings.get("timestamp").put(KEY.DATEFIELD_PATTERN.getFieldName(), "MM/dd/YY HH:mm:ss.SSS");
         
         return fieldEncodings;
     }
@@ -198,11 +205,17 @@ public class OnlineLearningUtils {
     }
     
     public static Publisher getPublisher() {
-		Publisher manualPublisher = Publisher.builder()
-								.addHeader("timestamp,consumption")
-								.addHeader("datetime,float")
-								.addHeader("B")
-								.build();
+//		Publisher manualPublisher = Publisher.builder()
+//								.addHeader("timestamp,consumption")
+//								.addHeader("datetime,float")
+//								.addHeader("B")
+//								.build();
+    	
+    	Publisher manualPublisher = Publisher.builder()
+				.addHeader("consumption")
+				.addHeader("float")
+				.addHeader("B")
+				.build();
 		
 		return manualPublisher;
     }

@@ -1,11 +1,14 @@
 package com.dsc.iu.utils;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,33 +36,67 @@ import rx.Subscriber;
 public class SingleMetricAnomaly {
 	
 	public static void main(String[] args) {
-		Publisher manualPublisher = Publisher.builder().addHeader("vehicle_speed").addHeader("float").addHeader("B").build();
-		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, new Object[] { "kakkerot", manualPublisher }));
+		Publisher manualPublisher = Publisher.builder()
+				.addHeader("vehicle_speed")
+				.addHeader("float")
+				.addHeader("B")
+				.build();
+		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(
+				ObservableSensor::create, 
+				SensorParams.create(
+						Keys::obs, new Object[] { "kakkerot", manualPublisher }));
 		Parameters params = getParams();
 		params = params.union(getNetworkLearningEncoderParams());
-		Network network = Network.create("single_metric_anomaly_detection", params).add(Network.createRegion("region1").add(Network.createLayer("layer2/3", params)
-						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE).add(Anomaly.create()).add(new TemporalMemory()).add(new SpatialPooler()).add(sensor)));
+		Network network = Network.create("single_metric_anomaly_detection", params)
+						.add(Network.createRegion("region1")
+						.add(Network.createLayer("layer2/3", params)
+						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
+						.add(Anomaly.create())
+						.add(new TemporalMemory())
+						.add(new SpatialPooler())
+						.add(sensor)));
 		
-		File output = new File("/Users/sahiltyagi/Desktop/htmoutput.txt");
+//		File output = new File("/scratch_ssd/sahil/htmrpm8.txt");
+		File output = new File("/Users/sahiltyagi/Desktop/htm9.csv");
 //		File output = new File("D:\\\\anomalydetection\\htmoutput.txt");
 		try {
 			PrintWriter pw = new PrintWriter(new FileWriter(output));
 			network.observe().subscribe(getSubscriber(output, pw));
+			network.start();
+			System.out.println("started the HTM network");
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
 		
-		network.start();
-		System.out.println("started the HTM network");
 		try {
-			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/speed_zero.log")));
+			//BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/scratch_ssd/sahil/execution1metric9.txt")));
+//			File f = new File("/scratch_ssd/sahil/execrpm8.txt");
+			File f = new File("/Users/sahiltyagi/Desktop/exec9.txt");
+			PrintWriter prnt = new PrintWriter(f);
+//			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/input11new.log")));
+			
+			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/inputcar-9.csv")));
 //			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_speed.log")));
 			String record;
-			manualPublisher.onNext("4.000");
+			int index=0;
+			manualPublisher.onNext("0.0");
 			while((record = logreader.readLine()) != null) {
-				manualPublisher.onNext(record);
+				index++;
+//				wrtr.write(index + "," + record.trim()+ "," + System.currentTimeMillis() + "\n");
+				
+				prnt.println(index+","+record.trim()+","+System.currentTimeMillis());
+				manualPublisher.onNext(record.split(",")[1]);
+				
+//				//input rate: 20 msg/sec
+//				try {
+//					Thread.sleep(50);
+//				} catch(InterruptedException i) {
+//					i.printStackTrace();
+//				}
 			}
 			
+
+			prnt.close();
 			logreader.close();
 		} catch(IOException e) {
 			e.printStackTrace();
@@ -114,7 +151,7 @@ public class SingleMetricAnomaly {
         p.set(KEY.SYN_PERM_ACTIVE_INC, 0.0001);
         p.set(KEY.SYN_PERM_INACTIVE_DEC, 0.0005);
         p.set(KEY.MAX_BOOST, 1.0);
-        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap("consumption", SDRClassifier.class));
+        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap("vehicle_speed", SDRClassifier.class));
         
         p.set(KEY.MAX_NEW_SYNAPSE_COUNT, 20);
         p.set(KEY.INITIAL_PERMANENCE, 0.21);
@@ -137,7 +174,7 @@ public class SingleMetricAnomaly {
 	
 	private static Map<String, Map<String, Object>> getNetworkDemoFieldEncodingMap() {
 		//float to double
-        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, 0, 250, 0, 0.1, null, Boolean.TRUE, null, "vehicle_speed", "float", "ScalarEncoder");
+        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, -20.0, 270.0, 0, 0.1, null, Boolean.TRUE, null, "vehicle_speed", "float", "ScalarEncoder");
         return fieldEncodings;
     }
 	
@@ -184,7 +221,7 @@ public class SingleMetricAnomaly {
             }
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference i) {
-            		writeToFileAnomaly(i, "vehicle_speed", pw); 
+            		writeToFileAnomaly(i, "vehicle_speed", pw);
             	}
         };
     }

@@ -43,7 +43,7 @@ public class Sample {
 	private void runHTMNetwork() {
 		//create a basic network here
         
-        ConcurrentLinkedQueue<String> nbqueue = new ConcurrentLinkedQueue<String>();
+        //ConcurrentLinkedQueue<String> nbqueue = new ConcurrentLinkedQueue<String>();
 		try {
 			
 			manualpublish = OnlineLearningUtils.getPublisher();
@@ -91,8 +91,8 @@ public class Sample {
 //					.add(new SpatialPooler())
 //					.add(sensor)));
 			
-			File outfile = new File("/Users/sahiltyagi/Desktop/htmsample.txt");
-//			File outfile = new File("/scratch_ssd/sahil/htmsample.txt");
+//			File outfile = new File("/Users/sahiltyagi/Desktop/htmsample.txt");
+			File outfile = new File("/scratch_ssd/sahil/htmonemetric9.txt");
 //			File outfile = new File("/N/u/styagi/htmsample.txt");
 			PrintWriter pw = new PrintWriter(new FileWriter(outfile));
 			network.observe().subscribe(getSubscriber(outfile, pw));
@@ -227,25 +227,30 @@ public class Sample {
 	
 	private void explicitFileRead() {
 		try {
-//			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/N/u/styagi/dixon_indycar.log")));
-			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/speed_zero.log")));
-			File f = new File("/Users/sahiltyagi/Desktop/executionTime.txt");
+			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/scratch_ssd/sahil/onemetric9.log")));
+			
+			File f = new File("/scratch_ssd/sahil/executiononemetric9.txt");
 			PrintWriter p = new PrintWriter(f);
+			
+//			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/speed_zero.log")));
+//			File f = new File("/Users/sahiltyagi/Desktop/executionTime.txt");
+			
 			String line; int index=0;
-			manualpublish.onNext("5/28/17 16:05:54.260,200.000");
+//			manualpublish.onNext("5/28/17 16:05:54.260,4.00");
+			manualpublish.onNext("0.00");
 			System.out.println("%%%%start timestamp is:"+System.currentTimeMillis());
 			while((line=rdr.readLine()) != null) {
 				index++;
-				p.println(index + "," + line.split(",")[1] + "," + System.currentTimeMillis());
-				//manualpublish.onNext(line.trim());
-				sample.measure(index, line);
+//				p.println(index + "," + line.split(",")[1] + "," + System.currentTimeMillis());
+				p.println(index + "," + line.trim() + "," + System.currentTimeMillis());
+				manualpublish.onNext(line.trim());
 				
 //				//20 msg/sec
-//				try {
-//					Thread.sleep(50);
-//				} catch(InterruptedException e) {
-//					e.printStackTrace();
-//				}
+				try {
+					Thread.sleep(50);
+				} catch(InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 			
 			p.close();
@@ -256,7 +261,7 @@ public class Sample {
 	}
 	
 	
-	public void measure(int index, String line) {
-		manualpublish.onNext(line.trim());
-	}
+//	public void measure(int index, String line) {
+//		manualpublish.onNext(line.trim());
+//	}
 }

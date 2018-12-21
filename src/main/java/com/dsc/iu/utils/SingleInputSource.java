@@ -17,16 +17,31 @@ public class SingleInputSource {
 	
 	public static void main(String[] args) {
 		try {
-			FileWriter fw = new FileWriter("D:\\\\anomalydetection\\dixon_17000.log");
+//			FileWriter fw = new FileWriter("D:\\\\anomalydetection\\dixon_17000.log");
+//			PrintWriter pw =new PrintWriter(fw);
+//			BufferedReader rdr = new BufferedReader(new InputStreamReader(
+//							new FileInputStream("D:\\\\anomalydetection\\eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
+			
+			FileWriter fw = new FileWriter("/Users/sahiltyagi/Desktop/rpm_car9.csv");
 			PrintWriter pw =new PrintWriter(fw);
 			BufferedReader rdr = new BufferedReader(new InputStreamReader(
-							new FileInputStream("D:\\\\anomalydetection\\eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
+							new FileInputStream("/Users/sahiltyagi/Desktop/Indy500/eRPGenerator_TGMLP_20170528_Indianapolis500_Race.log")));
+			
 			String line;
 			while((line=rdr.readLine()) != null) {
-				if(line.startsWith("$P") && line.split("¦")[2].length() >9 && line.split("¦")[1].equals("9")) {
+				if(line.startsWith("$P") && line.split("ï¿½")[2].length() >9 && line.split("ï¿½")[1].equals("9")) {
 //					pw.println("5/28/17 " + line.split("ï¿½")[2] + "," + line.split("ï¿½")[line.split("ï¿½").length -3]);
-//					pw.println("5/28/17 " + line.split("¦")[2] + "," + (Double.parseDouble(line.split("¦")[4])*0.02));
-					pw.println("5/28/17 " + line.split("¦")[2] + "," + Double.parseDouble(line.split("¦")[4]));
+//					pw.println("5/28/17 " + line.split("ï¿½")[2] + "," + (Double.parseDouble(line.split("ï¿½")[4])*0.02));
+//					pw.println("5/28/17 " + line.split("ï¿½")[2] + "," + Double.parseDouble(line.split("ï¿½")[4]));
+					
+					//speed metric
+					//pw.println(Double.parseDouble(line.split("ï¿½")[4]));
+					//RPM metric
+					//pw.println(Double.parseDouble(line.split("ï¿½")[5]));
+					//throttle metric
+					//pw.println(Double.parseDouble(line.split("ï¿½")[6]));
+
+					pw.println(line.split("ï¿½")[4] + "," + line.split("ï¿½")[5] + line.split("ï¿½")[6] + "\n");
 				}
 			}
 			
