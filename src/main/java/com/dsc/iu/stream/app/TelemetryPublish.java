@@ -5,9 +5,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -15,6 +18,8 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+
+import com.dsc.iu.utils.OnlineLearningUtils;
 
 public class TelemetryPublish implements MqttCallback {
 	private MqttClient client;
@@ -31,7 +36,7 @@ public class TelemetryPublish implements MqttCallback {
 		MqttConnectOptions conn = new MqttConnectOptions();
 		
 		//changing # of inflight messages from default 10 to 500 
-		conn.setMaxInflight(500);
+		conn.setMaxInflight(OnlineLearningUtils.inflightMsgRate);
 		
 		conn.setAutomaticReconnect(true);
 		conn.setCleanSession(true);
@@ -41,8 +46,7 @@ public class TelemetryPublish implements MqttCallback {
 		conn.setPassword("password".toCharArray());
 		
 		try {
-//			client = new MqttClient("tcp://127.0.0.1:61613", MqttClient.generateClientId());
-			client = new MqttClient("tcp://10.16.0.73:61613", MqttClient.generateClientId());
+			client = new MqttClient(OnlineLearningUtils.brokerurl, MqttClient.generateClientId());
 			client.setCallback(this);
 			client.connect(conn);
 		} catch(MqttException m) {m.printStackTrace();}
@@ -50,13 +54,13 @@ public class TelemetryPublish implements MqttCallback {
 	
 	public void publishToBroker() {
 		try {
+			
+			Map<String, Integer> uniquecarctr = new HashMap<String, Integer>();
+			File outputlog = new File("/scratch_ssd/sahil/pubsublogs.txt");
+			PrintWriter pw = new PrintWriter(outputlog);
+			
 			List<String> carlist = new LinkedList<String>();
-			carlist.add("20");carlist.add("21");
-//			carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("6");carlist.add("33");
-//			carlist.add("24");carlist.add("26");carlist.add("7");carlist.add("60");carlist.add("27");carlist.add("17");carlist.add("15");
-//			carlist.add("10");carlist.add("64");carlist.add("25");carlist.add("59");carlist.add("32");carlist.add("28");carlist.add("4");
-//			carlist.add("3");carlist.add("18");carlist.add("22");carlist.add("12");carlist.add("1");carlist.add("9");carlist.add("14");
-//			carlist.add("23");carlist.add("30");carlist.add("29");carlist.add("88");carlist.add("66");
+			carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
 			
 			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log"))));
 			String record, topic;
@@ -65,20 +69,34 @@ public class TelemetryPublish implements MqttCallback {
 				if(record.startsWith("$P") && record.split("�")[2].length() >9) {
 					topic = record.split("�")[1];
 					if(carlist.contains(topic)) {
+						
+						if(!uniquecarctr.containsKey(topic)) {
+							uniquecarctr.put(topic, 1);
+						} else {
+							uniquecarctr.put(topic, (uniquecarctr.get(topic) + 1));
+						}
+						
 						//confirm the index for throttle metric in input logs
-						// time_of_day, speed, rpm, throttle
-//						payload = "5/27/18 " + record.split("�")[2] + "," + record.split("�")[4] + "," + record.split("�")[5] + "," + record.split("�")[6];
-						payload = record.split("�")[4] + "," + record.split("�")[5] + "," + record.split("�")[6];
+						//speed, rpm, throttle, counter
+						payload = record.split("�")[4] + "," + record.split("�")[5] + "," + record.split("�")[6] + "," + String.valueOf(uniquecarctr.get(topic));
 						System.out.println(payload + " for car no.: " + topic);
+						pw.println(record.split("�")[4] + "," + record.split("�")[5] + "," + record.split("�")[6] + "," + String.valueOf(uniquecarctr.get(topic) + "_" + topic + "," + System.currentTimeMillis()));
 						msgobj.setQos(2);
 						msgobj.setPayload(payload.getBytes());
-						
-						//client.publish(record.split("¦")[1], msgobj);
 						client.publish(topic, msgobj);
+						
+						pw.flush();
+						//set input rate to 100 msg/sec
+						try {
+							Thread.sleep(10);
+						} catch(InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
 			
+			pw.close();
 			logreader.close();
 		} catch(IOException e) {
 			e.printStackTrace();

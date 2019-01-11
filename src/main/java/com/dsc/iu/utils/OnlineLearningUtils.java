@@ -28,6 +28,8 @@ import org.numenta.nupic.util.Tuple;
 import rx.Subscriber;
 
 public class OnlineLearningUtils {
+	public static int inflightMsgRate = 100;
+	public static String brokerurl = "tcp://10.16.0.73:61613";
 	
 	public static Network createBasicLearningNetwork(Sensor<ObservableSensor<String[]>> sensor, Publisher manualPublisher) {	
 		Parameters params = getLearningParameters();

@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.numenta.nupic.Parameters;
 import org.numenta.nupic.Parameters.KEY;
@@ -32,7 +33,7 @@ import rx.Subscriber;
  * */
 public class TwoMetricsDetection {
 	public static void main(String[] args) {
-		Publisher manualPublisher = Publisher.builder().addHeader("speed,rpm").addHeader("float,float").addHeader("B").build();
+		Publisher manualPublisher = Publisher.builder().addHeader("speed,rpm").addHeader("float,long").addHeader("B").build();
 		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, new Object[] { "speed_and_rpm_sensor", manualPublisher }));
 		Parameters params = getParams();
 		params = params.union(getNetworkLearningEncoderParams());
@@ -50,24 +51,28 @@ public class TwoMetricsDetection {
 		
 		network.start();
 		System.out.println("started the HTM network");
-		try {
-			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/dixon_SPEED_RPM.log")));
-//			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_SPEED_RPM.log")));
-
-			String record;
-			manualPublisher.onNext("0.000,0");
-			while((record = logreader.readLine()) != null) {
-//				String newrec = record.split(",")[0] + "," + String.valueOf((Double.parseDouble(record.split(",")[1])/2));
-				String newrec = record.split(",")[0] + "," + String.valueOf((Double.parseDouble(record.split(",")[1])*0.02));
-				System.out.println(newrec);
-				manualPublisher.onNext(newrec);
-			}
-			
-			logreader.close();
-		} catch(IOException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/dixon_SPEED_RPM.log")));
+////			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_SPEED_RPM.log")));
+//
+//			String record;
+//			//manualPublisher.onNext("0.000,0");
+//			manualPublisher.onNext("0.00, 23");
+//			while((record = logreader.readLine()) != null) {
+////				String newrec = record.split(",")[0] + "," + String.valueOf((Double.parseDouble(record.split(",")[1])/2));
+//				String newrec = record.split(",")[0] + "," + String.valueOf((Double.parseDouble(record.split(",")[1])*0.02));
+//				System.out.println(newrec);
+//				manualPublisher.onNext(newrec);
+//			}
+//			
+//			logreader.close();
+//		} catch(IOException e) {
+//			e.printStackTrace();
+//		}
 		
+		while(true) {
+			manualPublisher.onNext("0.00,2345678");
+		}
 	}
 	
 	private static Parameters getParams() {
@@ -144,7 +149,7 @@ public class TwoMetricsDetection {
 
         
 		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, 0, 250, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "speed", "float", "ScalarEncoder");
-	    fieldEncodings = setupMap(fieldEncodings, 50, 21, 0, 12500, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
+	    fieldEncodings = setupMap(fieldEncodings, 50, 21, Long.MIN_VALUE, Long.MAX_VALUE, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
 		return fieldEncodings;
     }
 	
@@ -207,11 +212,15 @@ public class TwoMetricsDetection {
 	private static void writeToFileAnomaly(Inference infer, PrintWriter pw) {
 		if(infer.getRecordNum() > 0) {
 			double speed = (Double)infer.getClassifierInput().get("speed").get("inputValue");
-			double rpm = (Double)infer.getClassifierInput().get("rpm").get("inputValue");
+			Double rpm = (Double)infer.getClassifierInput().get("rpm").get("inputValue");
+			Integer i = rpm.intValue();
 			 StringBuilder sb = new StringBuilder().append(infer.getRecordNum()).append(",").append(String.format("%3.2f", speed)).append(",")
 					 			.append(String.format("%3.2f", rpm)).append(",").append(infer.getAnomalyScore()).append(",")
                      			.append(System.currentTimeMillis());
              pw.println(sb.toString());
+             System.out.println(rpm);
+             System.out.println(i);
+             
              pw.flush();
 		}
 	}

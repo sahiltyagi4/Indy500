@@ -1,9 +1,13 @@
 package com.dsc.iu.stream.app;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -18,19 +22,24 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
-public class IndycarSpout extends BaseRichSpout implements MqttCallback {
+import com.dsc.iu.utils.OnlineLearningUtils;
+
+public class IndycarLatency extends BaseRichSpout implements MqttCallback {
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+	private final long serialVersionUID = 1L;
 	private String topic;
 	private ConcurrentLinkedQueue<String> nonblockingqueue;
 	private SpoutOutputCollector collector;
 	private String data;
+	private HashMap<String, Long> ctr = new HashMap<>();
 	
+	private PrintWriter pw;
+
 	//topic name: #car-number#
-	public IndycarSpout(String topic) {
+	public IndycarLatency(String topic) {
 		this.topic = topic;
 	}
 
@@ -38,31 +47,34 @@ public class IndycarSpout extends BaseRichSpout implements MqttCallback {
 	public void nextTuple() {
 		if(nonblockingqueue.size()>0) {
 			data = nonblockingqueue.poll();
-			//telemetry_log_time,speed,RPM,throttle
-//			System.out.println("@@@@@@@@@@@@@@@@@@@@indycarspout: " + data.split(",")[0] + ","+data.split(",")[1]+","+data.split(",")[2]+","+data.split(",")[3]);
-//			collector.emit(new Values(data.split(",")[0],data.split(",")[1],data.split(",")[2],data.split(",")[3]));
+			long ts = System.currentTimeMillis();
 			
 			//speed,rpm,throttle only
-			System.out.println("@@@@@@@@@@@@@@@@@@@@indycarspout," + topic + "," + data.split(",")[0] + ","+data.split(",")[1]+","+data.split(",")[2]);
-			collector.emit(new Values(data.split(",")[0],data.split(",")[1],data.split(",")[2]));
+//			System.out.println("@@@@@@@@@@@@@@@@@@@@indycarspout," + "speed_" + data.split(",")[3] + "_" + topic + "," 
+//								+ "RPM_" + data.split(",")[3] + "_" + topic + "," + "throttle_" + data.split(",")[3] + "_" + topic + "," + ts);
 			
-			//setting an input rate of 100 msg/sec
-			try {
-				Thread.sleep(10);
-			} catch(InterruptedException i) {
-				i.printStackTrace();
-			}
+			collector.emit(new Values(topic,data.split(",")[0],data.split(",")[1],data.split(",")[2], data.split(",")[3]));
+			pw.println("@@@@@@@@@@@@@@@@@@@@indycarspout," + "speed_" + data.split(",")[3] + "_" + topic + "," + "RPM_" + data.split(",")[3] + "_" + topic + "," + "throttle_" + data.split(",")[3] + "_" + topic + "," + ts);
+			pw.flush();
 		}
 	}
 
 	@Override
 	public void open(Map arg0, TopologyContext arg1, SpoutOutputCollector arg2) {
+		
+		File spoutfile = new File("/scratch_ssd/sahil/spout-"+topic+".txt");
+		try {
+			pw = new PrintWriter(spoutfile);
+		} catch(FileNotFoundException f) {
+			f.printStackTrace();
+		}
+		
 		nonblockingqueue = new ConcurrentLinkedQueue<String>();
 		collector = arg2;
 		
 		MqttConnectOptions conn = new MqttConnectOptions();
 		//setting maximum # ofinflight messages
-		conn.setMaxInflight(500);
+		conn.setMaxInflight(OnlineLearningUtils.inflightMsgRate);
 		
 		conn.setAutomaticReconnect(true);
 		conn.setCleanSession(true);
@@ -73,7 +85,7 @@ public class IndycarSpout extends BaseRichSpout implements MqttCallback {
 		
 		try {
 //			MqttClient mqttClient = new MqttClient("tcp://127.0.0.1:61613", MqttClient.generateClientId());
-			MqttClient mqttClient = new MqttClient("tcp://10.16.0.73:61613", MqttClient.generateClientId());
+			MqttClient mqttClient = new MqttClient(OnlineLearningUtils.brokerurl, MqttClient.generateClientId());
 			mqttClient.setCallback(this);
 			mqttClient.connect(conn);
 			mqttClient.subscribe(topic, 2);
@@ -82,8 +94,7 @@ public class IndycarSpout extends BaseRichSpout implements MqttCallback {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-//		arg0.declare(new Fields("telemetry_log_time","speed","RPM","throttle"));
-		arg0.declare(new Fields("speed","RPM","throttle"));
+		arg0.declare(new Fields("carnum","speed","RPM","throttle","counter"));
 	}
 
 	@Override
