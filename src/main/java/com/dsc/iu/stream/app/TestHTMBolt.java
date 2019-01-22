@@ -2,6 +2,7 @@ package com.dsc.iu.stream.app;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +16,6 @@ import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
-import org.joda.time.DateTime;
 import org.numenta.nupic.Parameters;
 import org.numenta.nupic.Parameters.KEY;
 import org.numenta.nupic.algorithms.Anomaly;
@@ -33,58 +33,67 @@ import org.numenta.nupic.network.sensor.SensorParams.Keys;
 
 import rx.Subscriber;
 
-public class ScalarMetricLatency extends BaseRichBolt {
+public class TestHTMBolt extends BaseRichBolt {
 	
 	private final long serialVersionUID = 1L;
 	private OutputCollector collector;
 	private String metric;
-	private String carnum, counter;
+	//spoutctr brings the counter value from telemetry publisher and used for generating keys for lapDistance and timeOfDay hashmaps
+	private String carnum, spoutctr;
 	private int min, max;
+	//ctr to increment after processing each tuple and used to match records for lapDistance and timeOfDay hashmaps. Basically, htmctr replaces spoutctr as data point emitted to sink and match a tuple for it's original features
+	private int htmctr=0;
 	private Publisher manualpublish;
 	private Network network;
 	private ConcurrentHashMap<String, String> lapdistancemap;
 	private ConcurrentHashMap<String, String> timeOfDaymap;
+	private Tuple tuple;
 	
 	private PrintWriter pw;
 	
-	public ScalarMetricLatency(String metric, String min, String max) {
+	public TestHTMBolt(String metric, String min, String max) {
 		this.metric = metric;
 		this.min = Integer.parseInt(min);
 		this.max = Integer.parseInt(max);
 	}
 
-	public String getMetric() {
+	public String getMetricname() {
 		return metric;
 	}
 
-	public void setMetric(String metric) {
+	public void setMetricname(String metric) {
 		this.metric = metric;
 	}
 
-	public int getMin() {
+	public int getMinVal() {
 		return min;
 	}
 
-	public void setMin(int min) {
+	public void setMinVal(int min) {
 		this.min = min;
 	}
 
-	public int getMax() {
+	public int getMaxVal() {
 		return max;
 	}
 
-	public void setMax(int max) {
+	public void setMaxVal(int max) {
 		this.max = max;
 	}
 
 	@Override
 	public void execute(Tuple arg0) {
+		tuple = arg0;
 		
 		carnum = arg0.getStringByField("carnum");
-		counter = arg0.getStringByField("counter");
-		lapdistancemap.put(carnum + "_" + counter, arg0.getStringByField("lapDistance"));
-		timeOfDaymap.put(carnum + "_" + counter, arg0.getStringByField("timeOfDay"));
-		manualpublish.onNext(arg0.getStringByField(getMetric()) + "," + counter);
+		spoutctr = arg0.getStringByField("counter");
+		lapdistancemap.put(carnum + "_" + spoutctr, arg0.getStringByField("lapDistance"));
+		timeOfDaymap.put(carnum + "_" + spoutctr, arg0.getStringByField("timeOfDay"));
+		manualpublish.onNext(arg0.getStringByField(getMetricname()));
+		
+		try {
+			tuple.wait();
+		} catch(InterruptedException e) {e.printStackTrace();}
 	}
 
 	@Override
@@ -92,11 +101,11 @@ public class ScalarMetricLatency extends BaseRichBolt {
 		
 		lapdistancemap = new ConcurrentHashMap<String, String>();
 		timeOfDaymap = new ConcurrentHashMap<String, String>();
-		setMetric(metric);
-		setMin(min);
-		setMax(max);
+		setMetricname(metric);
+		setMinVal(min);
+		setMaxVal(max);
 		
-		File boltfile = new File("/scratch_ssd/sahil/boltfile-"+ UUID.randomUUID().toString() + ".txt");
+		File boltfile = new File("/scratch/sahil/boltfile-"+ UUID.randomUUID().toString() + ".txt");
 		try {
 			pw = new PrintWriter(boltfile);
 		} catch(FileNotFoundException f) {
@@ -105,25 +114,19 @@ public class ScalarMetricLatency extends BaseRichBolt {
 		
 		collector = arg2;
 		
-//		manualpublish = Publisher.builder()
-//					.addHeader(getMetric() + ",counter" + ",timeOfDay")
-//					.addHeader("float,float,datetime")
-//					.addHeader("B")
-//					.build();
-		
 		manualpublish = Publisher.builder()
-				.addHeader(getMetric() + ",counter")
-				.addHeader("float,float")
+				.addHeader(getMetricname())
+				.addHeader("float")
 				.addHeader("B")
 				.build();
 		
 		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, 
-													new Object[] {"two_metrics", manualpublish }));
+													new Object[] {carnum+"_"+getMetricname(), manualpublish }));
 		Parameters params = getParams();
 		params = params.union(getNetworkLearningEncoderParams());
-		Network network = Network.create("two_metrics", params)
-						.add(Network.createRegion("region1")
-						.add(Network.createLayer("layer2/3", params)
+		Network network = Network.create(carnum+"_"+getMetricname(), params)
+						.add(Network.createRegion(carnum+"_"+getMetricname()+"_region")
+						.add(Network.createLayer(carnum+"_"+getMetricname() +"_layer2/3", params)
 						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
 						.add(Anomaly.create())
 						.add(new TemporalMemory())
@@ -187,7 +190,7 @@ public class ScalarMetricLatency extends BaseRichBolt {
         p.set(KEY.SYN_PERM_ACTIVE_INC, 0.0001);
         p.set(KEY.SYN_PERM_INACTIVE_DEC, 0.0005);
         p.set(KEY.MAX_BOOST, 1.0);
-        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap(getMetric(), SDRClassifier.class));
+        p.set(KEY.INFERRED_FIELDS, getInferredFieldsMap(getMetricname(), SDRClassifier.class));
         p.set(KEY.MAX_NEW_SYNAPSE_COUNT, 20);
         p.set(KEY.INITIAL_PERMANENCE, 0.21);
         p.set(KEY.PERMANENCE_INCREMENT, 0.1);
@@ -209,19 +212,8 @@ public class ScalarMetricLatency extends BaseRichBolt {
 	
 	private Map<String, Map<String, Object>> getNetworkDemoFieldEncodingMap() {
 		
-		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, getMin(), getMax(), 0, 0.1, null, Boolean.TRUE, null, getMetric(), 
-																	"float", "ScalarEncoder");
-		fieldEncodings = setupMap(fieldEncodings, 50, 21, Long.MIN_VALUE, Long.MAX_VALUE, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "counter", 
-									"float", "ScalarEncoder");
+		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, getMinVal(), getMaxVal(), 0, 0.1, null, Boolean.TRUE, null, getMetricname(), "float", "ScalarEncoder");
         return fieldEncodings;
-        
-//        Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 0, 0, 0, 0, 0, 0, null, null, null, "timeOfDay", "datetime", "DateEncoder");
-//	    fieldEncodings = setupMap(fieldEncodings, 50, 21, getMin(), getMax(), 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, getMetric(), "float", "ScalarEncoder");
-//		fieldEncodings = setupMap(fieldEncodings, 50, 21, 0, 400, 0, 0.1, null, Boolean.TRUE, null, "counter", "float", "ScalarEncoder");
-//	    
-//	    fieldEncodings.get("timeOfDay").put(KEY.DATEFIELD_TOFD.getFieldName(), new org.numenta.nupic.util.Tuple(21,9.5)); // Time of day
-//        fieldEncodings.get("timeOfDay").put(KEY.DATEFIELD_PATTERN.getFieldName(), "MM/dd/YY HH:mm:ss.SSS");
-//		return fieldEncodings;
     }
 	
 	private static Map<String, Map<String, Object>> setupMap(
@@ -259,25 +251,23 @@ public class ScalarMetricLatency extends BaseRichBolt {
             @Override public void onCompleted() {}
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference infer) {
-            		double actual_val = (Double)infer.getClassifierInput().get(getMetric()).get("inputValue");
-            		Double counter_val = (Double)infer.getClassifierInput().get("counter").get("inputValue");
-//            	DateTime timeOfDay = (DateTime)infer.getClassifierInput().get("timeOfDay").get("inputValue");
+            		double actual_val = (Double)infer.getClassifierInput().get(getMetricname()).get("inputValue");
             		long emitTs = System.currentTimeMillis();
-            		int ctrval = counter_val.intValue();
             		
+            		//on account of wait and notify methods, remove htmctr and use global counter sent downstream from bolt
+            		htmctr++;
             		//fetch lapDistance and remove from map once done
-            		if(lapdistancemap.containsKey(carnum + "_" + ctrval)) {
-            			String lapdistance = lapdistancemap.get(carnum + "_" + ctrval);
-            			String timeOfDay = timeOfDaymap.get(carnum + "_" + ctrval);
-//                		collector.emit(new Values(carnum, getMetric(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), String.valueOf(ctrval), lapdistance, 
-//                						String.valueOf(timeOfDay.getHourOfDay() + ":" + timeOfDay.getMinuteOfHour() + ":" + timeOfDay.getSecondOfMinute() + "." + timeOfDay.getMillisOfSecond())));
+            		if(lapdistancemap.containsKey(carnum + "_" + htmctr)) {
+            			String lapdistance = lapdistancemap.get(carnum + "_" + htmctr);
+            			String timeOfDay = timeOfDaymap.get(carnum + "_" + htmctr);
             			
-            			collector.emit(new Values(carnum, getMetric(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), String.valueOf(ctrval), lapdistance, timeOfDay));
+            			collector.emit(new Values(carnum, getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), String.valueOf(htmctr), lapdistance, timeOfDay));
+            			lapdistancemap.remove(carnum + "_" + htmctr);
                 		
-                		pw.println("***scalar metric out," + getMetric() + "_" + String.valueOf(ctrval) + "_" + carnum + "," + String.format("%3.2f", actual_val) + "," + infer.getAnomalyScore() + "," + emitTs);
+                		pw.println("***scalar metric out," + getMetricname() + "_" + String.valueOf(htmctr) + "_" + carnum + "," + String.format("%3.2f", actual_val) + "," + infer.getAnomalyScore() + "," + emitTs);
                 		pw.flush();
                 		
-                		lapdistancemap.remove(carnum + "_" + ctrval);
+                		tuple.notify();
             		}
             }
         };

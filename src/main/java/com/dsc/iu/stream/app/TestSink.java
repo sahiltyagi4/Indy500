@@ -3,7 +3,6 @@ package com.dsc.iu.stream.app;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,7 +21,7 @@ import org.json.simple.JSONObject;
 
 import com.dsc.iu.utils.OnlineLearningUtils;
 
-public class Sink extends BaseRichBolt implements MqttCallback {
+public class TestSink extends BaseRichBolt implements MqttCallback {
 	
 	/**
 	 * 
@@ -43,9 +42,6 @@ public class Sink extends BaseRichBolt implements MqttCallback {
 		String counter = arg0.getStringByField("counter");
 		String timeOfDay = arg0.getStringByField("timeOfDay");
 		String lapDistance = arg0.getStringByField("lapDistance");
-		
-		//System.out.println("******************** sink data: "+metric+","+carnum+","+data_val+","+score+","+ts);
-		//System.out.println("******************** sink data,"+metric+"_"+counter+"_"+carnum+","+System.currentTimeMillis()+","+data_val+","+score);
 		
 		pw.println("******************** sink data,"+metric+"_"+counter+"_"+carnum+","+System.currentTimeMillis()+","+data_val+","+score);
 		pw.flush();
@@ -74,17 +70,13 @@ public class Sink extends BaseRichBolt implements MqttCallback {
 		recordaccumulate.put(carnum+"_"+counter, record);
 		
 		if(record.containsKey("engineSpeed") && record.containsKey("vehicleSpeed") && record.containsKey("throttle")) {
-			//System.out.println("################ message payload:" + record.toJSONString());
 			msgobj.setPayload(record.toJSONString().getBytes());
 			msgobj.setQos(2);
 			try {
 				client.publish(OnlineLearningUtils.sinkoutTopic, msgobj);
-				Thread.sleep(3);
 				
 			} catch(MqttException e) {
 				e.printStackTrace();
-			} catch(InterruptedException i) {
-				i.printStackTrace();
 			}
 			
 			//calculate the latency and memory overhead caused by accumulator
@@ -100,22 +92,22 @@ public class Sink extends BaseRichBolt implements MqttCallback {
 		MqttConnectOptions conn = new MqttConnectOptions();
 		
 		//changing # of inflight messages from default 10 to 500 
-		conn.setMaxInflight(OnlineLearningUtils.inflightMsgRate);
+		conn.setMaxInflight(1000);
 		
 		conn.setAutomaticReconnect(true);
 		conn.setCleanSession(true);
 		conn.setConnectionTimeout(30);
 		conn.setKeepAliveInterval(30);
-		conn.setUserName(OnlineLearningUtils.mqttadmin);
-		conn.setPassword(OnlineLearningUtils.mqttpwd.toCharArray());
+		conn.setUserName("admin");
+		conn.setPassword("password".toCharArray());
 		
 		try {
-			client = new MqttClient(OnlineLearningUtils.brokerurl, MqttClient.generateClientId());
+			client = new MqttClient("tcp://10.16.4.205:61613", MqttClient.generateClientId());
 			client.setCallback(this);
 			client.connect(conn);
 		} catch(MqttException m) {m.printStackTrace();}
 		
-		File sinkfile = new File("/scratch_ssd/sahil/sinkfile.txt");
+		File sinkfile = new File("/scratch/sahil/sinkfile.txt");
 		try {
 			pw = new PrintWriter(sinkfile);
 		} catch(FileNotFoundException f) {
@@ -131,7 +123,8 @@ public class Sink extends BaseRichBolt implements MqttCallback {
 	@Override
 	public void connectionLost(Throwable cause) {
 		// TODO Auto-generated method stub
-		System.out.println("@@@@@@@@@@@@##################$$$$$$$$ connection lost");
+		//xyi5b2YUcw8CHhAE
+		System.out.println("@@@@@@@@@@@@##################$$$$$$$$ connection to MQTT broker lost:" + cause.getMessage());
 	}
 
 	@Override

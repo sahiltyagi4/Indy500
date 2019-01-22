@@ -1,7 +1,6 @@
 package com.dsc.iu.utils;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -12,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.joda.time.DateTime;
 import org.numenta.nupic.Parameters;
 import org.numenta.nupic.Parameters.KEY;
 import org.numenta.nupic.algorithms.Anomaly;
@@ -32,17 +32,27 @@ import rx.Subscriber;
 /*
  * combining multiple metrics for anomaly detection
  * */
-public class TwoMetricsDetection {
+public class ThreemetricHTM {
 	public static void main(String[] args) {
-		
-		Publisher manualPublisher = Publisher.builder().addHeader("rpm").addHeader("float").addHeader("B").build();
-		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, new Object[] { "rpm_counter", manualPublisher }));
+		Publisher manualPublisher = Publisher.builder()
+								.addHeader("speed,rpm,timestamp")
+								.addHeader("float,float,datetime")
+								.addHeader("B")
+								.build();
+		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, new Object[] { "3metrics", manualPublisher }));
 		Parameters params = getParams();
 		params = params.union(getNetworkLearningEncoderParams());
-		Network network = Network.create("rpmcounter", params).add(Network.createRegion("region1").add(Network.createLayer("layer2/3", params)
-						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE).add(Anomaly.create()).add(new TemporalMemory()).add(new SpatialPooler()).add(sensor)));
+		Network network = Network.create("3metrics", params)
+						.add(Network.createRegion("region1")
+						.add(Network.createLayer("layer2/3", params)
+						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
+						.add(Anomaly.create())
+						.add(new TemporalMemory())
+						.add(new SpatialPooler())
+						.add(sensor)));
 		
 		File output = new File("/Users/sahiltyagi/Desktop/htmoutput.txt");
+//		File output = new File("D:\\\\anomalydetection\\htmoutput.txt");
 		try {
 			PrintWriter pw = new PrintWriter(new FileWriter(output));
 			network.observe().subscribe(getSubscriber(output, pw));
@@ -52,41 +62,28 @@ public class TwoMetricsDetection {
 		
 		network.start();
 		System.out.println("started the HTM network");
-		try {
-			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/20RPM.csv")));
-			String record;
-			while((record = logreader.readLine()) != null) {
-				manualPublisher.onNext(record.split(",")[0]);
-				//500 msg/sec rate
-//				try {
-//					Thread.sleep(2);
-//				} catch(InterruptedException e) {}
-			}
-			System.out.println("completely read the 20_RPM log file");
-			logreader.close();
-		} catch(IOException e) {
-			e.printStackTrace();
+//		try {
+//			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Desktop/dixon_SPEED_RPM.log")));
+////			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\\\anomalydetection\\dixon_SPEED_RPM.log")));
+//
+//			String record;
+//			//manualPublisher.onNext("0.000,0");
+//			manualPublisher.onNext("0.00, 23");
+//			while((record = logreader.readLine()) != null) {
+////				String newrec = record.split(",")[0] + "," + String.valueOf((Double.parseDouble(record.split(",")[1])/2));
+//				String newrec = record.split(",")[0] + "," + String.valueOf((Double.parseDouble(record.split(",")[1])*0.02));
+//				System.out.println(newrec);
+//				manualPublisher.onNext(newrec);
+//			}
+//			
+//			logreader.close();
+//		} catch(IOException e) {
+//			e.printStackTrace();
+//		}
+		
+		while(true) {
+			manualPublisher.onNext("220.0,1234,5/28/18 23:59:50.999");
 		}
-	}
-	
-	private static void createlogfile() {
-		try {
-			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/sahiltyagi/Downloads/Indy_500_2018/IPBroadcaster_Input_2018-05-27_0.log")));
-			File f = new File("/Users/sahiltyagi/Desktop/20RPM.csv");
-			PrintWriter pw = new PrintWriter(f);
-			String rec;
-			int ctr=0;
-			while((rec=logreader.readLine()) != null) {
-				if(rec.startsWith("$P") && rec.split("�")[2].length() >9 && rec.split("�")[1].equals("20")) {
-					ctr++;
-					pw.println(rec.split("�")[5] + "," + ctr);
-					pw.flush();
-				}
-			}
-			System.out.println("created rpm 20");
-			logreader.close();
-			pw.close();
-		} catch(IOException e) {e.printStackTrace();}
 	}
 	
 	private static Parameters getParams() {
@@ -162,12 +159,12 @@ public class TwoMetricsDetection {
 //        fieldEncodings = setupMap(fieldEncodings, 100, 41, 0, 12500, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
 
         
-//		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, -3000, 15000, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
-//	    fieldEncodings = setupMap(fieldEncodings, 50, 21, Long.MIN_VALUE, Long.MAX_VALUE, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "counter", "float", "ScalarEncoder");
-//		return fieldEncodings;
-		
-		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, -3000, 15000, 0, 0.1, null, Boolean.TRUE, null, "rpm", "float", "ScalarEncoder");
-		//fieldEncodings = setupMap(fieldEncodings, 50, 21, Long.MIN_VALUE, Long.MAX_VALUE, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "counter", "float", "ScalarEncoder");
+		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 0, 0, 0, 0, 0, 0, null, null, null, "timestamp", "datetime", "DateEncoder");
+	    fieldEncodings = setupMap(fieldEncodings, 50, 21, Long.MIN_VALUE, Long.MAX_VALUE, 0, 0.1, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, "rpm", "float", "ScalarEncoder");
+		fieldEncodings = setupMap(fieldEncodings, 50, 21, 0, 400, 0, 0.1, null, Boolean.TRUE, null, "speed", "float", "ScalarEncoder");
+	    
+	    fieldEncodings.get("timestamp").put(KEY.DATEFIELD_TOFD.getFieldName(), new org.numenta.nupic.util.Tuple(21,9.5)); // Time of day
+        fieldEncodings.get("timestamp").put(KEY.DATEFIELD_PATTERN.getFieldName(), "MM/dd/YY HH:mm:ss.SSS");
 		return fieldEncodings;
     }
 	
@@ -203,8 +200,9 @@ public class TwoMetricsDetection {
 	
 	private static Map<String, Class<? extends Classifier>> getInferredFieldsMap() {
         Map<String, Class<? extends Classifier>> inferredFieldsMap = new HashMap<>();
+        inferredFieldsMap.put("speed", SDRClassifier.class);
         inferredFieldsMap.put("rpm", SDRClassifier.class);
-        //inferredFieldsMap.put("counter", SDRClassifier.class);
+        inferredFieldsMap.put("timestamp", SDRClassifier.class);
         
         return inferredFieldsMap;
     }
@@ -229,12 +227,16 @@ public class TwoMetricsDetection {
 	
 	private static void writeToFileAnomaly(Inference infer, PrintWriter pw) {
 		if(infer.getRecordNum() > 0) {
+			Double speed = (Double)infer.getClassifierInput().get("speed").get("inputValue");
 			Double rpm = (Double)infer.getClassifierInput().get("rpm").get("inputValue");
-			 StringBuilder sb = new StringBuilder().append(infer.getRecordNum()).append(",").append(",")
+			DateTime TOD = (DateTime)infer.getClassifierInput().get("timestamp").get("inputValue");
+			System.out.println("time of day:" + TOD.getHourOfDay()+":"+TOD.getMinuteOfHour()+":"+TOD.getSecondOfMinute()+"."+TOD.getMillisOfSecond());
+			//Integer i = speed.intValue();
+			 StringBuilder sb = new StringBuilder().append(infer.getRecordNum()).append(",").append(String.format("%3.2f", speed)).append(",")
 					 			.append(String.format("%3.2f", rpm)).append(",").append(infer.getAnomalyScore()).append(",")
                      			.append(System.currentTimeMillis());
-             pw.println(sb.toString());
-             
+             System.out.println(sb.toString());
+			 pw.println(sb.toString());
              pw.flush();
 		}
 	}

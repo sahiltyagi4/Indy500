@@ -24,7 +24,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import com.dsc.iu.utils.OnlineLearningUtils;
 
-public class IndycarLatency extends BaseRichSpout implements MqttCallback {
+public class TestSpout extends BaseRichSpout implements MqttCallback {
 
 	/**
 	 * 
@@ -39,7 +39,7 @@ public class IndycarLatency extends BaseRichSpout implements MqttCallback {
 	private PrintWriter pw;
 
 	//topic name: #car-number#
-	public IndycarLatency(String topic) {
+	public TestSpout(String topic) {
 		this.topic = topic;
 	}
 
@@ -60,7 +60,7 @@ public class IndycarLatency extends BaseRichSpout implements MqttCallback {
 	@Override
 	public void open(Map arg0, TopologyContext arg1, SpoutOutputCollector arg2) {
 		
-		File spoutfile = new File("/scratch_ssd/sahil/spout-"+topic+".txt");
+		File spoutfile = new File("/scratch/sahil/spout-"+topic+".txt");
 		System.out.println("##########&&&&&& going to subscribe to topic:" + topic);
 		try {
 			pw = new PrintWriter(spoutfile);
@@ -73,18 +73,17 @@ public class IndycarLatency extends BaseRichSpout implements MqttCallback {
 		
 		MqttConnectOptions conn = new MqttConnectOptions();
 		//setting maximum # ofinflight messages
-		conn.setMaxInflight(OnlineLearningUtils.inflightMsgRate);
+		conn.setMaxInflight(1000);
 		
 		conn.setAutomaticReconnect(true);
 		conn.setCleanSession(true);
 		conn.setConnectionTimeout(30);
 		conn.setKeepAliveInterval(30);
-		conn.setUserName(OnlineLearningUtils.mqttadmin);
-		conn.setPassword(OnlineLearningUtils.mqttpwd.toCharArray());
+		conn.setUserName("admin");
+		conn.setPassword("password".toCharArray());
 		
 		try {
-//			MqttClient mqttClient = new MqttClient("tcp://127.0.0.1:61613", MqttClient.generateClientId());
-			MqttClient mqttClient = new MqttClient(OnlineLearningUtils.brokerurl, MqttClient.generateClientId());
+			MqttClient mqttClient = new MqttClient("tcp://10.16.4.205:61613", MqttClient.generateClientId());
 			mqttClient.setCallback(this);
 			mqttClient.connect(conn);
 			mqttClient.subscribe(topic, 2);

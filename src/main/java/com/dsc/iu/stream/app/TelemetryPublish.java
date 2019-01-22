@@ -36,7 +36,7 @@ public class TelemetryPublish implements MqttCallback {
 		MqttConnectOptions conn = new MqttConnectOptions();
 		
 		//changing # of inflight messages from default 10 to 500 
-		conn.setMaxInflight(OnlineLearningUtils.inflightMsgRate);
+		conn.setMaxInflight(1000);
 		
 		conn.setAutomaticReconnect(true);
 		conn.setCleanSession(true);
@@ -46,7 +46,7 @@ public class TelemetryPublish implements MqttCallback {
 		conn.setPassword("password".toCharArray());
 		
 		try {
-			client = new MqttClient(OnlineLearningUtils.brokerurl, MqttClient.generateClientId());
+			client = new MqttClient("tcp://10.16.4.205:61613", MqttClient.generateClientId());
 			client.setCallback(this);
 			client.connect(conn);
 		} catch(MqttException m) {m.printStackTrace();}
@@ -56,16 +56,17 @@ public class TelemetryPublish implements MqttCallback {
 		try {
 			
 			Map<String, Integer> uniquecarctr = new HashMap<String, Integer>();
-			File outputlog = new File("/scratch_ssd/sahil/pubsublogs.txt");
+			File outputlog = new File("/scratch/sahil/pubsublogs.txt");
 			PrintWriter pw = new PrintWriter(outputlog);
 			
 			List<String> carlist = new LinkedList<String>();
 			carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
 			
-			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log"))));
+			BufferedReader logreader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("/scratch/sahil/IPBroadcaster_Input_2018-05-27_0.log"))));
 			String record, topic;
 			while((record=logreader.readLine()) != null) {
 				//record.split("�")[1] denotes the car number. This acts as broker topic name specific to the log data for a given, subscribed by a dedicated spout
+				//payload format: speedval, RPMval, throttleval, counter, lapDistance, timeOfDay
 				if(record.startsWith("$P") && record.split("�")[2].length() >9) {
 					topic = record.split("�")[1];
 					if(carlist.contains(topic)) {
@@ -76,19 +77,20 @@ public class TelemetryPublish implements MqttCallback {
 							uniquecarctr.put(topic, (uniquecarctr.get(topic) + 1));
 						}
 						
-						//confirm the index for throttle metric in input logs
-						//speed, rpm, throttle, counter
-						payload = record.split("�")[4] + "," + record.split("�")[5] + "," + record.split("�")[6] + "," + String.valueOf(uniquecarctr.get(topic));
+						//speed, rpm, throttle, counter, lapdistance, timeOfDay
+						payload = record.split("�")[4] + "," + record.split("�")[5] + "," + record.split("�")[6] + "," + String.valueOf(uniquecarctr.get(topic) 
+								+ "," + record.split("�")[3] + "," + "5/27/18 " + record.split("�")[2]);
 						System.out.println(payload + " for car no.: " + topic);
-						pw.println(record.split("�")[4] + "," + record.split("�")[5] + "," + record.split("�")[6] + "," + String.valueOf(uniquecarctr.get(topic) + "_" + topic + "," + System.currentTimeMillis()));
+						pw.println(record.split("�")[4] + "," + record.split("�")[5] + "," + record.split("�")[6] + "," + String.valueOf(uniquecarctr.get(topic) 
+								+ "_" + topic + "," + System.currentTimeMillis()) + "," + record.split("�")[3] + "," + "5/27/18 " + record.split("�")[2]);
 						msgobj.setQos(2);
 						msgobj.setPayload(payload.getBytes());
 						client.publish(topic, msgobj);
 						
 						pw.flush();
-						//set input rate to 100 msg/sec
+						//set input rate to 200 msg/sec
 						try {
-							Thread.sleep(10);
+							Thread.sleep(5);
 						} catch(InterruptedException e) {
 							e.printStackTrace();
 						}
