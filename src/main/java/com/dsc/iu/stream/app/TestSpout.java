@@ -3,11 +3,8 @@ package com.dsc.iu.stream.app;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
 
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -34,8 +31,6 @@ public class TestSpout extends BaseRichSpout implements MqttCallback {
 	private ConcurrentLinkedQueue<String> nonblockingqueue;
 	private SpoutOutputCollector collector;
 	private String data;
-	//private HashMap<String, Long> ctr = new HashMap<>();
-	
 	private PrintWriter pw;
 
 	//topic name: #car-number#
@@ -51,16 +46,14 @@ public class TestSpout extends BaseRichSpout implements MqttCallback {
 			
 			collector.emit(new Values(topic,data.split(",")[0],data.split(",")[1],data.split(",")[2], data.split(",")[3], data.split(",")[4], data.split(",")[5].split(" ")[1]));
 			
-			pw.println("@@@@@@@@@@@@@@@@@@@@indycarspout," + "speed_" + data.split(",")[3] + "_" + topic + "," + "RPM_" + data.split(",")[3] + "_" + topic 
-						+ "," + "throttle_" + data.split(",")[3] + "_" + topic + "," + ts + "," + data.split(",")[4]);
-			pw.flush();
+			pw.println(topic + "," + data.split(",")[3] + "," + System.currentTimeMillis());
 		}
 	}
 
 	@Override
 	public void open(Map arg0, TopologyContext arg1, SpoutOutputCollector arg2) {
 		
-		File spoutfile = new File("/scratch/sahil/spout-"+topic+".txt");
+		File spoutfile = new File("/share/project/FG542/spouts/spout-"+topic+".txt");
 		System.out.println("##########&&&&&& going to subscribe to topic:" + topic);
 		try {
 			pw = new PrintWriter(spoutfile);
@@ -73,20 +66,20 @@ public class TestSpout extends BaseRichSpout implements MqttCallback {
 		
 		MqttConnectOptions conn = new MqttConnectOptions();
 		//setting maximum # ofinflight messages
-		conn.setMaxInflight(1000);
+		conn.setMaxInflight(OnlineLearningUtils.inflightMsgRate);
 		
 		conn.setAutomaticReconnect(true);
 		conn.setCleanSession(true);
 		conn.setConnectionTimeout(30);
 		conn.setKeepAliveInterval(30);
-		conn.setUserName("admin");
-		conn.setPassword("password".toCharArray());
+		conn.setUserName(OnlineLearningUtils.mqttadmin);
+		conn.setPassword(OnlineLearningUtils.mqttpwd.toCharArray());
 		
 		try {
-			MqttClient mqttClient = new MqttClient("tcp://10.16.4.205:61613", MqttClient.generateClientId());
+			MqttClient mqttClient = new MqttClient(OnlineLearningUtils.brokerurl, MqttClient.generateClientId());
 			mqttClient.setCallback(this);
 			mqttClient.connect(conn);
-			mqttClient.subscribe(topic, 2);
+			mqttClient.subscribe(topic, OnlineLearningUtils.QoS);
 		} catch(MqttException m) {m.printStackTrace();}
 	}
 
@@ -98,7 +91,7 @@ public class TestSpout extends BaseRichSpout implements MqttCallback {
 	@Override
 	public void connectionLost(Throwable arg0) {
 		arg0.printStackTrace();
-		System.out.println("lost connection for data:" + data);
+		//System.out.println("lost connection for data:" + data);
 	}
 
 	@Override

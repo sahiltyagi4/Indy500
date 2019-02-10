@@ -27,11 +27,12 @@ public class TestSink extends BaseRichBolt implements MqttCallback {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private PrintWriter pw;
 	private MqttClient client;
 	private MqttMessage msgobj;
-	private ConcurrentHashMap<String, JSONObject> recordaccumulate;
-	private JSONObject record;
+	public ConcurrentHashMap<String, JSONObject> recordaccumulate;
+	public JSONObject record;
+	public File f;
+	public PrintWriter pw;
 
 	@Override
 	public void execute(Tuple arg0) {
@@ -43,7 +44,7 @@ public class TestSink extends BaseRichBolt implements MqttCallback {
 		String timeOfDay = arg0.getStringByField("timeOfDay");
 		String lapDistance = arg0.getStringByField("lapDistance");
 		
-		pw.println("******************** sink data,"+metric+"_"+counter+"_"+carnum+","+System.currentTimeMillis()+","+data_val+","+score);
+		pw.println(carnum+","+counter+","+metric+","+data_val+","+timeOfDay+","+System.currentTimeMillis());
 		pw.flush();
 		
 		if(!recordaccumulate.containsKey(carnum+"_"+counter)) {
@@ -69,9 +70,11 @@ public class TestSink extends BaseRichBolt implements MqttCallback {
 		record.put(metric+"Anomaly", score);
 		recordaccumulate.put(carnum+"_"+counter, record);
 		
+		//CALCULATE INDIVIDUAL LATENCY NOT JUST AGGREGATED TOTAL LATENCY (FETCH TS OF EACH METRIC ARRIVAL AT SINK)
 		if(record.containsKey("engineSpeed") && record.containsKey("vehicleSpeed") && record.containsKey("throttle")) {
+			//System.out.println(record.toJSONString());
 			msgobj.setPayload(record.toJSONString().getBytes());
-			msgobj.setQos(2);
+			msgobj.setQos(OnlineLearningUtils.QoS);
 			try {
 				client.publish(OnlineLearningUtils.sinkoutTopic, msgobj);
 				
@@ -79,7 +82,7 @@ public class TestSink extends BaseRichBolt implements MqttCallback {
 				e.printStackTrace();
 			}
 			
-			//calculate the latency and memory overhead caused by accumulator
+			//calculate the CPU and memory utilization caused by aggregator
 			recordaccumulate.remove(carnum+"_"+counter);
 		}
 	}
@@ -87,32 +90,39 @@ public class TestSink extends BaseRichBolt implements MqttCallback {
 	@Override
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
 		
+		f = new File("/N/u/styagi/sinktest.csv");
+		try {
+			pw = new PrintWriter(f);
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		
 		msgobj = new MqttMessage();
 		recordaccumulate = new ConcurrentHashMap<String, JSONObject>();
 		MqttConnectOptions conn = new MqttConnectOptions();
 		
 		//changing # of inflight messages from default 10 to 500 
-		conn.setMaxInflight(1000);
+		conn.setMaxInflight(OnlineLearningUtils.inflightMsgRate);
 		
 		conn.setAutomaticReconnect(true);
 		conn.setCleanSession(true);
 		conn.setConnectionTimeout(30);
 		conn.setKeepAliveInterval(30);
-		conn.setUserName("admin");
-		conn.setPassword("password".toCharArray());
+		conn.setUserName(OnlineLearningUtils.mqttadmin);
+		conn.setPassword(OnlineLearningUtils.mqttpwd.toCharArray());
 		
 		try {
-			client = new MqttClient("tcp://10.16.4.205:61613", MqttClient.generateClientId());
+			client = new MqttClient(OnlineLearningUtils.brokerurl, MqttClient.generateClientId());
 			client.setCallback(this);
 			client.connect(conn);
 		} catch(MqttException m) {m.printStackTrace();}
 		
-		File sinkfile = new File("/scratch/sahil/sinkfile.txt");
-		try {
-			pw = new PrintWriter(sinkfile);
-		} catch(FileNotFoundException f) {
-			f.printStackTrace();
-		}
+//		File sinkfile = new File("/scratch/sahil/sinkfile.txt");
+//		try {
+//			pw = new PrintWriter(sinkfile);
+//		} catch(FileNotFoundException f) {
+//			f.printStackTrace();
+//		}
 	}
 
 	@Override

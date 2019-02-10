@@ -42,14 +42,13 @@ public class TestHTMBolt extends BaseRichBolt {
 	private String carnum, spoutctr;
 	private int min, max;
 	//ctr to increment after processing each tuple and used to match records for lapDistance and timeOfDay hashmaps. Basically, htmctr replaces spoutctr as data point emitted to sink and match a tuple for it's original features
-	private int htmctr=0;
+	//private int htmctr=0;
 	private Publisher manualpublish;
 	private Network network;
 	private ConcurrentHashMap<String, String> lapdistancemap;
 	private ConcurrentHashMap<String, String> timeOfDaymap;
 	private Tuple tuple;
-	
-	private PrintWriter pw;
+	//private PrintWriter pw;
 	
 	public TestHTMBolt(String metric, String min, String max) {
 		this.metric = metric;
@@ -57,43 +56,46 @@ public class TestHTMBolt extends BaseRichBolt {
 		this.max = Integer.parseInt(max);
 	}
 
-	public String getMetricname() {
+	private String getMetricname() {
 		return metric;
 	}
 
-	public void setMetricname(String metric) {
+	private void setMetricname(String metric) {
 		this.metric = metric;
 	}
 
-	public int getMinVal() {
+	private int getMinVal() {
 		return min;
 	}
 
-	public void setMinVal(int min) {
+	private void setMinVal(int min) {
 		this.min = min;
 	}
 
-	public int getMaxVal() {
+	private int getMaxVal() {
 		return max;
 	}
 
-	public void setMaxVal(int max) {
+	private void setMaxVal(int max) {
 		this.max = max;
 	}
 
 	@Override
 	public void execute(Tuple arg0) {
 		tuple = arg0;
-		
-		carnum = arg0.getStringByField("carnum");
-		spoutctr = arg0.getStringByField("counter");
-		lapdistancemap.put(carnum + "_" + spoutctr, arg0.getStringByField("lapDistance"));
-		timeOfDaymap.put(carnum + "_" + spoutctr, arg0.getStringByField("timeOfDay"));
-		manualpublish.onNext(arg0.getStringByField(getMetricname()));
+		carnum = tuple.getStringByField("carnum");
+		spoutctr = tuple.getStringByField("counter");
+		lapdistancemap.put(carnum + "_" + spoutctr, tuple.getStringByField("lapDistance"));
+		timeOfDaymap.put(carnum + "_" + spoutctr, tuple.getStringByField("timeOfDay"));
+		manualpublish.onNext(tuple.getStringByField(getMetricname()));
 		
 		try {
-			tuple.wait();
-		} catch(InterruptedException e) {e.printStackTrace();}
+			synchronized (tuple) {
+				tuple.wait();
+			}
+		} catch(InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -105,12 +107,12 @@ public class TestHTMBolt extends BaseRichBolt {
 		setMinVal(min);
 		setMaxVal(max);
 		
-		File boltfile = new File("/scratch/sahil/boltfile-"+ UUID.randomUUID().toString() + ".txt");
-		try {
-			pw = new PrintWriter(boltfile);
-		} catch(FileNotFoundException f) {
-			f.printStackTrace();
-		}
+//		File boltfile = new File("/scratch/sahil/boltfile-"+ UUID.randomUUID().toString() + ".txt");
+//		try {
+//			pw = new PrintWriter(boltfile);
+//		} catch(FileNotFoundException f) {
+//			f.printStackTrace();
+//		}
 		
 		collector = arg2;
 		
@@ -252,23 +254,29 @@ public class TestHTMBolt extends BaseRichBolt {
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference infer) {
             		double actual_val = (Double)infer.getClassifierInput().get(getMetricname()).get("inputValue");
-            		long emitTs = System.currentTimeMillis();
             		
             		//on account of wait and notify methods, remove htmctr and use global counter sent downstream from bolt
-            		htmctr++;
             		//fetch lapDistance and remove from map once done
-            		if(lapdistancemap.containsKey(carnum + "_" + htmctr)) {
-            			String lapdistance = lapdistancemap.get(carnum + "_" + htmctr);
-            			String timeOfDay = timeOfDaymap.get(carnum + "_" + htmctr);
+            		if(lapdistancemap.containsKey(carnum + "_" + spoutctr)) {
+            			String lapdistance = lapdistancemap.get(carnum + "_" + spoutctr);
+            			String tod = timeOfDaymap.get(carnum + "_" + spoutctr);
+            			long tstamp = System.currentTimeMillis();
             			
-            			collector.emit(new Values(carnum, getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), String.valueOf(htmctr), lapdistance, timeOfDay));
-            			lapdistancemap.remove(carnum + "_" + htmctr);
+//            			pw.println(carnum + "," + spoutctr + "," + getMetricname() + "," + tstamp + "," + tod);
+//            			pw.flush();
+            			
+            			collector.emit(new Values(carnum, getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), spoutctr, lapdistance, tod));
+            			lapdistancemap.remove(carnum + "_" + spoutctr);
+            			timeOfDaymap.remove(carnum + "_" + spoutctr);
                 		
-                		pw.println("***scalar metric out," + getMetricname() + "_" + String.valueOf(htmctr) + "_" + carnum + "," + String.format("%3.2f", actual_val) + "," + infer.getAnomalyScore() + "," + emitTs);
-                		pw.flush();
-                		
-                		tuple.notify();
-            		}
+                		synchronized (tuple) {
+                			tuple.notify();
+					}
+            		} 
+//            		else {
+//            			pw.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX skipped lapdistance condition, " + carnum + "," + spoutctr);
+//            			pw.flush();
+//            		}
             }
         };
     }
