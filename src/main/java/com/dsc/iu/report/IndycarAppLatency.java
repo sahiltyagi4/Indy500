@@ -15,10 +15,17 @@ import org.json.simple.parser.JSONParser;
  * calculates latency from instant of publishing to broker from ERP logs to fetching end results with anomaly scores on dashboard
  * */
 public class IndycarAppLatency {
+	
+	public static String dirname;
 
 	public static void main(String[] args) {
+		
+		dirname = args[0];
+		spoutToSinkLatency();
+		System.out.println("completed execution");
+		
 		//for end to end pub to sub latency
-		comparepubsubmaps();
+		//comparepubsubmaps();
 	}
 	
 	private static HashMap<String, Long> procSubscriber() {
@@ -44,7 +51,7 @@ public class IndycarAppLatency {
 	private static HashMap<String, Long> procPublisher() {
 		HashMap<String, Long> pubmap = new HashMap<String, Long>();
 		try {
-			File f = new File("/share/project/FG542/node4/recin/");
+			File f = new File("/share/project/FG542/33htm/recin/");
 			if(f.isDirectory()) {
 				File[] carfiles = f.listFiles();
 				for(File crfile : carfiles) {
@@ -65,7 +72,7 @@ public class IndycarAppLatency {
 	
 	private static void comparepubsubmaps() {
 		try {
-			File f  = new File("/share/project/FG542/node4/pubsublatency.csv");
+			File f  = new File("/share/project/FG542/33htm/pubsublatency.csv");
 			PrintWriter pw = new PrintWriter(f);
 			HashMap<String, Long> pubmap = procPublisher();
 			HashMap<String, Long> submap= procSubscriber();
@@ -84,5 +91,70 @@ public class IndycarAppLatency {
 		}
 	}
 	
+	private static HashMap<String, Long> getSinkMap() {
+		HashMap<String, Long> sinkmap = new HashMap<String, Long>();
+		try {
+			File f = new File("/share/project/FG542/" + dirname + "/sinks/");
+			if(f.isDirectory()) {
+				File[] carfiles = f.listFiles();
+				for(File crfile : carfiles) {
+					BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(crfile)));
+					String line;
+					System.out.println(crfile.getName().split("-")[1].replaceAll(".csv", "").trim());
+					while((line=rdr.readLine()) != null) {
+						if(line.split(",").length == 6) {
+							sinkmap.put(line.split(",")[0] + "_" + line.split(",")[1], Long.parseLong(line.split(",")[5]));
+						}
+					}
+					rdr.close();
+				}
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return sinkmap;
+	}
 	
+	private static HashMap<String, Long> getSpoutMap() {
+		HashMap<String, Long> spoutmap = new HashMap<String, Long>();
+		try {
+			File f = new File("/share/project/FG542/" + dirname + "/spouts/");
+			if(f.isDirectory()) {
+				File[] carfiles = f.listFiles();
+				for(File crfile : carfiles) {
+					BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(crfile)));
+					String line;
+					System.out.println(crfile.getName().split("-")[1].replaceAll(".csv", "").trim());
+					while((line=rdr.readLine()) != null) {
+						if(line.split(",").length == 3) {
+							spoutmap.put(line.split(",")[0] + "_" + line.split(",")[1], Long.parseLong(line.split(",")[2]));
+						}
+					}
+					rdr.close();
+				}
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return spoutmap;
+	}
+	
+	private static void spoutToSinkLatency() {
+		try {
+			HashMap<String, Long> sinkmap = getSinkMap();
+			HashMap<String, Long> spoutmap = getSpoutMap();
+			File f  = new File("/share/project/FG542/" + dirname + "/spoutSinklatency.csv");
+			PrintWriter pw = new PrintWriter(f);
+			System.out.println("size of spoutmap:" + spoutmap.size());
+			System.out.println("size of sinkmap:" + sinkmap.size());
+			for(Map.Entry<String, Long> entryset : spoutmap.entrySet()) {
+				String key = entryset.getKey();
+				pw.println(key.split("_")[0] + "," + key.split("_")[1] + "," + entryset.getValue() + "," + sinkmap.get(key) 
+							+ "," + (sinkmap.get(key) - entryset.getValue()));
+				pw.flush();
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
 }

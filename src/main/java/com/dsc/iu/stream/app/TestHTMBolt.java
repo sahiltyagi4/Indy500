@@ -48,7 +48,7 @@ public class TestHTMBolt extends BaseRichBolt {
 	private ConcurrentHashMap<String, String> lapdistancemap;
 	private ConcurrentHashMap<String, String> timeOfDaymap;
 	private Tuple tuple;
-	//private PrintWriter pw;
+	private PrintWriter pw;
 	
 	public TestHTMBolt(String metric, String min, String max) {
 		this.metric = metric;
@@ -107,12 +107,12 @@ public class TestHTMBolt extends BaseRichBolt {
 		setMinVal(min);
 		setMaxVal(max);
 		
-//		File boltfile = new File("/scratch/sahil/boltfile-"+ UUID.randomUUID().toString() + ".txt");
-//		try {
-//			pw = new PrintWriter(boltfile);
-//		} catch(FileNotFoundException f) {
-//			f.printStackTrace();
-//		}
+		File boltfile = new File("/share/project/FG542/bolts/boltfile-"+ UUID.randomUUID().toString() + ".txt");
+		try {
+			pw = new PrintWriter(boltfile);
+		} catch(FileNotFoundException f) {
+			f.printStackTrace();
+		}
 		
 		collector = arg2;
 		
