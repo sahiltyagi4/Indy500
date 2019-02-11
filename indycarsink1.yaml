@@ -1,0 +1,81 @@
+name: "indy500-sink8cars"
+config:
+  topology.workers: 5
+
+spouts:
+  - id: "telemetryspout-30"
+    className: "com.dsc.iu.stream.app.TestSpout"
+    parallelism: 1
+    constructorArgs:
+      - "30"
+
+
+bolts:
+  - id: "sink-30"
+    className: "com.dsc.iu.stream.app.TestSink2"
+    parallelism: 1
+    constructorArgs:
+      - "30"
+
+  - id: "RPMBolt-30"
+    className: "com.dsc.iu.stream.app.BlankHTMBolt"
+    parallelism: 1
+    constructorArgs:
+      - "RPM"
+      - "0"
+      - "12500"
+      
+  - id: "SpeedBolt-30"
+    className: "com.dsc.iu.stream.app.BlankHTMBolt"
+    parallelism: 1
+    constructorArgs:
+      - "speed"
+      - "0"
+      - "250"
+      
+  - id: "ThrottleBolt-30"
+    className: "com.dsc.iu.stream.app.BlankHTMBolt"
+    parallelism: 1
+    constructorArgs:
+      - "throttle"
+      - "0"
+      - "6"
+
+
+streams:
+  - name: "telemetryspout-30 --> RPMBolt-30"
+    from: "telemetryspout-30"
+    to: "RPMBolt-30"
+    grouping:
+      type: SHUFFLE
+      
+  - name: "telemetryspout-30 --> SpeedBolt-30"
+    from: "telemetryspout-30"
+    to: "SpeedBolt-30"
+    grouping:
+      type: SHUFFLE
+      
+  - name: "telemetryspout-30 --> ThrottleBolt-30"
+    from: "telemetryspout-30"
+    to: "ThrottleBolt-30"
+    grouping:
+      type: SHUFFLE
+     
+  - name: "RPMBolt-30 --> sink-30"
+    from: "RPMBolt-30"
+    to: "sink-30"
+    grouping:
+      type: SHUFFLE
+      
+  - name: "SpeedBolt-30 --> sink-30"
+    from: "SpeedBolt-30"
+    to: "sink-30"
+    grouping:
+      type: SHUFFLE
+      
+  - name: "ThrottleBolt-30 --> sink-30"
+    from: "ThrottleBolt-30"
+    to: "sink-30"
+    grouping:
+      type: SHUFFLE
+
