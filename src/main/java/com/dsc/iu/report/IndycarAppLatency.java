@@ -91,6 +91,30 @@ public class IndycarAppLatency {
 		}
 	}
 	
+//	private static HashMap<String, Long> getSinkMap() {
+//		HashMap<String, Long> sinkmap = new HashMap<String, Long>();
+//		try {
+//			File f = new File("/share/project/FG542/" + dirname + "/sinks/");
+//			if(f.isDirectory()) {
+//				File[] carfiles = f.listFiles();
+//				for(File crfile : carfiles) {
+//					BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(crfile)));
+//					String line;
+//					System.out.println(crfile.getName().split("-")[1].replaceAll(".csv", "").trim());
+//					while((line=rdr.readLine()) != null) {
+//						if(line.split(",").length == 6) {
+//							sinkmap.put(line.split(",")[0] + "_" + line.split(",")[1], Long.parseLong(line.split(",")[5]));
+//						}
+//					}
+//					rdr.close();
+//				}
+//			}
+//		} catch(Exception e) {
+//			e.printStackTrace();
+//		}
+//		return sinkmap;
+//	}
+	
 	private static HashMap<String, Long> getSinkMap() {
 		HashMap<String, Long> sinkmap = new HashMap<String, Long>();
 		try {

@@ -9,13 +9,13 @@ import java.util.List;
 public class FluxGenerator {
 
     private static final String TEMPLATE_SPOUT = "  - id: \"telemetryspout-#NO\"\n" +
-            "    className: \"com.dsc.iu.stream.app.TestSpout\"\n" +
+            "    className: \"com.dsc.iu.stream.app.TestSpout3\"\n" +
             "    parallelism: 1\n" +
             "    constructorArgs:\n" +
             "      - \"#NO\"\n\n";
 
     private static final String TEMPLATE_BOLTS = "  - id: \"RPMBolt-#NO\"\n" +
-            "    className: \"com.dsc.iu.stream.app.BlankHTMBolt\"\n" +
+            "    className: \"com.dsc.iu.stream.app.TestHTMBolt3\"\n" +
             "    parallelism: 1\n" +
             "    constructorArgs:\n" +
             "      - \"RPM\"\n" +
@@ -23,7 +23,7 @@ public class FluxGenerator {
             "      - \"12500\"\n" +
             "      \n" +
             "  - id: \"SpeedBolt-#NO\"\n" +
-            "    className: \"com.dsc.iu.stream.app.BlankHTMBolt\"\n" +
+            "    className: \"com.dsc.iu.stream.app.TestHTMBolt3\"\n" +
             "    parallelism: 1\n" +
             "    constructorArgs:\n" +
             "      - \"speed\"\n" +
@@ -31,7 +31,7 @@ public class FluxGenerator {
             "      - \"250\"\n" +
             "      \n" +
             "  - id: \"ThrottleBolt-#NO\"\n" +
-            "    className: \"com.dsc.iu.stream.app.BlankHTMBolt\"\n" +
+            "    className: \"com.dsc.iu.stream.app.TestHTMBolt3\"\n" +
             "    parallelism: 1\n" +
             "    constructorArgs:\n" +
             "      - \"throttle\"\n" +
@@ -76,9 +76,11 @@ public class FluxGenerator {
 
     public static void main(String[] args) throws IOException {
         StringBuilder fluxTemplate = new StringBuilder(
-                "name: \"indy500-sink8cars\"\n" +
+                "name: \"cars-8-HTM-testbed\"\n" +
                         "config:\n" +
-                        "  topology.workers: 5\n\n"
+                        "  topology.workers: 8\n" +
+                        "  topology.debug: false\n" +
+                        "  topology.acker.executors: 0\n\n"
         );
 
         StringBuilder spouts = new StringBuilder("spouts:\n");
@@ -88,9 +90,9 @@ public class FluxGenerator {
         
         List<String> carlist = new LinkedList<String>();
         
-        carlist.add("30");
+//        carlist.add("30");
         
-//        carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
+        carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
     	
 //        carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");
 //        carlist.add("26");carlist.add("7");carlist.add("6");
@@ -102,7 +104,7 @@ public class FluxGenerator {
 
         for (int i = 0; i < carlist.size(); i++) {
             bolts.append(("  - id: \"sink-#NO\"\n" +
-                    "    className: \"com.dsc.iu.stream.app.TestSink2\"\n" +
+                    "    className: \"com.dsc.iu.stream.app.TestSink3\"\n" +
                     "    parallelism: 1\n"+ "    constructorArgs:\n" +
             "      - \"#NO\"\n\n").replace("#NO", carlist.get(i)));
 
@@ -125,7 +127,7 @@ public class FluxGenerator {
         fluxTemplate.append("\n");
         fluxTemplate.append(streams);
 
-        FileWriter fileWriter = new FileWriter(new File("/Users/sahiltyagi/Desktop/indycarsink1.yaml"));
+        FileWriter fileWriter = new FileWriter(new File("/Users/sahiltyagi/Desktop/testbed-8cars.yaml"));
         fileWriter.write(fluxTemplate.toString());
         fileWriter.flush();
         fileWriter.close();

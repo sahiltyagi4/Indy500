@@ -21,7 +21,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import com.dsc.iu.utils.OnlineLearningUtils;
 
-public class TestSpout extends BaseRichSpout implements MqttCallback {
+public class TestSpout3 extends BaseRichSpout implements MqttCallback {
 
 	/**
 	 * 
@@ -31,10 +31,9 @@ public class TestSpout extends BaseRichSpout implements MqttCallback {
 	private ConcurrentLinkedQueue<String> nonblockingqueue;
 	private SpoutOutputCollector collector;
 	private String data;
-//	private PrintWriter pw;
 
 	//topic name: #car-number#
-	public TestSpout(String topic) {
+	public TestSpout3(String topic) {
 		this.topic = topic;
 	}
 
@@ -43,29 +42,15 @@ public class TestSpout extends BaseRichSpout implements MqttCallback {
 		if(nonblockingqueue.size()>0) {
 			data = nonblockingqueue.poll();
 			
-			if(data.split(",").length == 6 && data.split(",")[5].split(" ").length == 2) {
-				collector.emit(new Values(topic,data.split(",")[0],data.split(",")[1],data.split(",")[2], data.split(",")[3], data.split(",")[4], 
-							data.split(",")[5].split(" ")[1]));
-				
-//				pw.println(topic + "," + data.split(",")[3] + "," + System.currentTimeMillis());
-//				
-//				if(Integer.parseInt(data.split(",")[3]) % 500 == 0) {
-//					pw.flush();
-//				}
+			if (data.split(",").length == 6) {
+				long ts = System.currentTimeMillis();
+				collector.emit(new Values(topic,data.split(",")[0],data.split(",")[1],data.split(",")[2], data.split(",")[3], data.split(",")[4], ts));
 			}
 		}
 	}
 
 	@Override
 	public void open(Map arg0, TopologyContext arg1, SpoutOutputCollector arg2) {
-		
-//		File spoutfile = new File("/scratch/sahil/spouts/spout-"+topic+".txt");
-//		System.out.println("##########&&&&&& going to subscribe to topic:" + topic);
-//		try {
-//			pw = new PrintWriter(spoutfile);
-//		} catch(FileNotFoundException f) {
-//			f.printStackTrace();
-//		}
 		
 		nonblockingqueue = new ConcurrentLinkedQueue<String>();
 		collector = arg2;
@@ -91,7 +76,7 @@ public class TestSpout extends BaseRichSpout implements MqttCallback {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-		arg0.declare(new Fields("carnum","speed","RPM","throttle","counter","lapDistance","timeOfDay"));
+		arg0.declare(new Fields("carnum","speed","RPM","throttle","counter","lapDistance","current_timestamp"));
 	}
 
 	@Override

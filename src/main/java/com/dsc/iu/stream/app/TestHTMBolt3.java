@@ -33,7 +33,13 @@ import org.numenta.nupic.network.sensor.SensorParams.Keys;
 
 import rx.Subscriber;
 
-public class TestHTMBolt extends BaseRichBolt {
+public class TestHTMBolt3 extends BaseRichBolt {
+	
+	/*
+	 *testbed branch code
+	 *
+	 */
+	
 	
 	private final long serialVersionUID = 1L;
 	private OutputCollector collector;
@@ -41,14 +47,17 @@ public class TestHTMBolt extends BaseRichBolt {
 	//spoutctr brings the counter value from telemetry publisher and used for generating keys for lapDistance and timeOfDay hashmaps
 	private String carnum, spoutctr;
 	private int min, max;
+	//ctr to increment after processing each tuple and used to match records for lapDistance and timeOfDay hashmaps. Basically, htmctr replaces spoutctr as data point emitted to sink and match a tuple for it's original features
+	//private int htmctr=0;
 	private Publisher manualpublish;
 	private Network network;
 	private ConcurrentHashMap<String, String> lapdistancemap;
-	private ConcurrentHashMap<String, String> timeOfDaymap;
+	private ConcurrentHashMap<String, Long> timeOfDaymap;
 	private Tuple tuple;
-//	private PrintWriter pw;
+	private long logtimestamp, spoutimestamp;
+	private PrintWriter pw;
 	
-	public TestHTMBolt(String metric, String min, String max) {
+	public TestHTMBolt3(String metric, String min, String max) {
 		this.metric = metric;
 		this.min = Integer.parseInt(min);
 		this.max = Integer.parseInt(max);
@@ -84,35 +93,41 @@ public class TestHTMBolt extends BaseRichBolt {
 		carnum = tuple.getStringByField("carnum");
 		spoutctr = tuple.getStringByField("counter");
 		lapdistancemap.put(carnum + "_" + spoutctr, tuple.getStringByField("lapDistance"));
-		timeOfDaymap.put(carnum + "_" + spoutctr, tuple.getStringByField("timeOfDay"));
-		manualpublish.onNext(tuple.getStringByField(getMetricname()));
+		timeOfDaymap.put(carnum + "_" + spoutctr, tuple.getLongByField("current_timestamp"));
+		spoutimestamp = tuple.getLongByField("current_timestamp");
 		
-		try {
-			synchronized (tuple) {
-				tuple.wait();
+		logtimestamp = System.currentTimeMillis();
+		
+		if((logtimestamp - spoutimestamp) < 200) {
+			manualpublish.onNext(tuple.getStringByField(getMetricname()));
+			try {
+				synchronized (tuple) {
+					tuple.wait();
+				}
+			} catch(InterruptedException e) {
+				e.printStackTrace();
 			}
-		} catch(InterruptedException e) {
-			e.printStackTrace();
 		}
+		
 	}
 
 	@Override
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
 		
 		lapdistancemap = new ConcurrentHashMap<String, String>();
-		timeOfDaymap = new ConcurrentHashMap<String, String>();
+		timeOfDaymap = new ConcurrentHashMap<String, Long>();
 		setMetricname(metric);
 		setMinVal(min);
 		setMaxVal(max);
 		
-//		File boltfile = new File("/scratch/sahil/bolts/boltfile-"+ UUID.randomUUID().toString() + ".txt");
-//		try {
-//			pw = new PrintWriter(boltfile);
-//		} catch(FileNotFoundException f) {
-//			f.printStackTrace();
-//		}
-		
 		collector = arg2;
+		
+		try {
+			File f = new File("/scratch/sahil/bolts/bolt-" + UUID.randomUUID().toString() + ".csv");
+			pw = new PrintWriter(f);
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
 		
 		manualpublish = Publisher.builder()
 				.addHeader(getMetricname())
@@ -139,8 +154,7 @@ public class TestHTMBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-//		arg0.declare(new Fields("carnum","metric","dataval","score","counter", "lapDistance", "timeOfDay"));
-		arg0.declare(new Fields("metric","dataval","score","counter", "lapDistance", "timeOfDay"));
+		arg0.declare(new Fields("carnum","metric","dataval","score","counter", "lapDistance", "current_timestamp", "bolt_timestamp"));
 	}
 	
 	private static Parameters getParams() {
@@ -213,8 +227,7 @@ public class TestHTMBolt extends BaseRichBolt {
 	
 	private Map<String, Map<String, Object>> getNetworkDemoFieldEncodingMap() {
 		
-		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, getMinVal(), getMaxVal(), 0, 0.1, null, 
-																Boolean.TRUE, null, getMetricname(), "float", "ScalarEncoder");
+		Map<String, Map<String, Object>> fieldEncodings = setupMap(null, 50, 21, getMinVal(), getMaxVal(), 0, 0.1, null, Boolean.TRUE, null, getMetricname(), "float", "ScalarEncoder");
         return fieldEncodings;
     }
 	
@@ -259,16 +272,23 @@ public class TestHTMBolt extends BaseRichBolt {
             		//fetch lapDistance and remove from map once done
             		if(lapdistancemap.containsKey(carnum + "_" + spoutctr)) {
             			String lapdistance = lapdistancemap.get(carnum + "_" + spoutctr);
-            			String tod = timeOfDaymap.get(carnum + "_" + spoutctr);
-            			long tstamp = System.currentTimeMillis();
+            			long tod = timeOfDaymap.get(carnum + "_" + spoutctr);
             			
-//            			pw.println(carnum + "," + spoutctr + "," + getMetricname() + "," + tstamp + "," + tod);
-//           			pw.flush();
+            			long before_emit = System.currentTimeMillis();
             			
-//            		collector.emit(new Values(carnum, getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), spoutctr, lapdistance, tod));
-            			collector.emit(new Values(getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), spoutctr, lapdistance, tod));
+            			collector.emit(new Values(carnum, getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), spoutctr, 
+            							lapdistance, tod, before_emit));
             			lapdistancemap.remove(carnum + "_" + spoutctr);
             			timeOfDaymap.remove(carnum + "_" + spoutctr);
+            			
+            			long after_emit = System.currentTimeMillis();
+            			
+            			pw.write(carnum + "," + spoutctr + "," + getMetricname() + "," + (logtimestamp - spoutimestamp) + "," + (after_emit - spoutimestamp) 
+            					+ "," + (after_emit - logtimestamp) + "," + spoutimestamp + "," + logtimestamp + "," + after_emit + "," + before_emit
+            					+ "," + (after_emit - before_emit) + "\n");
+            			if(Integer.parseInt(spoutctr) % 500 == 0) {
+            				pw.flush();
+            			}
                 		
                 		synchronized (tuple) {
                 			tuple.notify();

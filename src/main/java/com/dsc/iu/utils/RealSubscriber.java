@@ -15,7 +15,7 @@ public class RealSubscriber implements MqttCallback {
 	static PrintWriter pw;
 	
 	public static void main(String[] args) throws IOException {
-		File f = new File("/share/project/FG542/node5/recout/streamingtopic.csv");
+		File f = new File("/scratch/sahil/recout/streamingtopic.csv");
 		pw = new PrintWriter(f);
 		RealSubscriber rs = new RealSubscriber();
 		MqttConnectOptions conn = rs.getconnectObject();
@@ -57,6 +57,7 @@ public class RealSubscriber implements MqttCallback {
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
 		// TODO Auto-generated method stub
 		pw.println(new String(message.getPayload()) + "," + System.currentTimeMillis());
+		pw.flush();
 	}
 
 	@Override

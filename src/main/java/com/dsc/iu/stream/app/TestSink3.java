@@ -21,7 +21,7 @@ import org.json.simple.JSONObject;
 
 import com.dsc.iu.utils.OnlineLearningUtils;
 
-public class TestSink extends BaseRichBolt implements MqttCallback {
+public class TestSink3 extends BaseRichBolt implements MqttCallback {
 	
 	/**
 	 * 
@@ -31,31 +31,29 @@ public class TestSink extends BaseRichBolt implements MqttCallback {
 	private MqttMessage msgobj;
 	private ConcurrentHashMap<String, JSONObject> recordaccumulate;
 	private JSONObject record;
+	private File f;
+	private PrintWriter pw;
 	private String carnum;
-//	public File f;
-//	public PrintWriter pw;
 	
-	public TestSink(String carnum) {
+	public TestSink3(String carnum) {
 		this.carnum = carnum;
 	}
 
 	@Override
 	public void execute(Tuple arg0) {
-		//String carnum = arg0.getStringByField("carnum");
+		String carnum = arg0.getStringByField("carnum");
 		String metric = arg0.getStringByField("metric");
 		String data_val = arg0.getStringByField("dataval");
 		double score = arg0.getDoubleByField("score");
 		String counter = arg0.getStringByField("counter");
-		String timeOfDay = arg0.getStringByField("timeOfDay");
+		long ts = arg0.getLongByField("current_timestamp");
 		String lapDistance = arg0.getStringByField("lapDistance");
-		
-//		pw.println(carnum+","+counter+","+metric+","+data_val+","+timeOfDay+","+System.currentTimeMillis());
-//		pw.flush();
+		long bolt_ts= arg0.getLongByField("bolt_timestamp");
 		
 		if(!recordaccumulate.containsKey(carnum+"_"+counter)) {
 			record = new JSONObject();
 			record.put("carNumber", carnum);
-			record.put("timeOfDay", timeOfDay);
+			record.put("timeOfDay", ts);
 			record.put("lapDistance", lapDistance);
 			record.put("UUID", carnum+"_"+counter);
 			
@@ -90,17 +88,25 @@ public class TestSink extends BaseRichBolt implements MqttCallback {
 			//calculate the CPU and memory utilization caused by aggregator
 			recordaccumulate.remove(carnum+"_"+counter);
 		}
+		
+		long currtime = System.currentTimeMillis();
+		long nanosec = System.nanoTime();
+		pw.write(carnum + "," + counter + "," + metric + "," + (currtime - ts) + "," + (currtime - bolt_ts) + "," + currtime + "," + bolt_ts + "," + ts + ","
+				+ (bolt_ts - ts) + "," + (System.nanoTime() - nanosec) + "\n");
+		if(Integer.parseInt(counter) % 500 == 0) {
+			pw.flush();
+		}
 	}
 
 	@Override
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
 		
-//		f = new File("/N/u/styagi/sinktest.csv");
-//		try {
-//			pw = new PrintWriter(f);
-//		} catch(FileNotFoundException e) {
-//			e.printStackTrace();
-//		}
+		f = new File("/scratch/sahil/sinks/sink-" + carnum + ".csv");
+		try {
+			pw = new PrintWriter(f);
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+		}
 		
 		msgobj = new MqttMessage();
 		recordaccumulate = new ConcurrentHashMap<String, JSONObject>();
@@ -120,9 +126,7 @@ public class TestSink extends BaseRichBolt implements MqttCallback {
 			client = new MqttClient(OnlineLearningUtils.brokerurl, MqttClient.generateClientId());
 			client.setCallback(this);
 			client.connect(conn);
-		} catch(MqttException m) {
-			m.printStackTrace();
-		}
+		} catch(MqttException m) {m.printStackTrace();}
 	}
 
 	@Override
@@ -134,7 +138,7 @@ public class TestSink extends BaseRichBolt implements MqttCallback {
 	public void connectionLost(Throwable cause) {
 		// TODO Auto-generated method stub
 		//xyi5b2YUcw8CHhAE
-		System.out.println("@@@@@@@@@@@@##################$$$$$$$$ connection to MQTT broker lost:" + cause.getMessage());
+		//System.out.println("@@@@@@@@@@@@##################$$$$$$$$ connection to MQTT broker lost:" + cause.getMessage());
 	}
 
 	@Override

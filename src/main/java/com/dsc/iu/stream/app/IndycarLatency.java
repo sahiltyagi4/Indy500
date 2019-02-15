@@ -49,7 +49,9 @@ public class IndycarLatency extends BaseRichSpout implements MqttCallback {
 			data = nonblockingqueue.poll();
 			long ts = System.currentTimeMillis();
 			
-			collector.emit(new Values(topic,data.split(",")[0],data.split(",")[1],data.split(",")[2], data.split(",")[3], data.split(",")[4], data.split(",")[5].split(" ")[1]));
+			if(data.split(",").length ==6 && data.split(",")[5].split(" ").length ==2) {
+				collector.emit(new Values(topic,data.split(",")[0],data.split(",")[1],data.split(",")[2], data.split(",")[3], data.split(",")[4], data.split(",")[5].split(" ")[1]));
+			}
 			
 			pw.println("@@@@@@@@@@@@@@@@@@@@indycarspout," + "speed_" + data.split(",")[3] + "_" + topic + "," + "RPM_" + data.split(",")[3] + "_" + topic 
 						+ "," + "throttle_" + data.split(",")[3] + "_" + topic + "," + ts + "," + data.split(",")[4]);

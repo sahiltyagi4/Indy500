@@ -50,6 +50,7 @@ public class TestSink2 extends BaseRichBolt implements MqttCallback {
 		String lapDistance = arg0.getStringByField("lapDistance");
 		
 		pw.println(carnum+","+counter+","+metric+","+data_val+","+timeOfDay+","+System.currentTimeMillis());
+		pw.flush();
 		
 		if(!recordaccumulate.containsKey(carnum+"_"+counter)) {
 			record = new JSONObject();
@@ -94,7 +95,7 @@ public class TestSink2 extends BaseRichBolt implements MqttCallback {
 	@Override
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
 		
-		f = new File("/share/project/FG542/sinks/sink-" + carnum + ".csv");
+		f = new File("/scratch/sahil/sinks/sink-" + carnum + ".csv");
 		try {
 			pw = new PrintWriter(f);
 		} catch(FileNotFoundException e) {

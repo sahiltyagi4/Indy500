@@ -30,10 +30,11 @@ import rx.Subscriber;
 public class OnlineLearningUtils {
 	public static int inflightMsgRate = 5000;
 	public static int QoS = 2;
-	public static String brokerurl = "tcp://10.16.4.205:61613";
+	public static String brokerurl = "tcp://10.16.4.204:61613";
 	public static String mqttadmin = "admin";
 	public static String mqttpwd = "password";
 	public static String sinkoutTopic = "streaming_output";
+	public static String restart_topic = "status";
 //	public static String brokerurl = "tcp://j-093.juliet.futuresystems.org:61613";
 //	public static String mqttadmin = "admin";
 //	public static String mqttpwd = "xyi5b2YUcw8CHhAE";

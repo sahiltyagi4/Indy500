@@ -26,9 +26,9 @@ public class RealPublisher {
 	public static void main(String[] args) throws IOException {
 		List<String> carlist = new LinkedList<String>();
     		
-		carlist.add("30");
+//		carlist.add("30");
 		
-//		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
+		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
 		
 //		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
 //		carlist.add("7");carlist.add("6");carlist.add("60");carlist.add("27");carlist.add("22");carlist.add("18");carlist.add("3");carlist.add("4");
@@ -59,7 +59,7 @@ class ParallelPublishing implements Runnable, MqttCallback {
 		// TODO Auto-generated method stub
 		try {
 			int counter=0;
-			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("/share/project/FG542/node5/recin/car-"+carnum+".csv"))));
+			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("/scratch/sahil/recin/car-"+carnum+".csv"))));
 			MqttConnectOptions conn = new MqttConnectOptions();
 			conn.setMaxInflight(OnlineLearningUtils.inflightMsgRate);
 			conn.setAutomaticReconnect(true);
@@ -101,6 +101,7 @@ class ParallelPublishing implements Runnable, MqttCallback {
 					
 					if(currentrecTs > previousrecordTs) {
 						wrtr.write(payload + "," + System.currentTimeMillis() + "\n");
+						wrtr.flush();
 						
 						msgobj.setQos(OnlineLearningUtils.QoS);
 						msgobj.setPayload(payload.getBytes());
@@ -134,6 +135,7 @@ class ParallelPublishing implements Runnable, MqttCallback {
 			
 			rdr.close();
 			System.out.println("completed reading file for car: " + carnum);
+			System.out.println("timestamp logged when done reading above file:"+System.currentTimeMillis());
 			wrtr.flush();
 			wrtr.close();
 		} catch(IOException e) {

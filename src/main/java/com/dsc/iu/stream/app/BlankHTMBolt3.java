@@ -33,7 +33,7 @@ import org.numenta.nupic.network.sensor.SensorParams.Keys;
 
 import rx.Subscriber;
 
-public class BlankHTMBolt extends BaseRichBolt {
+public class BlankHTMBolt3 extends BaseRichBolt {
 	
 	private final long serialVersionUID = 1L;
 	private OutputCollector collector;
@@ -46,12 +46,10 @@ public class BlankHTMBolt extends BaseRichBolt {
 	private Publisher manualpublish;
 	private Network network;
 	private ConcurrentHashMap<String, String> lapdistancemap;
-	private ConcurrentHashMap<String, String> timeOfDaymap;
+	private ConcurrentHashMap<String, Long> timeOfDaymap;
 	private Tuple tuple;
 	
-	private PrintWriter pw;
-	
-	public BlankHTMBolt(String metric, String min, String max) {
+	public BlankHTMBolt3(String metric, String min, String max) {
 		this.metric = metric;
 		this.min = Integer.parseInt(min);
 		this.max = Integer.parseInt(max);
@@ -88,13 +86,10 @@ public class BlankHTMBolt extends BaseRichBolt {
 		carnum = tuple.getStringByField("carnum");
 		spoutctr = tuple.getStringByField("counter");
 		lapdistancemap.put(carnum + "_" + spoutctr, tuple.getStringByField("lapDistance"));
-		timeOfDaymap.put(carnum + "_" + spoutctr, tuple.getStringByField("timeOfDay"));
+		timeOfDaymap.put(carnum + "_" + spoutctr, tuple.getLongByField("current_timestamp"));
 		
 		collector.emit(new Values(carnum, getMetricname(), tuple.getStringByField(getMetricname()), 1.0, spoutctr, lapdistancemap.get(carnum+"_"+spoutctr), 
 									timeOfDaymap.get(carnum+"_"+spoutctr)));
-		
-		pw.println(carnum + "," + spoutctr + "," + getMetricname() + "," + System.currentTimeMillis() + "," + timeOfDaymap.get(carnum + "_" + spoutctr));
-		pw.flush();
 		
 		lapdistancemap.remove(carnum+"_"+spoutctr);
 		timeOfDaymap.remove(carnum+"_"+spoutctr);
@@ -105,23 +100,16 @@ public class BlankHTMBolt extends BaseRichBolt {
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
 		
 		lapdistancemap = new ConcurrentHashMap<String, String>();
-		timeOfDaymap = new ConcurrentHashMap<String, String>();
+		timeOfDaymap = new ConcurrentHashMap<String, Long>();
 		setMetricname(metric);
 		setMinVal(min);
 		setMaxVal(max);
-		
-		File boltfile = new File("/scratch/sahil/bolts/boltfile-"+ UUID.randomUUID().toString() + ".txt");
-		try {
-			pw = new PrintWriter(boltfile);
-		} catch(FileNotFoundException f) {
-			f.printStackTrace();
-		}
 		
 		collector = arg2;
 	}
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-		arg0.declare(new Fields("carnum","metric","dataval","score","counter", "lapDistance", "timeOfDay"));
+		arg0.declare(new Fields("carnum","metric","dataval","score","counter", "lapDistance", "current_timestamp"));
 	}
 }
