@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -35,12 +36,6 @@ import rx.Subscriber;
 
 public class TestHTMBolt3 extends BaseRichBolt {
 	
-	/*
-	 *testbed branch code
-	 *
-	 */
-	
-	
 	private final long serialVersionUID = 1L;
 	private OutputCollector collector;
 	private String metric;
@@ -56,6 +51,8 @@ public class TestHTMBolt3 extends BaseRichBolt {
 	private Tuple tuple;
 	private long logtimestamp, spoutimestamp;
 	private PrintWriter pw;
+	
+	private ConcurrentLinkedQueue<Integer> htmMessageQueue;
 	
 	public TestHTMBolt3(String metric, String min, String max) {
 		this.metric = metric;
@@ -89,16 +86,20 @@ public class TestHTMBolt3 extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple arg0) {
-		tuple = arg0;
-		carnum = tuple.getStringByField("carnum");
-		spoutctr = tuple.getStringByField("counter");
-		lapdistancemap.put(carnum + "_" + spoutctr, tuple.getStringByField("lapDistance"));
-		timeOfDaymap.put(carnum + "_" + spoutctr, tuple.getLongByField("current_timestamp"));
-		spoutimestamp = tuple.getLongByField("current_timestamp");
-		
-		logtimestamp = System.currentTimeMillis();
-		
-		if((logtimestamp - spoutimestamp) < 200) {
+		//assuming we're good to process upto 10 tuples in our queue
+		if(htmMessageQueue.size()<= 10) {
+			
+			htmMessageQueue.add(1);
+			
+			tuple = arg0;
+			carnum = tuple.getStringByField("carnum");
+			spoutctr = tuple.getStringByField("counter");
+			lapdistancemap.put(carnum + "_" + spoutctr, tuple.getStringByField("lapDistance"));
+			timeOfDaymap.put(carnum + "_" + spoutctr, tuple.getLongByField("current_timestamp"));
+			spoutimestamp = tuple.getLongByField("current_timestamp");
+			
+			logtimestamp = System.currentTimeMillis();
+			
 			manualpublish.onNext(tuple.getStringByField(getMetricname()));
 			try {
 				synchronized (tuple) {
@@ -107,8 +108,25 @@ public class TestHTMBolt3 extends BaseRichBolt {
 			} catch(InterruptedException e) {
 				e.printStackTrace();
 			}
+			
+			htmMessageQueue.poll();
+			
+		} else {
+			//if the queue is already full, then we want to skip sending these values to HTM and just directly emit them with some default values
+			collector.emit(new Values(carnum, getMetricname(), "REJECTED_TUPLE", 1.0, spoutctr, "LAP_DIST", 0L, 0L));
+			
+			//print these values out to bolt log files
+			pw.write(carnum + "," + "REJECTED_TUPLE" + "," + spoutctr + "," + getMetricname() + "," + (logtimestamp - spoutimestamp)  
+					+ "," + "REJECTED_TUPLE" + "," + spoutimestamp + "," + logtimestamp + "," + "REJECTED_TUPLE" + "," + "REJECTED_TUPLE" 
+					+ "," + "REJECTED_TUPLE" + "\n");
+			
+			lapdistancemap.remove(carnum + "_" + spoutctr);
+			timeOfDaymap.remove(carnum + "_" + spoutctr);
+			
+			if(Integer.parseInt(spoutctr) % 500 == 0) {
+				pw.flush();
+			}
 		}
-		
 	}
 
 	@Override
@@ -121,6 +139,8 @@ public class TestHTMBolt3 extends BaseRichBolt {
 		setMaxVal(max);
 		
 		collector = arg2;
+		
+		htmMessageQueue = new ConcurrentLinkedQueue<Integer>();
 		
 		try {
 			File f = new File("/scratch/sahil/bolts/bolt-" + UUID.randomUUID().toString() + ".csv");
