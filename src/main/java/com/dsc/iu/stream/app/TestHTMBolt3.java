@@ -32,6 +32,8 @@ import org.numenta.nupic.network.sensor.Sensor;
 import org.numenta.nupic.network.sensor.SensorParams;
 import org.numenta.nupic.network.sensor.SensorParams.Keys;
 
+import com.dsc.iu.utils.HTMStruct;
+
 import rx.Subscriber;
 
 public class TestHTMBolt3 extends BaseRichBolt {
@@ -39,20 +41,14 @@ public class TestHTMBolt3 extends BaseRichBolt {
 	private final long serialVersionUID = 1L;
 	private OutputCollector collector;
 	private String metric;
-	//spoutctr brings the counter value from telemetry publisher and used for generating keys for lapDistance and timeOfDay hashmaps
-	private String carnum, spoutctr;
+	private String carnum;
 	private int min, max;
-	//ctr to increment after processing each tuple and used to match records for lapDistance and timeOfDay hashmaps. Basically, htmctr replaces spoutctr as data point emitted to sink and match a tuple for it's original features
-	//private int htmctr=0;
 	private Publisher manualpublish;
 	private Network network;
-	private ConcurrentHashMap<String, String> lapdistancemap;
-	private ConcurrentHashMap<String, Long> timeOfDaymap;
-	private Tuple tuple;
-	private long logtimestamp, spoutimestamp;
 	private PrintWriter pw;
 	
-	private ConcurrentLinkedQueue<Integer> htmMessageQueue;
+	private ConcurrentLinkedQueue<HTMStruct> htmMessageQueue;
+	private HTMStruct struct;
 	
 	public TestHTMBolt3(String metric, String min, String max) {
 		this.metric = metric;
@@ -86,61 +82,40 @@ public class TestHTMBolt3 extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple arg0) {
-		//assuming we're good to process upto 10 tuples in our queue
-		if(htmMessageQueue.size()<= 10) {
-			
-			htmMessageQueue.add(1);
-			
-			tuple = arg0;
-			carnum = tuple.getStringByField("carnum");
-			spoutctr = tuple.getStringByField("counter");
-			lapdistancemap.put(carnum + "_" + spoutctr, tuple.getStringByField("lapDistance"));
-			timeOfDaymap.put(carnum + "_" + spoutctr, tuple.getLongByField("current_timestamp"));
-			spoutimestamp = tuple.getLongByField("current_timestamp");
-			
-			logtimestamp = System.currentTimeMillis();
-			
-			manualpublish.onNext(tuple.getStringByField(getMetricname()));
-			try {
-				synchronized (tuple) {
-					tuple.wait();
-				}
-			} catch(InterruptedException e) {
-				e.printStackTrace();
-			}
-			
-			htmMessageQueue.poll();
+		
+		struct = new HTMStruct();
+		struct.setCarnum(arg0.getStringByField("carnum"));
+		struct.setSpoutcounter(arg0.getStringByField("counter"));
+		struct.setSpout_ts(arg0.getLongByField("spout_timestamp"));
+		struct.setLapDistance(arg0.getStringByField("lapDistance"));
+		struct.setMetricval(arg0.getStringByField(getMetricname()));
+		
+		if(htmMessageQueue.size() <= 10) {
+			struct.setHtmflag(true);
 			
 		} else {
-			//if the queue is already full, then we want to skip sending these values to HTM and just directly emit them with some default values
-			collector.emit(new Values(carnum, getMetricname(), "REJECTED_TUPLE", 1.0, spoutctr, "LAP_DIST", 0L, 0L));
-			
-			//print these values out to bolt log files
-			pw.write(carnum + "," + "REJECTED_TUPLE" + "," + spoutctr + "," + getMetricname() + "," + (logtimestamp - spoutimestamp)  
-					+ "," + "REJECTED_TUPLE" + "," + spoutimestamp + "," + logtimestamp + "," + "REJECTED_TUPLE" + "," + "REJECTED_TUPLE" 
-					+ "," + "REJECTED_TUPLE" + "\n");
-			
-			lapdistancemap.remove(carnum + "_" + spoutctr);
-			timeOfDaymap.remove(carnum + "_" + spoutctr);
-			
-			if(Integer.parseInt(spoutctr) % 500 == 0) {
-				pw.flush();
-			}
+			struct.setHtmflag(false);
+		}
+		
+		struct.setBolt_ts(System.currentTimeMillis());
+		
+		htmMessageQueue.add(struct);
+		
+		//do a peek and publish to HTM only when there are less than 10 elements in queue
+		if(htmMessageQueue.peek().isHtmflag()) {
+			manualpublish.onNext(htmMessageQueue.peek().getMetricval());
 		}
 	}
 
 	@Override
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
 		
-		lapdistancemap = new ConcurrentHashMap<String, String>();
-		timeOfDaymap = new ConcurrentHashMap<String, Long>();
 		setMetricname(metric);
 		setMinVal(min);
 		setMaxVal(max);
 		
 		collector = arg2;
-		
-		htmMessageQueue = new ConcurrentLinkedQueue<Integer>();
+		htmMessageQueue = new ConcurrentLinkedQueue<HTMStruct>();
 		
 		try {
 			File f = new File("/scratch/sahil/bolts/bolt-" + UUID.randomUUID().toString() + ".csv");
@@ -174,7 +149,7 @@ public class TestHTMBolt3 extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-		arg0.declare(new Fields("carnum","metric","dataval","score","counter", "lapDistance", "current_timestamp", "bolt_timestamp"));
+		arg0.declare(new Fields("carnum","metric","dataval","score","counter", "lapDistance", "spout_timestamp", "bolt_timestamp"));
 	}
 	
 	private static Parameters getParams() {
@@ -281,39 +256,78 @@ public class TestHTMBolt3 extends BaseRichBolt {
         return map;
     }
 	
+//	private Subscriber<Inference> getSubscriber() {
+//        return new Subscriber<Inference>() {
+//            @Override public void onCompleted() {}
+//            @Override public void onError(Throwable e) { e.printStackTrace(); }
+//            @Override public void onNext(Inference infer) {
+//            		double actual_val = (Double)infer.getClassifierInput().get(getMetricname()).get("inputValue");
+//            		
+//            		//on account of wait and notify methods, remove htmctr and use global counter sent downstream from bolt
+//            		//fetch lapDistance and remove from map once done
+//            		if(lapdistancemap.containsKey(carnum + "_" + spoutctr)) {
+//            			String lapdistance = lapdistancemap.get(carnum + "_" + spoutctr);
+//            			long tod = timeOfDaymap.get(carnum + "_" + spoutctr);
+//            			
+//            			long before_emit = System.currentTimeMillis();
+//            			
+//            			collector.emit(new Values(carnum, getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), spoutctr, 
+//            							lapdistance, tod, before_emit));
+//            			lapdistancemap.remove(carnum + "_" + spoutctr);
+//            			timeOfDaymap.remove(carnum + "_" + spoutctr);
+//            			
+//            			long after_emit = System.currentTimeMillis();
+//            			
+//            			pw.write(carnum + "," + spoutctr + "," + getMetricname() + "," + (logtimestamp - spoutimestamp) + "," + (after_emit - spoutimestamp) 
+//            					+ "," + (after_emit - logtimestamp) + "," + spoutimestamp + "," + logtimestamp + "," + after_emit + "," + before_emit
+//            					+ "," + (after_emit - before_emit) + "\n");
+//            			if(Integer.parseInt(spoutctr) % 500 == 0) {
+//            				pw.flush();
+//            			}
+//                		
+//                		synchronized (tuple) {
+//                			tuple.notify();
+//					}
+//            		}
+//            }
+//        };
+//    }
+	
 	private Subscriber<Inference> getSubscriber() {
         return new Subscriber<Inference>() {
             @Override public void onCompleted() {}
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference infer) {
-            		double actual_val = (Double)infer.getClassifierInput().get(getMetricname()).get("inputValue");
             		
-            		//on account of wait and notify methods, remove htmctr and use global counter sent downstream from bolt
-            		//fetch lapDistance and remove from map once done
-            		if(lapdistancemap.containsKey(carnum + "_" + spoutctr)) {
-            			String lapdistance = lapdistancemap.get(carnum + "_" + spoutctr);
-            			long tod = timeOfDaymap.get(carnum + "_" + spoutctr);
+            		HTMStruct object = htmMessageQueue.peek();
+            		
+            		if(!htmMessageQueue.peek().isHtmflag()) {
+            			//if the queue is already full, then we don't send these values to HTM and just directly emit them with some default values
+            			collector.emit(new Values(carnum, getMetricname(), "REJECTED_TUPLE", 1.0, object.getSpoutcounter(), "LAP_DIST", 0L, 0L));
             			
+            			//print these values out to bolt log files
+            			pw.write(carnum + "," + "REJECTED_TUPLE" + "," + object.getSpoutcounter() + "," + getMetricname() + "," + (object.getBolt_ts() - object.getSpout_ts())  
+            					+ "," + "REJECTED_TUPLE" + "," + object.getSpout_ts() + "," + object.getBolt_ts() + "," + "REJECTED_TUPLE" + "," + "REJECTED_TUPLE" 
+            					+ "," + "REJECTED_TUPLE" + "\n");
+            		}
+            		//fetch anomaly score and relevant data downstream with actual values only if the htm_flag is set to TRUE
+            		else {
+            			double actual_val = (Double)infer.getClassifierInput().get(getMetricname()).get("inputValue");
             			long before_emit = System.currentTimeMillis();
-            			
-            			collector.emit(new Values(carnum, getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), spoutctr, 
-            							lapdistance, tod, before_emit));
-            			lapdistancemap.remove(carnum + "_" + spoutctr);
-            			timeOfDaymap.remove(carnum + "_" + spoutctr);
+            			collector.emit(new Values(object.getCarnum(), getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), 
+            							object.getSpoutcounter(), object.getLapDistance(), object.getSpout_ts(), object.getBolt_ts()));
             			
             			long after_emit = System.currentTimeMillis();
+            			pw.write(object.getCarnum() + "," + object.getSpoutcounter() + "," + getMetricname() + "," + (object.getBolt_ts() - object.getSpout_ts()) 
+            					+ "," + (after_emit - object.getSpout_ts()) + "," + (after_emit - object.getBolt_ts()) + "," + object.getSpout_ts() 
+            					+ "," + object.getBolt_ts() + "," + after_emit + "," + before_emit + "," + (after_emit - before_emit) + "\n");
             			
-            			pw.write(carnum + "," + spoutctr + "," + getMetricname() + "," + (logtimestamp - spoutimestamp) + "," + (after_emit - spoutimestamp) 
-            					+ "," + (after_emit - logtimestamp) + "," + spoutimestamp + "," + logtimestamp + "," + after_emit + "," + before_emit
-            					+ "," + (after_emit - before_emit) + "\n");
-            			if(Integer.parseInt(spoutctr) % 500 == 0) {
+            			if(Integer.parseInt(object.getSpoutcounter()) % 500 == 0) {
             				pw.flush();
             			}
-                		
-                		synchronized (tuple) {
-                			tuple.notify();
-					}
             		}
+            		
+            		htmMessageQueue.poll();
             }
         };
     }

@@ -46,7 +46,7 @@ public class TestSink3 extends BaseRichBolt implements MqttCallback {
 		String data_val = arg0.getStringByField("dataval");
 		double score = arg0.getDoubleByField("score");
 		String counter = arg0.getStringByField("counter");
-		long ts = arg0.getLongByField("current_timestamp");
+		long ts = arg0.getLongByField("spout_timestamp");
 		String lapDistance = arg0.getStringByField("lapDistance");
 		long bolt_ts= arg0.getLongByField("bolt_timestamp");
 		

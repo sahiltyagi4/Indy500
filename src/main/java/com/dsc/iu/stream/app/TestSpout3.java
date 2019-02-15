@@ -76,7 +76,7 @@ public class TestSpout3 extends BaseRichSpout implements MqttCallback {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-		arg0.declare(new Fields("carnum","speed","RPM","throttle","counter","lapDistance","current_timestamp"));
+		arg0.declare(new Fields("carnum","speed","RPM","throttle","counter","lapDistance","spout_timestamp"));
 	}
 
 	@Override
