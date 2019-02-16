@@ -26,9 +26,9 @@ public class RealPublisher {
 	public static void main(String[] args) throws IOException {
 		List<String> carlist = new LinkedList<String>();
     		
-//		carlist.add("30");
+		carlist.add("20");
 		
-		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
+//		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
 		
 //		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
 //		carlist.add("7");carlist.add("6");carlist.add("60");carlist.add("27");carlist.add("22");carlist.add("18");carlist.add("3");carlist.add("4");

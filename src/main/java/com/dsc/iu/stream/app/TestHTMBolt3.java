@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -299,35 +300,43 @@ public class TestHTMBolt3 extends BaseRichBolt {
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference infer) {
             		
-            		HTMStruct object = htmMessageQueue.peek();
-            		
-            		if(!htmMessageQueue.peek().isHtmflag()) {
-            			//if the queue is already full, then we don't send these values to HTM and just directly emit them with some default values
-            			collector.emit(new Values(object.getCarnum(), getMetricname(), "REJECTED_TUPLE", 1.0, object.getSpoutcounter(), "LAP_DIST", 0L, 0L));
-            			
-            			//print these values out to bolt log files
-            			pw.write(object.getCarnum() + "," + "REJECTED_TUPLE" + "," + object.getSpoutcounter() + "," + getMetricname() + "," + (object.getBolt_ts() - object.getSpout_ts())  
-            					+ "," + "REJECTED_TUPLE" + "," + object.getSpout_ts() + "," + object.getBolt_ts() + "," + "REJECTED_TUPLE" + "," + "REJECTED_TUPLE" 
-            					+ "," + "REJECTED_TUPLE" + "\n");
-            		}
-            		//fetch anomaly score and relevant data downstream with actual values only if the htm_flag is set to TRUE
-            		else {
-            			double actual_val = (Double)infer.getClassifierInput().get(getMetricname()).get("inputValue");
-            			long before_emit = System.currentTimeMillis();
-            			collector.emit(new Values(object.getCarnum(), getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), 
-            							object.getSpoutcounter(), object.getLapDistance(), object.getSpout_ts(), object.getBolt_ts()));
-            			
-            			long after_emit = System.currentTimeMillis();
-            			pw.write(object.getCarnum() + "," + object.getSpoutcounter() + "," + getMetricname() + "," + (object.getBolt_ts() - object.getSpout_ts()) 
-            					+ "," + (after_emit - object.getSpout_ts()) + "," + (after_emit - object.getBolt_ts()) + "," + object.getSpout_ts() 
-            					+ "," + object.getBolt_ts() + "," + after_emit + "," + before_emit + "," + (after_emit - before_emit) + "\n");
-            			
-            			if(Integer.parseInt(object.getSpoutcounter()) % 500 == 0) {
-            				pw.flush();
+            		Iterator<HTMStruct> iterator = htmMessageQueue.iterator();
+            		HTMStruct struct_obj;
+            		while(iterator.hasNext()) {
+            			struct_obj = iterator.next();
+            			if(!struct_obj.isHtmflag()) {
+            				//if the queue is already full, then we don't send these values to HTM and just directly emit them with some default values
+                			collector.emit(new Values(struct_obj.getCarnum(), getMetricname(), "REJECTED_TUPLE", 1.0, struct_obj.getSpoutcounter(), "LAP_DIST", 0L, 0L));
+                			
+                			//print these values out to bolt log files
+                			pw.write(struct_obj.getCarnum() + "," + "REJECTED_TUPLE" + "," + struct_obj.getSpoutcounter() + "," + getMetricname() + "," + (struct_obj.getBolt_ts() - struct_obj.getSpout_ts())  
+                					+ "," + "REJECTED_TUPLE" + "," + struct_obj.getSpout_ts() + "," + struct_obj.getBolt_ts() + "," + "REJECTED_TUPLE" + "," + "REJECTED_TUPLE" 
+                					+ "," + "REJECTED_TUPLE" + "\n");
+                			
+                			pw.flush();
+                			htmMessageQueue.remove(struct_obj);
             			}
             		}
-            		
-            		htmMessageQueue.poll();
+            	
+            		struct_obj = htmMessageQueue.peek();
+            		//fetch anomaly score and relevant data downstream with actual values only if the htm_flag is set to TRUE
+            		if(struct_obj.isHtmflag()) {
+            			double actual_val = (Double)infer.getClassifierInput().get(getMetricname()).get("inputValue");
+            			long before_emit = System.currentTimeMillis();
+            			collector.emit(new Values(struct_obj.getCarnum(), getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), 
+            					struct_obj.getSpoutcounter(), struct_obj.getLapDistance(), struct_obj.getSpout_ts(), struct_obj.getBolt_ts()));
+            			
+            			long after_emit = System.currentTimeMillis();
+            			pw.write(struct_obj.getCarnum() + "," + struct_obj.getSpoutcounter() + "," + getMetricname() + "," + (struct_obj.getBolt_ts() - struct_obj.getSpout_ts()) 
+            					+ "," + (after_emit - struct_obj.getSpout_ts()) + "," + (after_emit - struct_obj.getBolt_ts()) + "," + struct_obj.getSpout_ts() 
+            					+ "," + struct_obj.getBolt_ts() + "," + after_emit + "," + before_emit + "," + (after_emit - before_emit) + "\n");
+            			
+            			if(Integer.parseInt(struct_obj.getSpoutcounter()) % 500 == 0) {
+            				pw.flush();
+            			}
+            			
+            			htmMessageQueue.poll();
+            		}
             }
         };
     }
