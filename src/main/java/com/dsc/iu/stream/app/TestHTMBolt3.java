@@ -104,8 +104,7 @@ public class TestHTMBolt3 extends BaseRichBolt {
 			struct.setBolt_ts(System.currentTimeMillis());
 
 			htmMessageQueue.add(struct);
-
-			//do a peek and publish to HTM only when there are less than 10 elements in queue
+			
 			if (htmMessageQueue.peek().isHtmflag()) {
 				manualpublish.onNext(htmMessageQueue.peek().getMetricval());
 			}
