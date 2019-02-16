@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -300,23 +301,8 @@ public class TestHTMBolt3 extends BaseRichBolt {
             @Override public void onError(Throwable e) { e.printStackTrace(); }
             @Override public void onNext(Inference infer) {
             		
-            		Iterator<HTMStruct> iterator = htmMessageQueue.iterator();
+            		
             		HTMStruct struct_obj;
-            		while(iterator.hasNext()) {
-            			struct_obj = iterator.next();
-            			if(!struct_obj.isHtmflag()) {
-            				//if the queue is already full, then we don't send these values to HTM and just directly emit them with some default values
-                			collector.emit(new Values(struct_obj.getCarnum(), getMetricname(), "REJECTED_TUPLE", 1.0, struct_obj.getSpoutcounter(), "LAP_DIST", 0L, 0L));
-                			
-                			//print these values out to bolt log files
-                			pw.write(struct_obj.getCarnum() + "," + "REJECTED_TUPLE" + "," + struct_obj.getSpoutcounter() + "," + getMetricname() + "," + (struct_obj.getBolt_ts() - struct_obj.getSpout_ts())  
-                					+ "," + "REJECTED_TUPLE" + "," + struct_obj.getSpout_ts() + "," + struct_obj.getBolt_ts() + "," + "REJECTED_TUPLE" + "," + "REJECTED_TUPLE" 
-                					+ "," + "REJECTED_TUPLE" + "\n");
-                			
-                			pw.flush();
-                			htmMessageQueue.remove(struct_obj);
-            			}
-            		}
             	
             		struct_obj = htmMessageQueue.peek();
             		//fetch anomaly score and relevant data downstream with actual values only if the htm_flag is set to TRUE
@@ -336,6 +322,25 @@ public class TestHTMBolt3 extends BaseRichBolt {
             			}
             			
             			htmMessageQueue.poll();
+            		}
+            		
+            		Iterator<HTMStruct> iterator = htmMessageQueue.iterator();
+            		while(iterator.hasNext()) {
+            			struct_obj = iterator.next();
+            			if(!struct_obj.isHtmflag()) {
+            				//if the queue is already full, then we don't send these values to HTM and just directly emit them with some default values
+                			collector.emit(new Values(struct_obj.getCarnum(), getMetricname(), "REJECTED_TUPLE", 1.0, struct_obj.getSpoutcounter(), "LAP_DIST", 0L, 0L));
+                			
+                			//print these values out to bolt log files
+                			pw.write(struct_obj.getCarnum() + "," + "REJECTED_TUPLE" + "," + struct_obj.getSpoutcounter() + "," + getMetricname() + "," + (struct_obj.getBolt_ts() - struct_obj.getSpout_ts())  
+                					+ "," + "REJECTED_TUPLE" + "," + struct_obj.getSpout_ts() + "," + struct_obj.getBolt_ts() + "," + "REJECTED_TUPLE" + "," + "REJECTED_TUPLE" 
+                					+ "," + "REJECTED_TUPLE" + "\n");
+                			
+                			pw.flush();
+                			htmMessageQueue.remove(struct_obj);
+            			} else {
+            				break;
+            			}
             		}
             }
         };
