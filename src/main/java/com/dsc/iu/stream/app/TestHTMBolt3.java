@@ -342,6 +342,7 @@ public class TestHTMBolt3 extends BaseRichBolt {
 
 							pw.flush();
 							htmMessageQueue.poll();
+							struct_obj = htmMessageQueue.peek();
 						} else {
 							break;
 						}
