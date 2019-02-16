@@ -41,7 +41,6 @@ public class TestHTMBolt3 extends BaseRichBolt {
 	private final long serialVersionUID = 1L;
 	private OutputCollector collector;
 	private String metric;
-	private String carnum;
 	private int min, max;
 	private Publisher manualpublish;
 	private Network network;
@@ -130,13 +129,14 @@ public class TestHTMBolt3 extends BaseRichBolt {
 				.addHeader("B")
 				.build();
 		
+		String uid = UUID.randomUUID().toString();
 		Sensor<ObservableSensor<String[]>> sensor = Sensor.create(ObservableSensor::create, SensorParams.create(Keys::obs, 
-													new Object[] {carnum+"_"+getMetricname(), manualpublish }));
+													new Object[] {uid+"_"+getMetricname(), manualpublish }));
 		Parameters params = getParams();
 		params = params.union(getNetworkLearningEncoderParams());
-		Network network = Network.create(carnum+"_"+getMetricname(), params)
-						.add(Network.createRegion(carnum+"_"+getMetricname()+"_region")
-						.add(Network.createLayer(carnum+"_"+getMetricname() +"_layer2/3", params)
+		Network network = Network.create(uid+"_"+getMetricname(), params)
+						.add(Network.createRegion(uid+"_"+getMetricname()+"_region")
+						.add(Network.createLayer(uid+"_"+getMetricname() +"_layer2/3", params)
 						.alterParameter(KEY.AUTO_CLASSIFY, Boolean.TRUE)
 						.add(Anomaly.create())
 						.add(new TemporalMemory())
@@ -303,10 +303,10 @@ public class TestHTMBolt3 extends BaseRichBolt {
             		
             		if(!htmMessageQueue.peek().isHtmflag()) {
             			//if the queue is already full, then we don't send these values to HTM and just directly emit them with some default values
-            			collector.emit(new Values(carnum, getMetricname(), "REJECTED_TUPLE", 1.0, object.getSpoutcounter(), "LAP_DIST", 0L, 0L));
+            			collector.emit(new Values(object.getCarnum(), getMetricname(), "REJECTED_TUPLE", 1.0, object.getSpoutcounter(), "LAP_DIST", 0L, 0L));
             			
             			//print these values out to bolt log files
-            			pw.write(carnum + "," + "REJECTED_TUPLE" + "," + object.getSpoutcounter() + "," + getMetricname() + "," + (object.getBolt_ts() - object.getSpout_ts())  
+            			pw.write(object.getCarnum() + "," + "REJECTED_TUPLE" + "," + object.getSpoutcounter() + "," + getMetricname() + "," + (object.getBolt_ts() - object.getSpout_ts())  
             					+ "," + "REJECTED_TUPLE" + "," + object.getSpout_ts() + "," + object.getBolt_ts() + "," + "REJECTED_TUPLE" + "," + "REJECTED_TUPLE" 
             					+ "," + "REJECTED_TUPLE" + "\n");
             		}
