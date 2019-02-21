@@ -19,13 +19,36 @@ public class IndycarAppLatency {
 	public static String dirname;
 
 	public static void main(String[] args) {
-		
-		dirname = args[0];
-		spoutToSinkLatency();
-		System.out.println("completed execution");
-		
-		//for end to end pub to sub latency
-		//comparepubsubmaps();
+		File out = new File("/Users/sahiltyagi/Desktop/benchmarks/1blank/spoutsinklatency.csv");
+		try {
+			PrintWriter pw  =new PrintWriter(out);
+			int counter=0;
+//			File f = new File("/share/project/FG542/" + dirname + "/sinks/");
+			File f = new File("/Users/sahiltyagi/Desktop/benchmarks/1blank/sinks/");
+			if(f.isDirectory()) {
+				File[] carfiles = f.listFiles();
+				for(File crfile : carfiles) {
+					System.out.println("goin to read:"+crfile.getName());
+					BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(crfile)));
+					String line;
+					System.out.println(crfile.getName().split("-")[1].replaceAll(".csv", "").trim());
+					while((line=rdr.readLine()) != null) {
+						if(line.split(",").length == 10 && !line.split(",")[line.split(",").length -2].equals("0") && !line.split(",")[line.split(",").length -3].equals("0") 
+								&& !line.split(",")[line.split(",").length -4].equals("0")) {
+							
+							counter++;
+							pw.println(counter+","+Long.parseLong(line.split(",")[3]));
+							
+						}
+					}
+					rdr.close();
+				}
+				pw.close();
+				System.out.println("#############################");
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private static HashMap<String, Long> procSubscriber() {
@@ -126,8 +149,9 @@ public class IndycarAppLatency {
 					String line;
 					System.out.println(crfile.getName().split("-")[1].replaceAll(".csv", "").trim());
 					while((line=rdr.readLine()) != null) {
-						if(line.split(",").length == 6) {
-							sinkmap.put(line.split(",")[0] + "_" + line.split(",")[1], Long.parseLong(line.split(",")[5]));
+						if(line.split(",").length == 10 && line.split(",")[line.split(",").length -2].equals("0") && line.split(",")[line.split(",").length -3].equals("0") 
+								&& line.split(",")[line.split(",").length -4].equals("0")) {
+							sinkmap.put(line.split(",")[0] + "_" + line.split(",")[1], Long.parseLong(line.split(",")[3]));
 						}
 					}
 					rdr.close();

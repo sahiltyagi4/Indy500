@@ -82,14 +82,15 @@ public class BlankHTMBolt3 extends BaseRichBolt {
 	@Override
 	public void execute(Tuple arg0) {
 		tuple = arg0;
+		long bolt_ts = System.currentTimeMillis();
 		
 		carnum = tuple.getStringByField("carnum");
 		spoutctr = tuple.getStringByField("counter");
 		lapdistancemap.put(carnum + "_" + spoutctr, tuple.getStringByField("lapDistance"));
-		timeOfDaymap.put(carnum + "_" + spoutctr, tuple.getLongByField("current_timestamp"));
+		timeOfDaymap.put(carnum + "_" + spoutctr, tuple.getLongByField("spout_timestamp"));
 		
 		collector.emit(new Values(carnum, getMetricname(), tuple.getStringByField(getMetricname()), 1.0, spoutctr, lapdistancemap.get(carnum+"_"+spoutctr), 
-									timeOfDaymap.get(carnum+"_"+spoutctr)));
+				tuple.getLongByField("spout_timestamp"), bolt_ts));
 		
 		lapdistancemap.remove(carnum+"_"+spoutctr);
 		timeOfDaymap.remove(carnum+"_"+spoutctr);
@@ -110,6 +111,7 @@ public class BlankHTMBolt3 extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-		arg0.declare(new Fields("carnum","metric","dataval","score","counter", "lapDistance", "current_timestamp"));
+	//	arg0.declare(new Fields("carnum","metric","dataval","score","counter", "lapDistance", "current_timestamp"));
+		arg0.declare(new Fields("carnum","metric","dataval","score","counter", "lapDistance", "spout_timestamp", "bolt_timestamp"));
 	}
 }

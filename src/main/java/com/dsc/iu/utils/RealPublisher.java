@@ -28,7 +28,14 @@ public class RealPublisher {
     		
 		carlist.add("20");
 		
-//		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
+//		carlist.add("13");
+//		carlist.add("19");
+//		carlist.add("20");
+//		carlist.add("21");
+//		carlist.add("24");
+//		carlist.add("26");
+//		carlist.add("33");
+//		carlist.add("98");
 		
 //		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
 //		carlist.add("7");carlist.add("6");carlist.add("60");carlist.add("27");carlist.add("22");carlist.add("18");carlist.add("3");carlist.add("4");
@@ -81,13 +88,12 @@ class ParallelPublishing implements Runnable, MqttCallback {
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 			File f = new File("/scratch/sahil/IPBroadcaster_Input_2018-05-27_0.log");
 			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
+			System.out.println("going to start reading at:"+System.currentTimeMillis());
 			String line;
 			long previousrecordTs=Long.MIN_VALUE;
 			long currentrecTs=Long.MIN_VALUE;
 			String prevrecord="";
 			while((line=rdr.readLine()) != null) {
-				//matches("\\d+:\\d+:\\d+.\\d+")
-//				if(line.startsWith("$P") && line.split("�")[2].length() >9 && line.split("�")[1].equalsIgnoreCase(carnum)) {
 				if(line.startsWith("$P") && line.split("�")[2].matches("\\d+:\\d+:\\d+.\\d+") && line.split("�")[1].equalsIgnoreCase(carnum)) {
 					counter++;
 					try {
@@ -134,6 +140,7 @@ class ParallelPublishing implements Runnable, MqttCallback {
 			}
 			
 			rdr.close();
+			System.out.println("count value for car " + carnum + " is:" + counter);
 			System.out.println("completed reading file for car: " + carnum);
 			System.out.println("timestamp logged when done reading above file:"+System.currentTimeMillis());
 			wrtr.flush();

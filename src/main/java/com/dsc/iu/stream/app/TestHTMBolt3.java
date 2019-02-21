@@ -311,7 +311,7 @@ public class TestHTMBolt3 extends BaseRichBolt {
 				try {
 					struct_obj = htmMessageQueue.peek();
 					//fetch anomaly score and relevant data downstream with actual values only if the htm_flag is set to TRUE
-					if (struct_obj.isHtmflag()) {
+					if (struct_obj != null && struct_obj.isHtmflag()) {
 						double actual_val = (Double) infer.getClassifierInput().get(getMetricname()).get("inputValue");
 						long before_emit = System.currentTimeMillis();
 						collector.emit(new Values(struct_obj.getCarnum(), getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(),

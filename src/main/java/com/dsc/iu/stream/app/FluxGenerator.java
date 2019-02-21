@@ -76,7 +76,7 @@ public class FluxGenerator {
 
     public static void main(String[] args) throws IOException {
         StringBuilder fluxTemplate = new StringBuilder(
-                "name: \"cars-8-HTM-testbed\"\n" +
+                "name: \"testbed-1carHTM\"\n" +
                         "config:\n" +
                         "  topology.workers: 1\n" +
                         "  topology.debug: false\n" +
@@ -90,9 +90,16 @@ public class FluxGenerator {
         
         List<String> carlist = new LinkedList<String>();
         
-        carlist.add("20");
+      carlist.add("20");
         
-//        carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");
+//        carlist.add("13");
+//		carlist.add("19");
+//		carlist.add("20");
+//		carlist.add("21");
+//		carlist.add("24");
+//		carlist.add("26");
+//		carlist.add("33");
+//		carlist.add("98");
     	
 //        carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");
 //        carlist.add("26");carlist.add("7");carlist.add("6");
@@ -127,7 +134,7 @@ public class FluxGenerator {
         fluxTemplate.append("\n");
         fluxTemplate.append(streams);
 
-        FileWriter fileWriter = new FileWriter(new File("/Users/sahiltyagi/Desktop/testbed-1car.yaml"));
+        FileWriter fileWriter = new FileWriter(new File("/Users/sahiltyagi/Desktop/testbed-1carHTM.yaml"));
         fileWriter.write(fluxTemplate.toString());
         fileWriter.flush();
         fileWriter.close();

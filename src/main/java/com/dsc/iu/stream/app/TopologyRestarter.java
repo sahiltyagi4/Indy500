@@ -54,7 +54,7 @@ public class TopologyRestarter implements MqttCallback {
 					Thread.sleep(20000);
 					System.out.println("going to kill topology");
 					
-					procbuildr = new ProcessBuilder("/scratch_ssd/sahil/apache-storm-1.0.4/bin/storm", "jar", "Indycar500-1.0-SNAPSHOT-jar-with-dependencies.jar", 
+					procbuildr = new ProcessBuilder("/scratch_ssd/sahil/apache-storm-1.0.4/bin/storm", "jar", "/scratch_ssd/sahil/Indycar500-1.0-SNAPSHOT-jar-with-dependencies.jar", 
 													"org.apache.storm.flux.Flux", "--remote", "/scratch_ssd/sahil/production-8cars.yaml");
 					p = procbuildr.start();
 					Thread.sleep(20000);
