@@ -1,7 +1,7 @@
 package com.dsc.iu.utils;
 
 public class HTMStruct {
-	String carnum, spoutcounter, lapDistance, metricval;
+	String carnum, spoutcounter, lapDistance, metricval, timeofday;
 	long spout_ts, bolt_ts;
 	boolean htmflag;
 	
@@ -10,6 +10,12 @@ public class HTMStruct {
 	}
 	public void setSpout_ts(long spout_ts) {
 		this.spout_ts = spout_ts;
+	}
+	public String getTimeofday() {
+		return timeofday;
+	}
+	public void setTimeofday(String timeofday) {
+		this.timeofday = timeofday;
 	}
 	public long getBolt_ts() {
 		return bolt_ts;

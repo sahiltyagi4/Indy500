@@ -1,8 +1,5 @@
 package com.dsc.iu.stream.app;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -36,7 +33,7 @@ import com.dsc.iu.utils.HTMStruct;
 
 import rx.Subscriber;
 
-public class TestHTMBolt3 extends BaseRichBolt {
+public class TestHTMBolt2 extends BaseRichBolt {
 
 	private final long serialVersionUID = 1L;
 	private OutputCollector collector;
@@ -44,14 +41,13 @@ public class TestHTMBolt3 extends BaseRichBolt {
 	private int min, max;
 	private Publisher manualpublish;
 	private Network network;
-//	private PrintWriter pw;
 
 	private ConcurrentLinkedQueue<HTMStruct> htmMessageQueue;
 	private HTMStruct struct;
 
 	private Lock lock = new ReentrantLock();
 
-	public TestHTMBolt3(String metric, String min, String max) {
+	public TestHTMBolt2(String metric, String min, String max) {
 		this.metric = metric;
 		this.min = Integer.parseInt(min);
 		this.max = Integer.parseInt(max);
@@ -87,8 +83,8 @@ public class TestHTMBolt3 extends BaseRichBolt {
 		struct = new HTMStruct();
 		struct.setCarnum(arg0.getStringByField("carnum"));
 		struct.setSpoutcounter(arg0.getStringByField("counter"));
-		struct.setSpout_ts(arg0.getLongByField("spout_timestamp"));
 		struct.setLapDistance(arg0.getStringByField("lapDistance"));
+		struct.setTimeofday(arg0.getStringByField("timeOfDay"));
 		struct.setMetricval(arg0.getStringByField(getMetricname()));
 
 		lock.lock();
@@ -123,14 +119,6 @@ public class TestHTMBolt3 extends BaseRichBolt {
 		collector = arg2;
 		htmMessageQueue = new ConcurrentLinkedQueue<HTMStruct>();
 
-//		try {
-////			File f = new File("/scratch/sahil/bolts/bolt-" + UUID.randomUUID().toString() + ".csv");
-//			File f = new File("/scratch_ssd/rbapat/bolts/bolt-" + UUID.randomUUID().toString() + ".csv");
-//			pw = new PrintWriter(f);
-//		} catch(IOException e) {
-//			e.printStackTrace();
-//		}
-
 		manualpublish = Publisher.builder()
 				.addHeader(getMetricname())
 				.addHeader("float")
@@ -157,7 +145,7 @@ public class TestHTMBolt3 extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-		arg0.declare(new Fields("carnum","metric","dataval","score","counter", "lapDistance", "spout_timestamp", "bolt_timestamp"));
+		arg0.declare(new Fields("metric", "dataval", "score", "counter", "lapDistance", "timeOfDay"));
 	}
 
 	private static Parameters getParams() {
@@ -264,43 +252,6 @@ public class TestHTMBolt3 extends BaseRichBolt {
 		return map;
 	}
 
-//	private Subscriber<Inference> getSubscriber() {
-//        return new Subscriber<Inference>() {
-//            @Override public void onCompleted() {}
-//            @Override public void onError(Throwable e) { e.printStackTrace(); }
-//            @Override public void onNext(Inference infer) {
-//            		double actual_val = (Double)infer.getClassifierInput().get(getMetricname()).get("inputValue");
-//
-//            		//on account of wait and notify methods, remove htmctr and use global counter sent downstream from bolt
-//            		//fetch lapDistance and remove from map once done
-//            		if(lapdistancemap.containsKey(carnum + "_" + spoutctr)) {
-//            			String lapdistance = lapdistancemap.get(carnum + "_" + spoutctr);
-//            			long tod = timeOfDaymap.get(carnum + "_" + spoutctr);
-//
-//            			long before_emit = System.currentTimeMillis();
-//
-//            			collector.emit(new Values(carnum, getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(), spoutctr,
-//            							lapdistance, tod, before_emit));
-//            			lapdistancemap.remove(carnum + "_" + spoutctr);
-//            			timeOfDaymap.remove(carnum + "_" + spoutctr);
-//
-//            			long after_emit = System.currentTimeMillis();
-//
-//            			pw.write(carnum + "," + spoutctr + "," + getMetricname() + "," + (logtimestamp - spoutimestamp) + "," + (after_emit - spoutimestamp)
-//            					+ "," + (after_emit - logtimestamp) + "," + spoutimestamp + "," + logtimestamp + "," + after_emit + "," + before_emit
-//            					+ "," + (after_emit - before_emit) + "\n");
-//            			if(Integer.parseInt(spoutctr) % 500 == 0) {
-//            				pw.flush();
-//            			}
-//
-//                		synchronized (tuple) {
-//                			tuple.notify();
-//					}
-//            		}
-//            }
-//        };
-//    }
-
 	private Subscriber<Inference> getSubscriber() {
 		return new Subscriber<Inference>() {
 			@Override public void onCompleted() {}
@@ -314,18 +265,8 @@ public class TestHTMBolt3 extends BaseRichBolt {
 					//fetch anomaly score and relevant data downstream with actual values only if the htm_flag is set to TRUE
 					if (struct_obj != null && struct_obj.isHtmflag()) {
 						double actual_val = (Double) infer.getClassifierInput().get(getMetricname()).get("inputValue");
-						long before_emit = System.currentTimeMillis();
-						collector.emit(new Values(struct_obj.getCarnum(), getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(),
-								struct_obj.getSpoutcounter(), struct_obj.getLapDistance(), struct_obj.getSpout_ts(), struct_obj.getBolt_ts()));
-
-						long after_emit = System.currentTimeMillis();
-//						pw.write(struct_obj.getCarnum() + "," + struct_obj.getSpoutcounter() + "," + getMetricname() + "," + (struct_obj.getBolt_ts() - struct_obj.getSpout_ts())
-//								+ "," + (after_emit - struct_obj.getSpout_ts()) + "," + (after_emit - struct_obj.getBolt_ts()) + "," + struct_obj.getSpout_ts()
-//								+ "," + struct_obj.getBolt_ts() + "," + after_emit + "," + before_emit + "," + (after_emit - before_emit) + "\n");
-//
-//						if (Integer.parseInt(struct_obj.getSpoutcounter()) % 500 == 0) {
-//							pw.flush();
-//						}
+						collector.emit(new Values(getMetricname(), String.format("%3.2f", actual_val), infer.getAnomalyScore(),
+								struct_obj.getSpoutcounter(), struct_obj.getLapDistance(), struct_obj.getTimeofday()));
 
 						htmMessageQueue.poll();
 					}
@@ -334,14 +275,7 @@ public class TestHTMBolt3 extends BaseRichBolt {
 					while (struct_obj != null) {
 						if (!struct_obj.isHtmflag()) {
 							//if the queue is already full, then we don't send these values to HTM and just directly emit them with some default values
-							collector.emit(new Values(struct_obj.getCarnum(), getMetricname(), "REJECTED_TUPLE", 1.0, struct_obj.getSpoutcounter(), "LAP_DIST", 0L, 0L));
-
-							//print these values out to bolt log files
-//							pw.write(struct_obj.getCarnum() + "," + "REJECTED_TUPLE" + "," + struct_obj.getSpoutcounter() + "," + getMetricname() + "," + (struct_obj.getBolt_ts() - struct_obj.getSpout_ts())
-//									+ "," + "REJECTED_TUPLE" + "," + struct_obj.getSpout_ts() + "," + struct_obj.getBolt_ts() + "," + "REJECTED_TUPLE" + "," + "REJECTED_TUPLE"
-//									+ "," + "REJECTED_TUPLE" + "\n");
-//
-//							pw.flush();
+							collector.emit(new Values(getMetricname(), struct_obj.getMetricval(), -100.0, struct_obj.getSpoutcounter(), struct_obj.getLapDistance(), struct_obj.getTimeofday()));
 							htmMessageQueue.poll();
 							struct_obj = htmMessageQueue.peek();
 						} else {

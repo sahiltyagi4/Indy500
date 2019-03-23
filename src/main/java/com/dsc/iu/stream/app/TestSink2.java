@@ -31,8 +31,6 @@ public class TestSink2 extends BaseRichBolt implements MqttCallback {
 	private MqttMessage msgobj;
 	private ConcurrentHashMap<String, JSONObject> recordaccumulate;
 	private JSONObject record;
-	private File f;
-	private PrintWriter pw;
 	private String carnum;
 	
 	public TestSink2(String carnum) {
@@ -41,16 +39,13 @@ public class TestSink2 extends BaseRichBolt implements MqttCallback {
 
 	@Override
 	public void execute(Tuple arg0) {
-		String carnum = arg0.getStringByField("carnum");
+		//String carnum = arg0.getStringByField("carnum");
 		String metric = arg0.getStringByField("metric");
 		String data_val = arg0.getStringByField("dataval");
 		double score = arg0.getDoubleByField("score");
 		String counter = arg0.getStringByField("counter");
 		String timeOfDay = arg0.getStringByField("timeOfDay");
 		String lapDistance = arg0.getStringByField("lapDistance");
-		
-		pw.println(carnum+","+counter+","+metric+","+data_val+","+timeOfDay+","+System.currentTimeMillis());
-		pw.flush();
 		
 		if(!recordaccumulate.containsKey(carnum+"_"+counter)) {
 			record = new JSONObject();
@@ -75,7 +70,6 @@ public class TestSink2 extends BaseRichBolt implements MqttCallback {
 		record.put(metric+"Anomaly", score);
 		recordaccumulate.put(carnum+"_"+counter, record);
 		
-		//CALCULATE INDIVIDUAL LATENCY NOT JUST AGGREGATED TOTAL LATENCY (FETCH TS OF EACH METRIC ARRIVAL AT SINK)
 		if(record.containsKey("engineSpeed") && record.containsKey("vehicleSpeed") && record.containsKey("throttle")) {
 			//System.out.println(record.toJSONString());
 			msgobj.setPayload(record.toJSONString().getBytes());
@@ -94,13 +88,6 @@ public class TestSink2 extends BaseRichBolt implements MqttCallback {
 
 	@Override
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
-		
-		f = new File("/scratch/sahil/sinks/sink-" + carnum + ".csv");
-		try {
-			pw = new PrintWriter(f);
-		} catch(FileNotFoundException e) {
-			e.printStackTrace();
-		}
 		
 		msgobj = new MqttMessage();
 		recordaccumulate = new ConcurrentHashMap<String, JSONObject>();

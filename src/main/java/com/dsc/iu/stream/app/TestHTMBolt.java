@@ -105,13 +105,6 @@ public class TestHTMBolt extends BaseRichBolt {
 		setMinVal(min);
 		setMaxVal(max);
 		
-//		File boltfile = new File("/scratch/sahil/bolts/boltfile-"+ UUID.randomUUID().toString() + ".txt");
-//		try {
-//			pw = new PrintWriter(boltfile);
-//		} catch(FileNotFoundException f) {
-//			f.printStackTrace();
-//		}
-		
 		collector = arg2;
 		
 		manualpublish = Publisher.builder()

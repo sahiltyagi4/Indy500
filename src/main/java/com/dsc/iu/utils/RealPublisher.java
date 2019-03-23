@@ -66,7 +66,8 @@ class ParallelPublishing implements Runnable, MqttCallback {
 		// TODO Auto-generated method stub
 		try {
 			int counter=0;
-			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("/scratch/sahil/recin/car-"+carnum+".csv"))));
+//			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("/scratch/sahil/recin/car-"+carnum+".csv"))));
+			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("/scratch_ssd/rbapat/car-"+carnum+".csv"))));
 			MqttConnectOptions conn = new MqttConnectOptions();
 			conn.setMaxInflight(OnlineLearningUtils.inflightMsgRate);
 			conn.setAutomaticReconnect(true);
@@ -86,7 +87,8 @@ class ParallelPublishing implements Runnable, MqttCallback {
 			}
 			
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-			File f = new File("/scratch/sahil/IPBroadcaster_Input_2018-05-27_0.log");
+//			File f = new File("/scratch/sahil/IPBroadcaster_Input_2018-05-27_0.log");
+			File f = new File("/scratch_ssd/rbapat/IPBroadcaster_Input_2018-05-27_0.log");
 			BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
 			System.out.println("going to start reading at:"+System.currentTimeMillis());
 			String line;

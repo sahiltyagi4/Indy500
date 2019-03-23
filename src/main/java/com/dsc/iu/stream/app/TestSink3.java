@@ -31,8 +31,8 @@ public class TestSink3 extends BaseRichBolt implements MqttCallback {
 	private MqttMessage msgobj;
 	private ConcurrentHashMap<String, JSONObject> recordaccumulate;
 	private JSONObject record;
-	private File f;
-	private PrintWriter pw;
+//	private File f;
+//	private PrintWriter pw;
 	private String carnum;
 	
 	public TestSink3(String carnum) {
@@ -41,7 +41,7 @@ public class TestSink3 extends BaseRichBolt implements MqttCallback {
 
 	@Override
 	public void execute(Tuple arg0) {
-		String carnum = arg0.getStringByField("carnum");
+		//String carnum = arg0.getStringByField("carnum");
 		String metric = arg0.getStringByField("metric");
 		String data_val = arg0.getStringByField("dataval");
 		double score = arg0.getDoubleByField("score");
@@ -91,22 +91,22 @@ public class TestSink3 extends BaseRichBolt implements MqttCallback {
 		
 		long currtime = System.currentTimeMillis();
 		long nanosec = System.nanoTime();
-		pw.write(carnum + "," + counter + "," + metric + "," + (currtime - ts) + "," + (currtime - bolt_ts) + "," + currtime + "," + bolt_ts + "," + ts + ","
-				+ (bolt_ts - ts) + "," + (System.nanoTime() - nanosec) + "\n");
-		if(Integer.parseInt(counter) % 500 == 0) {
-			pw.flush();
-		}
+//		pw.write(carnum + "," + counter + "," + metric + "," + (currtime - ts) + "," + (currtime - bolt_ts) + "," + currtime + "," + bolt_ts + "," + ts + ","
+//				+ (bolt_ts - ts) + "," + (System.nanoTime() - nanosec) + "\n");
+//		if(Integer.parseInt(counter) % 500 == 0) {
+//			pw.flush();
+//		}
 	}
 
 	@Override
 	public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
-		
-		f = new File("/scratch/sahil/sinks/sink-" + carnum + ".csv");
-		try {
-			pw = new PrintWriter(f);
-		} catch(FileNotFoundException e) {
-			e.printStackTrace();
-		}
+		//f = new File("/scratch/sahil/sinks/sink-" + carnum + ".csv");
+//		f = new File("/scratch_ssd/rbapat/sinks/sink-" + carnum + ".csv");
+//		try {
+//			pw = new PrintWriter(f);
+//		} catch(FileNotFoundException e) {
+//			e.printStackTrace();
+//		}
 		
 		msgobj = new MqttMessage();
 		recordaccumulate = new ConcurrentHashMap<String, JSONObject>();
@@ -138,7 +138,7 @@ public class TestSink3 extends BaseRichBolt implements MqttCallback {
 	public void connectionLost(Throwable cause) {
 		// TODO Auto-generated method stub
 		//xyi5b2YUcw8CHhAE
-		//System.out.println("@@@@@@@@@@@@##################$$$$$$$$ connection to MQTT broker lost:" + cause.getMessage());
+		System.out.println("@@@@@@@@@@@@##################$$$$$$$$ connection to MQTT broker lost:" + cause.getMessage());
 	}
 
 	@Override
