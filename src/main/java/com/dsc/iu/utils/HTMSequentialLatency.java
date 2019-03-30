@@ -13,54 +13,56 @@ import java.util.Map;
 
 public class HTMSequentialLatency {
 	public static void main(String[] args) throws IOException {
-//		PrintWriter pw=null;
-//		File f2 = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/clean_env/car13/3/HTMseqTime.csv");
-//		try {
-//			pw = new PrintWriter(f2);
-//		} catch(FileNotFoundException e) {
-//			e.printStackTrace();
-//		} 
-//		
-//		//HashMap<Long, Long> datamap = new HashMap<Long, Long>();
-//		HashMap<Long, Long> infermap = new HashMap<Long, Long>();
-//		HashMap<Long, Double> anomalyscore = new HashMap<Long, Double>();
-//		HashMap<Long, String> timemap = new HashMap<Long, String>();
-//		HashMap<Long, Double> speedmap = new HashMap<Long, Double>();
-//		File f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/clean_env/car13/3/dataHTM.csv");
-//		BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
-//		String line;
-//		while((line=rdr.readLine()) != null) {
-//			//contains counter and timestamp
-//			//datamap.put(Long.parseLong(line.split(",")[2]), Long.parseLong(line.split(",")[1]));
-//			//counter and timeofday values
-//			timemap.put(Long.parseLong(line.split(",")[2]), line.split(",")[0].split(" ")[1]);
-//		}
-//		rdr.close();
-//		
-//		f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/clean_env/car13/3/inferHTM.csv");
-//		rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
-//		line=null;
-//		while((line=rdr.readLine()) != null) {
-//			if(line.split(",").length == 6) {
-//				anomalyscore.put(Long.parseLong(line.split(",")[1]), Double.parseDouble(line.split(",")[4]));
-//				infermap.put(Long.parseLong(line.split(",")[1]), Long.parseLong(line.split(",")[5]));
-//				speedmap.put(Long.parseLong(line.split(",")[1]), Double.parseDouble(line.split(",")[3]));
-//			}
-//		}
-//		rdr.close();
-//		
-//		for(Map.Entry<Long, Long> set: infermap.entrySet()) {
-//			long key = set.getKey();
-//			System.out.println("key:" + key);
-////			pw.println(key + "," + speedmap.get(key) + "," + (set.getValue() - datamap.get(key)) + "," + timemap.get(key) + "," + anomalyscore.get(key));
-////			pw.flush();
-//			pw.println(key + "," + speedmap.get(key) + "," + timemap.get(key) + "," + anomalyscore.get(key));
-//			pw.flush();
-//		}
-//		pw.close();
-//		System.out.println("complete.");
+		PrintWriter pw=null;
+		File f2 = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/HTMseqTime13_rawscore.csv");
+		try {
+			pw = new PrintWriter(f2);
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+		} 
 		
-		averagelatency(3);
+		//HashMap<Long, Long> datamap = new HashMap<Long, Long>();
+		HashMap<Long, Long> infermap = new HashMap<Long, Long>();
+		HashMap<Long, Double> anomalyscore = new HashMap<Long, Double>();
+		HashMap<Long, String> timemap = new HashMap<Long, String>();
+		HashMap<Long, Double> speedmap = new HashMap<Long, Double>();
+		File f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/dataHTM13_rawscore.csv");
+		BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
+		String line;
+		while((line=rdr.readLine()) != null) {
+			//contains counter and timestamp
+			//datamap.put(Long.parseLong(line.split(",")[2]), Long.parseLong(line.split(",")[1]));
+			//counter and timeofday values
+			
+			timemap.put(Long.parseLong(line.split(",")[2]), line.split(",")[0].split(" ")[1]);
+		}
+		rdr.close();
+		
+//		f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/inferHTM.csv");
+		f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/javaNAB13_rawscore.csv");
+		rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
+		line=null;
+		while((line=rdr.readLine()) != null) {
+			if(line.split(",").length == 6) {
+				anomalyscore.put(Long.parseLong(line.split(",")[1]), Double.parseDouble(line.split(",")[4]));
+				infermap.put(Long.parseLong(line.split(",")[1]), Long.parseLong(line.split(",")[5]));
+				speedmap.put(Long.parseLong(line.split(",")[1]), Double.parseDouble(line.split(",")[3]));
+			}
+		}
+		rdr.close();
+		
+		for(Map.Entry<Long, Long> set: infermap.entrySet()) {
+			long key = set.getKey();
+			System.out.println("key:" + key);
+//			pw.println(key + "," + speedmap.get(key) + "," + (set.getValue() - datamap.get(key)) + "," + timemap.get(key) + "," + anomalyscore.get(key));
+//			pw.flush();
+			pw.println(key + "," + speedmap.get(key) + "," + timemap.get(key) + "," + anomalyscore.get(key));
+			pw.flush();
+		}
+		pw.close();
+		System.out.println("complete.");
+		
+//		averagelatency(3);
 		
 //		jiayufile();
 	}
