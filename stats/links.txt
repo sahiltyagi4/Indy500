@@ -1,7 +1,0 @@
-https://discourse.numenta.org/t/sdr-classifier-question/3169
-https://discourse.numenta.org/t/how-should-i-represent-my-input-with-multiple-fields/1234/4
-https://discourse.numenta.org/t/new-htm-java-release-v0-6-12-alpha/2091
-https://github.com/numenta/htm.java/blob/master/src/main/java/org/numenta/nupic/Parameters.java#L423
-https://github.com/numenta/nupic/issues/1712#issuecomment-68765336
-https://discourse.numenta.org/t/predicting-multiple-output-values/2078/7
-https://discourse.numenta.org/t/predicting-multiple-output-values/2078

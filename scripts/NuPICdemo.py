@@ -87,9 +87,7 @@ TM_PARAMS = {
 
 def createEncoder():
   """Create the encoder instance for our test and return it."""
-  #consumption_encoder = ScalarEncoder(21, 0.0, 100.0, n=50, name="consumption",
-  #     clipInput=True)
-  consumption_encoder = ScalarEncoder(21, -50.0, 300.0, n=50, name="consumption",
+  consumption_encoder = ScalarEncoder(21, 0.0, 100.0, n=50, name="consumption",
       clipInput=True)
   time_encoder = DateEncoder(timeOfDay=(21, 9.5), name="timestamp_timeOfDay")
 
@@ -110,9 +108,6 @@ def createNetwork(dataSource):
   :returns: a Network instance ready to run
   """
   network = Network()
-
-  print("input path is:")
-  print(_INPUT_FILE_PATH)
 
   # Our input is sensor data from the gym file. The RecordSensor region
   # allows us to specify a file record stream as the input source via the
@@ -205,8 +200,8 @@ def runNetwork(network, writer):
 
 if __name__ == "__main__":
   start_time = time.time()
-  print('start time:')
-  print(start_time)
+  print 'start time:'
+  print start_time
   dataSource = FileRecordStream(streamID=_INPUT_FILE_PATH)
 
   network = createNetwork(dataSource)
