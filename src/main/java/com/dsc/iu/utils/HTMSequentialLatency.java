@@ -14,7 +14,7 @@ import java.util.Map;
 public class HTMSequentialLatency {
 	public static void main(String[] args) throws IOException {
 		PrintWriter pw=null;
-		File f2 = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/HTMseqTime13_rawscore.csv");
+		File f2 = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/modifiedlikelihood.csv");
 		try {
 			pw = new PrintWriter(f2);
 		} catch(FileNotFoundException e) {
@@ -26,7 +26,7 @@ public class HTMSequentialLatency {
 		HashMap<Long, Double> anomalyscore = new HashMap<Long, Double>();
 		HashMap<Long, String> timemap = new HashMap<Long, String>();
 		HashMap<Long, Double> speedmap = new HashMap<Long, Double>();
-		File f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/dataHTM13_rawscore.csv");
+		File f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/DATASAHIL.csv");
 		BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
 		String line;
 		while((line=rdr.readLine()) != null) {
@@ -38,8 +38,7 @@ public class HTMSequentialLatency {
 		}
 		rdr.close();
 		
-//		f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/inferHTM.csv");
-		f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/javaNAB13_rawscore.csv");
+		f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/SCORESAHIL.csv");
 		rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
 		line=null;
 		while((line=rdr.readLine()) != null) {
