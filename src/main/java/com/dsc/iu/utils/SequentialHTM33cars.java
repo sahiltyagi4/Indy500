@@ -40,8 +40,6 @@ public class SequentialHTM33cars {
 		carlist.add("22");carlist.add("18");carlist.add("3");carlist.add("4");carlist.add("28");carlist.add("32");carlist.add("59");carlist.add("25");carlist.add("64");carlist.add("10");carlist.add("15");carlist.add("17");
 		carlist.add("12");carlist.add("1");carlist.add("9");carlist.add("14");carlist.add("23");carlist.add("30");carlist.add("29");carlist.add("88");carlist.add("66");
 		
-//		carlist.add("9"); carlist.add("10");
-		
 		String[] metrics = {"speed", "RPM", "throttle"};
 		Map<String, Double> minvalues = new HashMap<String, Double>();
 		minvalues.put("speed", -20.0);
