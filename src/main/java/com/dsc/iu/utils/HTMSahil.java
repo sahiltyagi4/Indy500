@@ -417,7 +417,7 @@ public class HTMSahil {
                 
                 // Output log likelihood anomaly score
                 outpw.write("20," + (record + 1) + ",speed," + value + "," + logscore + "," + System.currentTimeMillis() + "\n");
-                outpw.flush();
+                //outpw.flush();
                
             }, (error) -> {
                 LOGGER.error("Error processing data", error);
@@ -442,9 +442,9 @@ public class HTMSahil {
                 ctr++;
                 publisher.onNext(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + line.split(",")[1]);
                 inpw.write(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + line.split(",")[1] + "," + ctr + "," + System.currentTimeMillis() + "\n");
-                inpw.flush();
+                //inpw.flush();
                 try {
-                	 Thread.sleep(1);
+                	 Thread.sleep(10);
                 } catch(InterruptedException i) {}
             }
         

@@ -14,7 +14,7 @@ import java.util.Map;
 public class HTMSequentialLatency {
 	public static void main(String[] args) throws IOException {
 		PrintWriter pw=null;
-		File f2 = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/modifiedlikelihood.csv");
+		File f2 = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/score_executiontime-13.csv");
 		try {
 			pw = new PrintWriter(f2);
 		} catch(FileNotFoundException e) {
@@ -26,7 +26,9 @@ public class HTMSequentialLatency {
 		HashMap<Long, Double> anomalyscore = new HashMap<Long, Double>();
 		HashMap<Long, String> timemap = new HashMap<Long, String>();
 		HashMap<Long, Double> speedmap = new HashMap<Long, Double>();
-		File f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/DATASAHIL.csv");
+		HashMap<Long, Long> datatime = new HashMap<Long, Long>();
+		HashMap<Long, Long> inferencetime = new HashMap<Long, Long>();
+		File f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/data-13-speed.csv");
 		BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
 		String line;
 		while((line=rdr.readLine()) != null) {
@@ -35,10 +37,11 @@ public class HTMSequentialLatency {
 			//counter and timeofday values
 			
 			timemap.put(Long.parseLong(line.split(",")[2]), line.split(",")[0].split(" ")[1]);
+			datatime.put(Long.parseLong(line.split(",")[2]), Long.parseLong(line.split(",")[3]));
 		}
 		rdr.close();
 		
-		f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/SCORESAHIL.csv");
+		f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/inference-13-speed.csv");
 		rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
 		line=null;
 		while((line=rdr.readLine()) != null) {
@@ -46,6 +49,7 @@ public class HTMSequentialLatency {
 				anomalyscore.put(Long.parseLong(line.split(",")[1]), Double.parseDouble(line.split(",")[4]));
 				infermap.put(Long.parseLong(line.split(",")[1]), Long.parseLong(line.split(",")[5]));
 				speedmap.put(Long.parseLong(line.split(",")[1]), Double.parseDouble(line.split(",")[3]));
+				inferencetime.put(Long.parseLong(line.split(",")[1]), Long.parseLong(line.split(",")[5]));
 			}
 		}
 		rdr.close();
@@ -55,7 +59,7 @@ public class HTMSequentialLatency {
 			System.out.println("key:" + key);
 //			pw.println(key + "," + speedmap.get(key) + "," + (set.getValue() - datamap.get(key)) + "," + timemap.get(key) + "," + anomalyscore.get(key));
 //			pw.flush();
-			pw.println(key + "," + speedmap.get(key) + "," + timemap.get(key) + "," + anomalyscore.get(key));
+			pw.println(key + "," + speedmap.get(key) + "," + timemap.get(key) + "," + anomalyscore.get(key) + "," + (inferencetime.get(key) - datatime.get(key)));
 			pw.flush();
 		}
 		pw.close();
