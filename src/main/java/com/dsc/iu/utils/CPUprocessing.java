@@ -12,16 +12,18 @@ public class CPUprocessing {
 	public static void main(String[] args) {
 		try {
 			BufferedReader rdr = new BufferedReader(new InputStreamReader(
-							new FileInputStream("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/throttle-13/throttle-13.txt")));
+							new FileInputStream("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/htm99threads.txt")));
 			String str;
-			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/Users/sahiltyagi/Desktop/throttle-cpumem.csv")));
+			BufferedWriter wrtr = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/Users/sahiltyagi/Desktop/allcars99threads-cpumem.csv")));
 			int index=1;
 			//speed
 			//String proc_id = "6509";
 			//rpm
 			//String proc_id = "7448";
 			//throttle
-			String proc_id = "6854";
+			//String proc_id = "6854";
+			//all cars 99 threads
+			String proc_id = "9040";
 			
 			while((str=rdr.readLine()) !=null) {
 				if(str.contains("java") && str.contains(proc_id)) {

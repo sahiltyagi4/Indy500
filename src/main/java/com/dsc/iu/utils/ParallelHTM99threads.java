@@ -309,7 +309,7 @@ public class ParallelHTM99threads {
 	                	 	if(line.startsWith("$P") && line.split("�")[2].matches("\\d+:\\d+:\\d+.\\d+") && line.split("�")[1].equalsIgnoreCase(carnum)) {
 	                	 		publisher.onNext("2018-05-27 " + line.split("�")[2] + "," + line.split("�")[4]);
 	                	 		try {
-	                	 			Thread.sleep(10);
+	                	 			Thread.sleep(100);
 	                	 		} catch(InterruptedException ex) {}
 	                	 	}
 	                 }
