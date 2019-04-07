@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,6 +39,7 @@ import joptsimple.OptionSet;
 public class ParallelHTM99threads {
 	static List<String> carlist = new ArrayList<String>();
 	public static Map<String, Double> prev_lhood_thd = new HashMap<String, Double>();
+	public static Map<String, PrintWriter> wrtrmap = new HashMap<String, PrintWriter>();
 	
 	public static void main(String[] args) {
 		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("6");carlist.add("33");carlist.add("24");carlist.add("26");carlist.add("7");carlist.add("60");carlist.add("27");
@@ -191,6 +193,19 @@ public class ParallelHTM99threads {
 	private static void runHTM(String carnum, String metric, int threadnum) {
 		new Thread("thread-"+threadnum+"-for car-"+carnum) {
 			public void run() {
+				File outfile = new File("/scratch_ssd/sahil/bolts99/out-"+carnum+"-"+metric+".csv");
+				File infile = new File("/scratch_ssd/sahil/bolts99/in-"+carnum+"-"+metric+".csv");
+				
+				PrintWriter outpw=null;
+				PrintWriter inpw=null;
+				try {
+					outpw = new PrintWriter(outfile);
+					wrtrmap.put(carnum + "_" + metric, outpw);
+					inpw = new PrintWriter(infile);
+				} catch(IOException e) {
+					e.printStackTrace();
+				}
+				
 				System.out.println("thread name:"+Thread.currentThread().getName());
 				String arg1 = "{\"input\":\"/Users/sahiltyagi/Desktop/numenta_indy2018-13-vspeed.csv\", \"output\":\"/Users/sahiltyagi/Desktop/javaNAB.csv\", "
 						+ "\"aggregationInfo\": {\"seconds\": 0, \"fields\": [], \"months\": 0, \"days\": 0, \"years\": 0, \"hours\": 0, \"microseconds\": 0, "
@@ -294,6 +309,10 @@ public class ParallelHTM99threads {
 	                     
 	                     prev_lhood_thd.put(carnum+"_"+metric, prev_likelihood);
 	                     double logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
+	                     long ts = System.currentTimeMillis();
+	                     
+	                     wrtrmap.get(carnum + "_" + metric).println(record + "," + String.valueOf(value) + "," + timestamp.toString() + "," + 
+	                    		 	logscore + "," + String.valueOf(ts));
 	                     
 	                 }, (error) -> {
 	                     
@@ -305,9 +324,22 @@ public class ParallelHTM99threads {
 	                 Publisher publisher = supplier.get();
 	                 BufferedReader rdr = new BufferedReader(new InputStreamReader(inp));
 	                 String line;
+	                 int counter=1;
 	                 while((line=rdr.readLine()) != null) {
 	                	 	if(line.startsWith("$P") && line.split("�")[2].matches("\\d+:\\d+:\\d+.\\d+") && line.split("�")[1].equalsIgnoreCase(carnum)) {
-	                	 		publisher.onNext("2018-05-27 " + line.split("�")[2] + "," + line.split("�")[4]);
+	                	 		String data=null;
+	                	 		if(carnum.equals("speed")) {
+	                	 			data = line.split("�")[3];
+	                	 		} else if(carnum.equals("rpm")) {
+	                	 			data = line.split("�")[4];
+	                	 		} else if(carnum.equals("throttle")) {
+	                	 			data = line.split("�")[5];
+	                	 		}
+	                	 		
+	                	 		publisher.onNext("2018-05-27 " + line.split("�")[2] + "," + data);
+	                	 		
+	                	 		inpw.println("2018-05-27 " + line.split("�")[2] + "," + data + "," + System.currentTimeMillis());
+	                	 		
 	                	 		try {
 	                	 			Thread.sleep(100);
 	                	 		} catch(InterruptedException ex) {}
