@@ -317,182 +317,203 @@ public class HTMSahil {
      *          java -DLOGLEVEL=TRACE -DLOGGER=FILE -jar htm.java-nab.jar "{\"modelParams\":{....}}" < nab_data.csv > anomalies.out
      *
      */
+    
+    public static boolean startnewcar;
+    
     @SuppressWarnings("resource")
     public static void main(String[] args) {
-        try {
-//            LOGGER.trace("main({})",  Arrays.asList(args));
-        		System.out.println("in main..");
-        		String arg1 = "{\"aggregationInfo\": {\"seconds\": 0, \"fields\": [], \"months\": 0, \"days\": 0, \"years\": 0, \"hours\": 0, \"microseconds\": 0, \"weeks\": 0, \"minutes\": 0, \"milliseconds\": 0}, \"model\": \"HTMPrediction\", \"version\": 1, \"predictAheadTime\": null, \"modelParams\": {\"sensorParams\": {\"sensorAutoReset\": null, \"encoders\": {\"value\": {\"name\": \"value\", \"resolution\": 2.5143999999999997, \"seed\": 42, \"fieldname\": \"value\", \"type\": \"RandomDistributedScalarEncoder\"}, \"timestamp_dayOfWeek\": null, \"timestamp_timeOfDay\": {\"fieldname\": \"timestamp\", \"timeOfDay\": [21, 9.49], \"type\": \"DateEncoder\", \"name\": \"timestamp\"}, \"timestamp_weekend\": null}, \"verbosity\": 0}, \"anomalyParams\": {\"anomalyCacheRecords\": null, \"autoDetectThreshold\": null, \"autoDetectWaitRecords\": 5030}, \"spParams\": {\"columnCount\": 2048, \"synPermInactiveDec\": 0.0005, \"spatialImp\": \"cpp\", \"inputWidth\": 0, \"spVerbosity\": 0, \"synPermConnected\": 0.2, \"synPermActiveInc\": 0.003, \"potentialPct\": 0.8, \"numActiveColumnsPerInhArea\": 40, \"boostStrength\": 0.0, \"globalInhibition\": 1, \"seed\": 1956}, \"trainSPNetOnlyIfRequested\": false, \"clParams\": {\"alpha\": 0.035828933612158, \"verbosity\": 0, \"steps\": \"1\", \"regionName\": \"SDRClassifierRegion\"}, \"tmParams\": {\"columnCount\": 2048, \"activationThreshold\": 20, \"cellsPerColumn\": 32, \"permanenceDec\": 0.008, \"minThreshold\": 13, \"inputWidth\": 2048, \"maxSynapsesPerSegment\": 128, \"outputType\": \"normal\", \"initialPerm\": 0.24, \"globalDecay\": 0.0, \"maxAge\": 0, \"newSynapseCount\": 31, \"maxSegmentsPerCell\": 128, \"permanenceInc\": 0.04, \"temporalImp\": \"tm_cpp\", \"seed\": 1960, \"verbosity\": 0, \"predictedSegmentDecrement\": 0.001}, \"tmEnable\": true, \"clEnable\": false, \"spEnable\": true, \"inferenceType\": \"TemporalAnomaly\"}}";
-        	
-            // Parse command line args
-            OptionParser parser = new OptionParser();
-            parser.nonOptions("OPF parameters object (JSON)");
-            parser.acceptsAll(Arrays.asList("p", "params"), "OPF parameters file (JSON).\n(default: first non-option argument)")
-                .withOptionalArg()
-                .ofType(File.class);
-            parser.acceptsAll(Arrays.asList("i", "input"), "Input data file (csv).\n(default: stdin)")
-                .withOptionalArg()
-                .ofType(File.class);
-            parser.acceptsAll(Arrays.asList("o", "output"), "Output results file (csv).\n(default: stdout)")
-                .withOptionalArg()
-                .ofType(File.class);
-            parser.acceptsAll(Arrays.asList("s", "skip"), "Header lines to skip")
-                .withOptionalArg()
-                .ofType(Integer.class)
-                .defaultsTo(0);
-            parser.acceptsAll(Arrays.asList("h", "?", "help"), "Help");
-            OptionSet options = parser.parse(arg1);
-//            if (args.length == 0 || options.has("h")) {
-//                parser.printHelpOn(System.out);
-//                return;
-//            }
-
-            // Get in/out files
-//            final PrintStream output;
-//            final InputStream input;
-//            if (options.has("i")) {
-//                input = new FileInputStream((File)options.valueOf("i"));
-//            } else {
-//                input = System.in;
-//            }
-            
-            
-//            FileInputStream inp = new FileInputStream(new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/htmjava_indy2018-13-vspeed-inout.csv"));
-            FileInputStream inp = new FileInputStream(new File("/scratch_ssd/sahil/"+args[0]));
-//            if (options.has("o")) {
-//                output = new PrintStream((File)options.valueOf("o"));
-//            } else {
-//                output = System.out;
-//            }
-            
-//            File infile = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/DATASAHIL.csv");
-//            PrintWriter inpw = new PrintWriter(infile);
-//            File outfile = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/SCORESAHIL.csv");
-//            PrintWriter outpw = new PrintWriter(outfile);
-            
-            File infile = new File("/scratch_ssd/sahil/data-13-" + args[1] + ".csv");
-            PrintWriter inpw = new PrintWriter(infile);
-            File outfile = new File("/scratch_ssd/sahil/inference-13-" + args[1] + ".csv");
-            PrintWriter outpw = new PrintWriter(outfile);
-
-            // Parse OPF Model Parameters
-            JsonNode params;
-            ObjectMapper mapper = new ObjectMapper();
-            if (options.has("p")) {
-                params = mapper.readTree((File)options.valueOf("p"));
-            } 
-            else if (options.nonOptionArguments().isEmpty()) {
-                try { inp.close(); }catch(Exception ignore) {}
-                if(options.has("o")) {
-                    try { outpw.flush(); outpw.close(); }catch(Exception ignore) {}
-                }
-                throw new IllegalArgumentException("Expecting OPF parameters. See 'help' for more information");
-            } else {
-                params = mapper.readTree((String)options.nonOptionArguments().get(0));
-            }
-
-            // Number of header lines to skip
-            int skip = (int) options.valueOf("s");
-
-            // Force timezone to UTC
-            DateTimeZone.setDefault(DateTimeZone.UTC);
-            
-            //anomaly likelihood calculation
-            //AnomalyLikelihood likelihood = new AnomalyLikelihood(false, 375, false, 375, 375);
-           AnomalyLikelihood likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
-            
-            // Create NAB Network Model
-            System.out.println("going to start htm..");
-            HTMSahil model = new HTMSahil(params);
-            Network network = model.getNetwork();
-            network.observe().subscribe((Inference inference) -> {
-                double score = inference.getAnomalyScore();
-                int record = inference.getRecordNum();
-                double value = (Double)inference.getClassifierInput().get("value").get("inputValue");
-                DateTime timestamp = (DateTime)inference.getClassifierInput().get("timestamp").get("inputValue");
-                
-                
-                double anomaly_likelihood = likelihood.anomalyProbability(value, score, timestamp);
-                if (anomaly_likelihood >=0.99999 && prev_likelihood >= 0.99999){
-                    prev_likelihood = anomaly_likelihood;
-                    anomaly_likelihood = 0.999;
-                }
-                else{
-                    prev_likelihood = anomaly_likelihood;
-                }
-                
-                double logscore=0L;
-                if(spatialAnomaly) {
-                		logscore = 1.0;
-                } else {
-                		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
-                }
-                
-                //System.out.println("13," + (record + 1) + ",speed," + value + "," + logscore   );
-                LOGGER.trace("record = {}, score = {}", record, score);
-                
-                // Output log likelihood anomaly score
-                outpw.write("20," + (record + 1) + ",speed," + value + "," + logscore + "," + System.currentTimeMillis() + "\n");
-                //outpw.flush();
-               
-            }, (error) -> {
-                LOGGER.error("Error processing data", error);
-            }, () -> {
-                LOGGER.trace("Done processing data");
-            });
-            network.start();
-
-            // Pipe data to network
-            Publisher publisher = model.getPublisher();
-            BufferedReader in = new BufferedReader(new InputStreamReader(inp));
-            String line;
-            int ctr=0;
-            double init_min=0L, init_max=0L, maxExpected=0L, minExpected=0L;
-           
-            while ((line = in.readLine()) != null && line.trim().length() > 0) {
-                // Skip header lines
-                if (skip > 0) {
-                    skip--;
-                    continue;
-                }
-                
-                //spatial anomaly logic. if spatialAnomaly is TRUE, then logscore = 1.0
-                double value  = Double.parseDouble(line.split(",")[1]);
-                
-                spatialAnomaly = false;
-                
-                if(init_min != init_max) {
-                		double tolerance = (init_max - init_min) * SPATIAL_TOLERANCE;
-                		maxExpected = init_max + tolerance;
-                		minExpected = init_min - tolerance;
-                }
-                
-                if(value > maxExpected || value < minExpected) {
-                		spatialAnomaly = true;
-                }
-                
-                if(value > init_max || init_max == 0L) {
-                		init_max = value;
-                }
-                
-                if(value < init_min || init_min == 0L) {
-                		init_min = value;
-                }
-                
-                ctr++;
-                publisher.onNext(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + value);
-                inpw.write(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + value + "," + ctr + "," + System.currentTimeMillis() + "\n");
-                //inpw.flush();
-                try {
-                	 Thread.sleep(10);
-                } catch(InterruptedException i) {}
-            }
-        
-            publisher.onComplete();
-            in.close();
-            LOGGER.trace("Done publishing data");
-        } catch (IOException e) {
-            e.printStackTrace();
+        File dir = new File("/scratch_ssd/sahil/results");
+        if(dir.isDirectory()) {
+        		File[] files = dir.listFiles();
+        		for(File f : files) {
+        			startnewcar = false;
+        			callhtm(f.getName(), "speed");
+        			while(startnewcar == false) {
+        				//do nothing
+        			}
+        			System.out.println("completed for file:" + f.getName());
+        		}
         }
+    }
+    
+    private static void callhtm(String filename, String metric) {
+    	try {
+    			String fileloc = "/scratch_ssd/sahil/baselineHTM";
+//          LOGGER.trace("main({})",  Arrays.asList(args));
+      		System.out.println("in main..");
+      		String arg1 = "{\"aggregationInfo\": {\"seconds\": 0, \"fields\": [], \"months\": 0, \"days\": 0, \"years\": 0, \"hours\": 0, \"microseconds\": 0, \"weeks\": 0, \"minutes\": 0, \"milliseconds\": 0}, \"model\": \"HTMPrediction\", \"version\": 1, \"predictAheadTime\": null, \"modelParams\": {\"sensorParams\": {\"sensorAutoReset\": null, \"encoders\": {\"value\": {\"name\": \"value\", \"resolution\": 2.5143999999999997, \"seed\": 42, \"fieldname\": \"value\", \"type\": \"RandomDistributedScalarEncoder\"}, \"timestamp_dayOfWeek\": null, \"timestamp_timeOfDay\": {\"fieldname\": \"timestamp\", \"timeOfDay\": [21, 9.49], \"type\": \"DateEncoder\", \"name\": \"timestamp\"}, \"timestamp_weekend\": null}, \"verbosity\": 0}, \"anomalyParams\": {\"anomalyCacheRecords\": null, \"autoDetectThreshold\": null, \"autoDetectWaitRecords\": 5030}, \"spParams\": {\"columnCount\": 2048, \"synPermInactiveDec\": 0.0005, \"spatialImp\": \"cpp\", \"inputWidth\": 0, \"spVerbosity\": 0, \"synPermConnected\": 0.2, \"synPermActiveInc\": 0.003, \"potentialPct\": 0.8, \"numActiveColumnsPerInhArea\": 40, \"boostStrength\": 0.0, \"globalInhibition\": 1, \"seed\": 1956}, \"trainSPNetOnlyIfRequested\": false, \"clParams\": {\"alpha\": 0.035828933612158, \"verbosity\": 0, \"steps\": \"1\", \"regionName\": \"SDRClassifierRegion\"}, \"tmParams\": {\"columnCount\": 2048, \"activationThreshold\": 20, \"cellsPerColumn\": 32, \"permanenceDec\": 0.008, \"minThreshold\": 13, \"inputWidth\": 2048, \"maxSynapsesPerSegment\": 128, \"outputType\": \"normal\", \"initialPerm\": 0.24, \"globalDecay\": 0.0, \"maxAge\": 0, \"newSynapseCount\": 31, \"maxSegmentsPerCell\": 128, \"permanenceInc\": 0.04, \"temporalImp\": \"tm_cpp\", \"seed\": 1960, \"verbosity\": 0, \"predictedSegmentDecrement\": 0.001}, \"tmEnable\": true, \"clEnable\": false, \"spEnable\": true, \"inferenceType\": \"TemporalAnomaly\"}}";
+      	
+          // Parse command line args
+          OptionParser parser = new OptionParser();
+          parser.nonOptions("OPF parameters object (JSON)");
+          parser.acceptsAll(Arrays.asList("p", "params"), "OPF parameters file (JSON).\n(default: first non-option argument)")
+              .withOptionalArg()
+              .ofType(File.class);
+          parser.acceptsAll(Arrays.asList("i", "input"), "Input data file (csv).\n(default: stdin)")
+              .withOptionalArg()
+              .ofType(File.class);
+          parser.acceptsAll(Arrays.asList("o", "output"), "Output results file (csv).\n(default: stdout)")
+              .withOptionalArg()
+              .ofType(File.class);
+          parser.acceptsAll(Arrays.asList("s", "skip"), "Header lines to skip")
+              .withOptionalArg()
+              .ofType(Integer.class)
+              .defaultsTo(0);
+          parser.acceptsAll(Arrays.asList("h", "?", "help"), "Help");
+          OptionSet options = parser.parse(arg1);
+//          if (args.length == 0 || options.has("h")) {
+//              parser.printHelpOn(System.out);
+//              return;
+//          }
+
+          // Get in/out files
+//          final PrintStream output;
+//          final InputStream input;
+//          if (options.has("i")) {
+//              input = new FileInputStream((File)options.valueOf("i"));
+//          } else {
+//              input = System.in;
+//          }
+          
+          
+//          FileInputStream inp = new FileInputStream(new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/htmjava_indy2018-13-vspeed-inout.csv"));
+          FileInputStream inp = new FileInputStream(new File(filename));
+//          if (options.has("o")) {
+//              output = new PrintStream((File)options.valueOf("o"));
+//          } else {
+//              output = System.out;
+//          }
+          
+//          File infile = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/DATASAHIL.csv");
+//          PrintWriter inpw = new PrintWriter(infile);
+//          File outfile = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/SCORESAHIL.csv");
+//          PrintWriter outpw = new PrintWriter(outfile);
+          
+          String carnum = filename.split("-")[1];
+          File infile = new File(fileloc + "/data-" + carnum + "-" + metric + ".csv");
+          PrintWriter inpw = new PrintWriter(infile);
+          File outfile = new File(fileloc + "/inference-" + carnum + "-" + metric + ".csv");
+          PrintWriter outpw = new PrintWriter(outfile);
+
+          // Parse OPF Model Parameters
+          JsonNode params;
+          ObjectMapper mapper = new ObjectMapper();
+          if (options.has("p")) {
+              params = mapper.readTree((File)options.valueOf("p"));
+          } 
+          else if (options.nonOptionArguments().isEmpty()) {
+              try { inp.close(); }catch(Exception ignore) {}
+              if(options.has("o")) {
+                  try { outpw.flush(); outpw.close(); }catch(Exception ignore) {}
+              }
+              throw new IllegalArgumentException("Expecting OPF parameters. See 'help' for more information");
+          } else {
+              params = mapper.readTree((String)options.nonOptionArguments().get(0));
+          }
+
+          // Number of header lines to skip
+          int skip = (int) options.valueOf("s");
+
+          // Force timezone to UTC
+          DateTimeZone.setDefault(DateTimeZone.UTC);
+          
+          //anomaly likelihood calculation
+          //AnomalyLikelihood likelihood = new AnomalyLikelihood(false, 375, false, 375, 375);
+         AnomalyLikelihood likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
+          
+          // Create NAB Network Model
+          System.out.println("going to start htm..");
+          HTMSahil model = new HTMSahil(params);
+          Network network = model.getNetwork();
+          network.observe().subscribe((Inference inference) -> {
+              double score = inference.getAnomalyScore();
+              int record = inference.getRecordNum();
+              double value = (Double)inference.getClassifierInput().get("value").get("inputValue");
+              DateTime timestamp = (DateTime)inference.getClassifierInput().get("timestamp").get("inputValue");
+              
+              
+              double anomaly_likelihood = likelihood.anomalyProbability(value, score, timestamp);
+              if (anomaly_likelihood >=0.99999 && prev_likelihood >= 0.99999){
+                  prev_likelihood = anomaly_likelihood;
+                  anomaly_likelihood = 0.999;
+              }
+              else{
+                  prev_likelihood = anomaly_likelihood;
+              }
+              
+              double logscore=0L;
+              if(spatialAnomaly) {
+              		logscore = 1.0;
+              } else {
+              		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
+              }
+              
+              //System.out.println("13," + (record + 1) + ",speed," + value + "," + logscore   );
+              LOGGER.trace("record = {}, score = {}", record, score);
+              
+              // Output log likelihood anomaly score
+              outpw.write("20," + (record + 1) + ",speed," + value + "," + logscore + "," + System.currentTimeMillis() + "\n");
+              //outpw.flush();
+             
+          }, (error) -> {
+              LOGGER.error("Error processing data", error);
+          }, () -> {
+              LOGGER.trace("Done processing data");
+          });
+          network.start();
+
+          // Pipe data to network
+          Publisher publisher = model.getPublisher();
+          BufferedReader in = new BufferedReader(new InputStreamReader(inp));
+          String line;
+          int ctr=0;
+          double init_min=0L, init_max=0L, maxExpected=0L, minExpected=0L;
+         
+          while ((line = in.readLine()) != null && line.trim().length() > 0) {
+              // Skip header lines
+              if (skip > 0) {
+                  skip--;
+                  continue;
+              }
+              
+              //spatial anomaly logic. if spatialAnomaly is TRUE, then logscore = 1.0
+              double value  = Double.parseDouble(line.split(",")[1]);
+              
+              spatialAnomaly = false;
+              
+              if(init_min != init_max) {
+              		double tolerance = (init_max - init_min) * SPATIAL_TOLERANCE;
+              		maxExpected = init_max + tolerance;
+              		minExpected = init_min - tolerance;
+              }
+              
+              if(value > maxExpected || value < minExpected) {
+              		spatialAnomaly = true;
+              }
+              
+              if(value > init_max || init_max == 0L) {
+              		init_max = value;
+              }
+              
+              if(value < init_min || init_min == 0L) {
+              		init_min = value;
+              }
+              
+              ctr++;
+              publisher.onNext(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + value);
+              inpw.write(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + value + "," + ctr + "," + System.currentTimeMillis() + "\n");
+              //inpw.flush();
+              try {
+              	 Thread.sleep(10);
+              } catch(InterruptedException i) {}
+          }
+      
+          publisher.onComplete();
+          startnewcar = true;
+          in.close();
+          LOGGER.trace("Done publishing data");
+      } catch (IOException e) {
+          e.printStackTrace();
+      }
     }
 }

@@ -14,7 +14,7 @@ import java.util.Map;
 public class HTMSequentialLatency {
 	public static void main(String[] args) throws IOException {
 		PrintWriter pw=null;
-		File f2 = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/score_executiontime-13.csv");
+		File f2 = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/spatialAnomaly/throttle-executiontime.csv");
 		try {
 			pw = new PrintWriter(f2);
 		} catch(FileNotFoundException e) {
@@ -28,7 +28,7 @@ public class HTMSequentialLatency {
 		HashMap<Long, Double> speedmap = new HashMap<Long, Double>();
 		HashMap<Long, Long> datatime = new HashMap<Long, Long>();
 		HashMap<Long, Long> inferencetime = new HashMap<Long, Long>();
-		File f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/data-13-speed.csv");
+		File f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/spatialAnomaly/data-13-throttle.csv");
 		BufferedReader rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
 		String line;
 		while((line=rdr.readLine()) != null) {
@@ -41,7 +41,7 @@ public class HTMSequentialLatency {
 		}
 		rdr.close();
 		
-		f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/inference-13-speed.csv");
+		f = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/spatialAnomaly/inference-13-throttle.csv");
 		rdr = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
 		line=null;
 		while((line=rdr.readLine()) != null) {
