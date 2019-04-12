@@ -470,6 +470,9 @@ public class HTMSahil {
           int ctr=0;
           double init_min=0L, init_max=0L, maxExpected=0L, minExpected=0L;
          
+          //header line that should be ignored
+          String headr = in.readLine();
+          System.out.println("header line:" + headr);
           while ((line = in.readLine()) != null && line.trim().length() > 0) {
               // Skip header lines
               if (skip > 0) {
