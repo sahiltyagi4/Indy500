@@ -319,10 +319,11 @@ public class HTMSahil {
      */
     
     public static boolean startnewcar;
+    public static String inpfileloc = "/scratch_ssd/sahil/results/";
     
     @SuppressWarnings("resource")
     public static void main(String[] args) {
-        File dir = new File("/scratch_ssd/sahil/results");
+        File dir = new File(inpfileloc);
         if(dir.isDirectory()) {
         		File[] files = dir.listFiles();
         		for(File f : files) {
@@ -377,7 +378,7 @@ public class HTMSahil {
           
           
 //          FileInputStream inp = new FileInputStream(new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/htmjava_indy2018-13-vspeed-inout.csv"));
-          FileInputStream inp = new FileInputStream(new File(filename));
+          FileInputStream inp = new FileInputStream(new File(inpfileloc + filename));
 //          if (options.has("o")) {
 //              output = new PrintStream((File)options.valueOf("o"));
 //          } else {
