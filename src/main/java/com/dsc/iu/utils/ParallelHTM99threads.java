@@ -101,7 +101,6 @@ public class ParallelHTM99threads {
         if (spParams.has("potentialPct")) {
             p.set(KEY.POTENTIAL_PCT, spParams.get("potentialPct").asDouble());
         }
-
         return p;
     }
 	
@@ -268,8 +267,7 @@ public class ParallelHTM99threads {
 	                 DateTimeZone.setDefault(DateTimeZone.UTC);
 	                 AnomalyLikelihood likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
 	                  
-	                 System.out.println("going to start htm..");
-	                 //HTMSahil model = new HTMSahil(params);
+	                 System.out.println("going to start htm...");
 	                 
 	                 PublisherSupplier supplier = PublisherSupplier.builder()
 	                         .addHeader("timestamp,value")

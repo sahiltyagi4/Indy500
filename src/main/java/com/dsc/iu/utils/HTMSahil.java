@@ -71,6 +71,8 @@ public class HTMSahil {
 
     private PublisherSupplier supplier;
     private static double prev_likelihood;
+    private static boolean spatialAnomaly = false;
+    private static double SPATIAL_TOLERANCE = 0.05;
 
     /**
      * Create HTM Model to be used by NAB
@@ -178,6 +180,14 @@ public class HTMSahil {
         if (spParams.has("potentialPct")) {
             p.set(KEY.POTENTIAL_PCT, spParams.get("potentialPct").asDouble());
         }
+//        if(spParams.has("minValue")) {
+//        		System.out.println("found a MIN value for the metric");
+//        		p.set(KEY.MIN_VAL, spParams.get("minValue").asDouble());
+//        }
+//        if(spParams.has("maxValue")) {
+//        		System.out.println("found a MAX value for the metric");
+//        		p.set(KEY.MAX_VAL, spParams.get("maxValue").asDouble());
+//        }
 
         LOGGER.trace("getSpatialPoolerParams => {}", p);
         return p;
@@ -411,7 +421,13 @@ public class HTMSahil {
                     prev_likelihood = anomaly_likelihood;
                 }
                 
-                double logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
+                double logscore=0L;
+                if(spatialAnomaly) {
+                		logscore = 1.0;
+                } else {
+                		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
+                }
+                
                 //System.out.println("13," + (record + 1) + ",speed," + value + "," + logscore   );
                 LOGGER.trace("record = {}, score = {}", record, score);
                 
@@ -431,17 +447,41 @@ public class HTMSahil {
             BufferedReader in = new BufferedReader(new InputStreamReader(inp));
             String line;
             int ctr=0;
-            
+            double init_min=0L, init_max=0L, maxExpected=0L, minExpected=0L;
+           
             while ((line = in.readLine()) != null && line.trim().length() > 0) {
                 // Skip header lines
                 if (skip > 0) {
                     skip--;
                     continue;
                 }
-//                publisher.onNext(line.split(",")[0] + "," + line.split(",")[1]);
+                
+                //spatial anomaly logic. if spatialAnomaly is TRUE, then logscore = 1.0
+                double value  = Double.parseDouble(line.split(",")[1]);
+                
+                spatialAnomaly = false;
+                
+                if(init_min != init_max) {
+                		double tolerance = (init_max - init_min) * SPATIAL_TOLERANCE;
+                		maxExpected = init_max + tolerance;
+                		minExpected = init_min - tolerance;
+                }
+                
+                if(value > maxExpected || value < minExpected) {
+                		spatialAnomaly = true;
+                }
+                
+                if(value > init_max || init_max == 0L) {
+                		init_max = value;
+                }
+                
+                if(value < init_min || init_min == 0L) {
+                		init_min = value;
+                }
+                
                 ctr++;
-                publisher.onNext(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + line.split(",")[1]);
-                inpw.write(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + line.split(",")[1] + "," + ctr + "," + System.currentTimeMillis() + "\n");
+                publisher.onNext(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + value);
+                inpw.write(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + value + "," + ctr + "," + System.currentTimeMillis() + "\n");
                 //inpw.flush();
                 try {
                 	 Thread.sleep(10);
