@@ -500,7 +500,6 @@ public class ThreemetricSynchronization {
         	  			Date dtformat = null;
         	  			try {
         	  				dtformat = df.parse(racetime);
-        	  				System.out.println("df format:"+df);
         	  			} catch(ParseException p) {}
         	  			
         	  			if(dtformat.getTime() > dt.getTime()) {
@@ -585,7 +584,7 @@ public class ThreemetricSynchronization {
         	              	throttle_publisher.onNext(racetime + "," + throttle);
         	              	
         	              	//FILE WRITE --> INPUT DATA FOR POST-PROCESSING
-        	              	inpw.println(carnum + "," + dtformat.toString() + "," + speed + "," + speed_timestamp + "," + rpm + "," + rpm_timestamp 
+        	              	inpw.println(carnum + "," + racetime + "," + speed + "," + speed_timestamp + "," + rpm + "," + rpm_timestamp 
         	              			+ "," + throttle + "," + throttle_timestamp);
         	              	
         	              	//JSON AGGREGATION AND SYNCHRONIZATION COMES HERE
@@ -597,6 +596,7 @@ public class ThreemetricSynchronization {
         	              		if(recordobj !=null && recordobj.containsKey("engineSpeed") && recordobj.containsKey("vehicleSpeed") 
         	              				&& recordobj.containsKey("throttle")) {
         	              			
+        	              			System.out.println("in json arr condition");
         	              			//WRITE TO OUTPUT FILE
         	              			outpw.println(recordobj.get("carnum") + "," + recordobj.get("datetime") + "," + recordobj.get("vehicleSpeed") + "," 
         	              					+ recordobj.get("engineSpeed") + "," + recordobj.get("throttle") + "," + recordobj.get("vehicleSpeed_Anomaly") + "," 
