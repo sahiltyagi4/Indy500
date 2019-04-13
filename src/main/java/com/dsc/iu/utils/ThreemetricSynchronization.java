@@ -659,7 +659,13 @@ public class ThreemetricSynchronization {
     	            //LOGGER.trace("record = {}, score = {}", record, score);
     	            
     	            //ADD CORRESPONDING JSONOBJECT TO AGGREGATOR
-    	            JSONObject ob = new JSONObject();
+    	            JSONObject ob=null;
+    	            if(aggregator.containsKey(carnum + "_" + timestamp.toString())) {
+    	            		ob = aggregator.get(carnum + "_" + timestamp.toString());
+    	            } else {
+    	            		ob = new JSONObject();
+    	            }
+    	            
     	            ob.put(metric, value);
     	            ob.put("datetime", timestamp.toString());
     	            ob.put("carnum", carnum);
@@ -700,7 +706,12 @@ public class ThreemetricSynchronization {
     	            //LOGGER.trace("record = {}, score = {}", record, score);
     	            
     	            //ADD CORRESPONDING JSONOBJECT TO AGGREGATOR
-    	            JSONObject ob = new JSONObject();
+    	            JSONObject ob=null;
+    	            if(aggregator.containsKey(carnum + "_" + timestamp.toString())) {
+    	            		ob = aggregator.get(carnum + "_" + timestamp.toString());
+    	            } else {
+    	            		ob = new JSONObject();
+    	            }
     	            ob.put(metric, value);
     	            ob.put("datetime", timestamp.toString());
     	            ob.put("carnum", carnum);
@@ -741,7 +752,12 @@ public class ThreemetricSynchronization {
     	            //LOGGER.trace("record = {}, score = {}", record, score);
     	            
     	            //ADD CORRESPONDING JSONOBJECT TO AGGREGATOR
-    	            JSONObject ob = new JSONObject();
+    	            JSONObject ob=null;
+    	            if(aggregator.containsKey(carnum + "_" + timestamp.toString())) {
+    	            		ob = aggregator.get(carnum + "_" + timestamp.toString());
+    	            } else {
+    	            		ob = new JSONObject();
+    	            }
     	            ob.put(metric, value);
     	            ob.put("datetime", timestamp.toString());
     	            ob.put("carnum", carnum);
