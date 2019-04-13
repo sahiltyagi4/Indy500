@@ -94,6 +94,18 @@ public class ThreemetricSynchronization {
                 .addHeader("datetime,float")
                 .addHeader("T,B")
                 .build();
+        
+        rpm_supplier = PublisherSupplier.builder()
+                .addHeader("timestamp,value")
+                .addHeader("datetime,float")
+                .addHeader("T,B")
+                .build();
+        
+        throttle_supplier = PublisherSupplier.builder()
+                .addHeader("timestamp,value")
+                .addHeader("datetime,float")
+                .addHeader("T,B")
+                .build();
 
         // Get updated model parameters
         Parameters parameters = getModelParameters(modelParams);
