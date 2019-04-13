@@ -479,8 +479,8 @@ public class ThreemetricSynchronization {
           double speed_init_min=0L, speed_init_max=0L, speed_maxExpected=0L, speed_minExpected=0L;
           double rpm_init_min=0L, rpm_init_max=0L, rpm_maxExpected=0L, rpm_minExpected=0L;
           double throttle_init_min=0L, throttle_init_max=0L, throttle_maxExpected=0L, throttle_minExpected=0L;
-          DateTime dt_threshold = DateTime.parse("2018-05-27 16:23:00.000");
-         
+          DateTime dt_threshold = DateTime.parse("YYYY-MM-dd HH:mm:ss.SSS");
+          dt_threshold = dt_threshold.parse("2018-05-27 16:23:00.000");
           while ((line = in.readLine()) != null && line.trim().length() > 0) {
         	  		if(line.startsWith("$P") && line.split("�")[2].matches("\\d+:\\d+:\\d+.\\d+") && line.split("�")[1].equalsIgnoreCase(carnum)) {
         	  			
