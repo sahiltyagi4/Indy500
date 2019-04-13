@@ -500,6 +500,7 @@ public class ThreemetricSynchronization {
         	  			Date dtformat = null;
         	  			try {
         	  				dtformat = df.parse(racetime);
+        	  				System.out.println("df format:"+df);
         	  			} catch(ParseException p) {}
         	  			
         	  			if(dtformat.getTime() > dt.getTime()) {
@@ -533,7 +534,7 @@ public class ThreemetricSynchronization {
           	              }
           	              
           	              long speed_timestamp = System.currentTimeMillis();
-          	              speed_publisher.onNext(dtformat.toString() + "," + speed);
+          	              speed_publisher.onNext(racetime + "," + speed);
           	              
           	            //RPM
           	            double rpm  = Double.parseDouble(line.split("�")[5]);
@@ -557,7 +558,7 @@ public class ThreemetricSynchronization {
         	              	}
         	              
         	              	long rpm_timestamp = System.currentTimeMillis();
-        	              	rpm_publisher.onNext(dtformat.toString() + "," + rpm);
+        	              	rpm_publisher.onNext(racetime + "," + rpm);
           	              
         	              //THROTTLE
         	              	double throttle  = Double.parseDouble(line.split("�")[6]);
@@ -581,7 +582,7 @@ public class ThreemetricSynchronization {
         	              	}
         	              
         	              	long throttle_timestamp = System.currentTimeMillis();
-        	              	throttle_publisher.onNext(dtformat.toString() + "," + throttle);
+        	              	throttle_publisher.onNext(racetime + "," + throttle);
         	              	
         	              	//FILE WRITE --> INPUT DATA FOR POST-PROCESSING
         	              	inpw.println(carnum + "," + dtformat.toString() + "," + speed + "," + speed_timestamp + "," + rpm + "," + rpm_timestamp 
