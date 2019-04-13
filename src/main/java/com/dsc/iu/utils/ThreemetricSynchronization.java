@@ -512,7 +512,7 @@ public class ThreemetricSynchronization {
           	              
           	            //SPEED
           	              //spatial anomaly logic. if spatialAnomaly is TRUE, then logscore = 1.0
-          	              double speed  = Double.parseDouble(line.split(",")[4]);
+          	              double speed  = Double.parseDouble(line.split("�")[4]);
           	              speed_spatialAnomaly = false;
           	              if(speed_init_min != speed_init_max) {
           	              		double tolerance = (speed_init_max - speed_init_min) * SPATIAL_TOLERANCE;
@@ -536,7 +536,7 @@ public class ThreemetricSynchronization {
           	              speed_publisher.onNext(dtformat.toString() + "," + speed);
           	              
           	            //RPM
-          	            double rpm  = Double.parseDouble(line.split(",")[5]);
+          	            double rpm  = Double.parseDouble(line.split("�")[5]);
         	              	rpm_spatialAnomaly = false;
         	              	if(rpm_init_min != rpm_init_max) {
         	              		double tolerance = (rpm_init_max - rpm_init_min) * SPATIAL_TOLERANCE;
@@ -560,7 +560,7 @@ public class ThreemetricSynchronization {
         	              	rpm_publisher.onNext(dtformat.toString() + "," + rpm);
           	              
         	              //THROTTLE
-        	              	double throttle  = Double.parseDouble(line.split(",")[6]);
+        	              	double throttle  = Double.parseDouble(line.split("�")[6]);
         	              	throttle_spatialAnomaly = false;
         	              	if(throttle_init_min != throttle_init_max) {
         	              		double tolerance = (throttle_init_max - throttle_init_min) * SPATIAL_TOLERANCE;
