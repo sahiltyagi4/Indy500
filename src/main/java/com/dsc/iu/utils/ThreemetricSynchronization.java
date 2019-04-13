@@ -595,7 +595,6 @@ public class ThreemetricSynchronization {
         	              		if(recordobj !=null && recordobj.containsKey("engineSpeed") && recordobj.containsKey("vehicleSpeed") 
         	              				&& recordobj.containsKey("throttle")) {
         	              			
-        	              			System.out.println("in json arr condition");
         	              			//WRITE TO OUTPUT FILE
         	              			outpw.println(recordobj.get("carnum") + "," + recordobj.get("datetime") + "," + recordobj.get("vehicleSpeed") + "," 
         	              					+ recordobj.get("engineSpeed") + "," + recordobj.get("throttle") + "," + recordobj.get("vehicleSpeed_Anomaly") + "," 
