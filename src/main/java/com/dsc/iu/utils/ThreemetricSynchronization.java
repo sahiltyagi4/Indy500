@@ -31,7 +31,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -479,15 +482,24 @@ public class ThreemetricSynchronization {
           double speed_init_min=0L, speed_init_max=0L, speed_maxExpected=0L, speed_minExpected=0L;
           double rpm_init_min=0L, rpm_init_max=0L, rpm_maxExpected=0L, rpm_minExpected=0L;
           double throttle_init_min=0L, throttle_init_max=0L, throttle_maxExpected=0L, throttle_minExpected=0L;
-          DateTime dt_threshold = DateTime.parse("HH:mm:ss.SSS");
-          dt_threshold = dt_threshold.parse("16:23:00.000");
+          
+          SimpleDateFormat df = new SimpleDateFormat("YYYY-mm-dd HH:mm:ss.SSS");
+          Date dt=null;
+          try {
+        	  		dt = df.parse("2018-05-27 16:23:00.000");
+          } catch(ParseException p) {}
+          
           while ((line = in.readLine()) != null && line.trim().length() > 0) {
         	  		if(line.startsWith("$P") && line.split("�")[2].matches("\\d+:\\d+:\\d+.\\d+") && line.split("�")[1].equalsIgnoreCase(carnum)) {
         	  			
-        	  			String racetime = line.split("�")[2].trim();
-        	  			DateTime dtformat = new DateTime("HH:mm:ss.SSS");
-        	  			dtformat = DateTime.parse(racetime);
-        	  			if(dtformat.getSecondOfDay() > dt_threshold.getSecondOfDay()) {
+        	  			String racetime = "2018-05-27 " + line.split("�")[2].trim();
+        	  			
+        	  			Date dtformat = null;
+        	  			try {
+        	  				dtformat = df.parse(racetime);
+        	  			} catch(ParseException p) {}
+        	  			
+        	  			if(dtformat.getTime() > dt.getTime()) {
         	  				
         	  				// Skip header lines
           	            if (skip > 0) {
