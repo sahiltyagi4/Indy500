@@ -377,9 +377,17 @@ public class ThreemetricSynchronization {
      *
      */
     
+    private static PrintWriter inpw, outpw;
+    
     @SuppressWarnings("resource")
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
     		aggregator = new ConcurrentHashMap<String, JSONObject>();
+    		
+    		String fileloc = "/scratch_ssd/sahil/syncHTM";
+    		File infile = new File(fileloc + "/data-escience.csv");
+        inpw = new PrintWriter(infile);
+        File outfile = new File(fileloc + "/inference-escience.csv");
+        outpw = new PrintWriter(outfile);
         
         List<String> carlist = new LinkedList<String>();
         carlist.add("13");
@@ -400,8 +408,6 @@ public class ThreemetricSynchronization {
     		File logfile = new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log");
     		FileInputStream inp = new FileInputStream(logfile);
     		
-    		String fileloc = "/scratch_ssd/sahil/syncHTM";
-      	
     		String arg1 = "{\"aggregationInfo\": {\"seconds\": 0, \"fields\": [], \"months\": 0, \"days\": 0, \"years\": 0, \"hours\": 0, \"microseconds\": 0, \"weeks\": 0, \"minutes\": 0, \"milliseconds\": 0}, "
     				+ "\"model\": \"HTMPrediction\", \"version\": 1, \"predictAheadTime\": null, \"modelParams\": {\"sensorParams\": {\"sensorAutoReset\": null, \"encoders\": {\"value\": {\"name\": \"value\", "
     				+ "\"resolution\": 2.5143999999999997, \"seed\": 42, \"fieldname\": \"value\", \"type\": \"RandomDistributedScalarEncoder\"}, \"timestamp_dayOfWeek\": null, "
@@ -434,10 +440,7 @@ public class ThreemetricSynchronization {
           
           OptionSet options = parser.parse(arg1);
           
-          File infile = new File(fileloc + "/data-escience.csv");
-          PrintWriter inpw = new PrintWriter(infile);
-          File outfile = new File(fileloc + "/inference-escience.csv");
-          PrintWriter outpw = new PrintWriter(outfile);
+          
 
           // Parse OPF Model Parameters
           JsonNode params;
@@ -448,7 +451,7 @@ public class ThreemetricSynchronization {
           else if (options.nonOptionArguments().isEmpty()) {
               try { inp.close(); }catch(Exception ignore) {}
               if(options.has("o")) {
-                  try { outpw.flush(); outpw.close(); }catch(Exception ignore) {}
+//                  try { outpw.flush(); outpw.close(); }catch(Exception ignore) {}
               }
               throw new IllegalArgumentException("Expecting OPF parameters. See 'help' for more information");
           } else {
@@ -530,7 +533,7 @@ public class ThreemetricSynchronization {
           	              }
           	              
           	              long speed_timestamp = System.currentTimeMillis();
-          	              speed_publisher.onNext("2018-05-27 " + dtformat.toString() + "," + speed);
+          	              speed_publisher.onNext(dtformat.toString() + "," + speed);
           	              
           	            //RPM
           	            double rpm  = Double.parseDouble(line.split(",")[5]);
@@ -554,7 +557,7 @@ public class ThreemetricSynchronization {
         	              	}
         	              
         	              	long rpm_timestamp = System.currentTimeMillis();
-        	              	rpm_publisher.onNext("2018-05-27 " + dtformat.toString() + "," + rpm);
+        	              	rpm_publisher.onNext(dtformat.toString() + "," + rpm);
           	              
         	              //THROTTLE
         	              	double throttle  = Double.parseDouble(line.split(",")[6]);
@@ -578,10 +581,10 @@ public class ThreemetricSynchronization {
         	              	}
         	              
         	              	long throttle_timestamp = System.currentTimeMillis();
-        	              	throttle_publisher.onNext("2018-05-27 " + dtformat.toString() + "," + throttle);
+        	              	throttle_publisher.onNext(dtformat.toString() + "," + throttle);
         	              	
         	              	//FILE WRITE --> INPUT DATA FOR POST-PROCESSING
-        	              	inpw.println(carnum + "," + "2018-05-27 " + dtformat.toString() + "," + speed + "," + speed_timestamp + "," + rpm + "," + rpm_timestamp 
+        	              	inpw.println(carnum + "," + dtformat.toString() + "," + speed + "," + speed_timestamp + "," + rpm + "," + rpm_timestamp 
         	              			+ "," + throttle + "," + throttle_timestamp);
         	              	
         	              	//JSON AGGREGATION AND SYNCHRONIZATION COMES HERE
