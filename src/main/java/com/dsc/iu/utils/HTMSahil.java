@@ -132,8 +132,8 @@ public class HTMSahil {
             if (node.has("timeOfDay")) {
                 JsonNode timeOfDay = node.get("timeOfDay");
                 fieldMap.put("fieldType", "datetime");
-                //fieldMap.put(KEY.DATEFIELD_PATTERN.getFieldName(), "YYYY-MM-dd HH:mm:ss.SSS");
-                fieldMap.put(KEY.DATEFIELD_PATTERN.getFieldName(), "YYYY-MM-dd HH:mm:ss");
+                fieldMap.put(KEY.DATEFIELD_PATTERN.getFieldName(), "YYYY-MM-dd HH:mm:ss.SSS");
+                //fieldMap.put(KEY.DATEFIELD_PATTERN.getFieldName(), "YYYY-MM-dd HH:mm:ss");
                 fieldMap.put(KEY.DATEFIELD_TOFD.getFieldName(),
                         new Tuple(timeOfDay.get(0).asInt(), timeOfDay.get(1).asDouble()));
             } else {
@@ -339,7 +339,7 @@ public class HTMSahil {
     
     private static void callhtm(String filename, String metric) {
     	try {
-    			String fileloc = "/scratch_ssd/sahil/baselineHTM";
+    			String fileloc = "/scratch_ssd/sahil/baselineHTM_microsecs";
 //          LOGGER.trace("main({})",  Arrays.asList(args));
       		System.out.println("in main..");
       		String arg1 = "{\"aggregationInfo\": {\"seconds\": 0, \"fields\": [], \"months\": 0, \"days\": 0, \"years\": 0, \"hours\": 0, \"microseconds\": 0, \"weeks\": 0, \"minutes\": 0, \"milliseconds\": 0}, \"model\": \"HTMPrediction\", \"version\": 1, \"predictAheadTime\": null, \"modelParams\": {\"sensorParams\": {\"sensorAutoReset\": null, \"encoders\": {\"value\": {\"name\": \"value\", \"resolution\": 2.5143999999999997, \"seed\": 42, \"fieldname\": \"value\", \"type\": \"RandomDistributedScalarEncoder\"}, \"timestamp_dayOfWeek\": null, \"timestamp_timeOfDay\": {\"fieldname\": \"timestamp\", \"timeOfDay\": [21, 9.49], \"type\": \"DateEncoder\", \"name\": \"timestamp\"}, \"timestamp_weekend\": null}, \"verbosity\": 0}, \"anomalyParams\": {\"anomalyCacheRecords\": null, \"autoDetectThreshold\": null, \"autoDetectWaitRecords\": 5030}, \"spParams\": {\"columnCount\": 2048, \"synPermInactiveDec\": 0.0005, \"spatialImp\": \"cpp\", \"inputWidth\": 0, \"spVerbosity\": 0, \"synPermConnected\": 0.2, \"synPermActiveInc\": 0.003, \"potentialPct\": 0.8, \"numActiveColumnsPerInhArea\": 40, \"boostStrength\": 0.0, \"globalInhibition\": 1, \"seed\": 1956}, \"trainSPNetOnlyIfRequested\": false, \"clParams\": {\"alpha\": 0.035828933612158, \"verbosity\": 0, \"steps\": \"1\", \"regionName\": \"SDRClassifierRegion\"}, \"tmParams\": {\"columnCount\": 2048, \"activationThreshold\": 20, \"cellsPerColumn\": 32, \"permanenceDec\": 0.008, \"minThreshold\": 13, \"inputWidth\": 2048, \"maxSynapsesPerSegment\": 128, \"outputType\": \"normal\", \"initialPerm\": 0.24, \"globalDecay\": 0.0, \"maxAge\": 0, \"newSynapseCount\": 31, \"maxSegmentsPerCell\": 128, \"permanenceInc\": 0.04, \"temporalImp\": \"tm_cpp\", \"seed\": 1960, \"verbosity\": 0, \"predictedSegmentDecrement\": 0.001}, \"tmEnable\": true, \"clEnable\": false, \"spEnable\": true, \"inferenceType\": \"TemporalAnomaly\"}}";
@@ -384,11 +384,6 @@ public class HTMSahil {
 //          } else {
 //              output = System.out;
 //          }
-          
-//          File infile = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/DATASAHIL.csv");
-//          PrintWriter inpw = new PrintWriter(infile);
-//          File outfile = new File("/Users/sahiltyagi/Desktop/benchmarks/HTMjava/modifiedHTMparams/speed-13/SCORESAHIL.csv");
-//          PrintWriter outpw = new PrintWriter(outfile);
           
           String carnum = filename.split("-")[1];
           File infile = new File(fileloc + "/data-" + carnum + "-" + metric + ".csv");
@@ -504,8 +499,10 @@ public class HTMSahil {
               }
               
               ctr++;
-              publisher.onNext(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + value);
-              inpw.write(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + value + "," + ctr + "," + System.currentTimeMillis() + "\n");
+//              publisher.onNext(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + value);
+              publisher.onNext(line.split(",")[0] + "," + value);
+//              inpw.write(line.split(",")[0].substring(0, line.split(",")[0].length()-4) + "," + value + "," + ctr + "," + System.currentTimeMillis() + "\n");
+              inpw.write(line.split(",")[0] + "," + value + "," + ctr + "," + System.currentTimeMillis() + "\n");
               //inpw.flush();
               try {
               	 Thread.sleep(10);
