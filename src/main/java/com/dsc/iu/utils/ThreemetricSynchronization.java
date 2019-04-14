@@ -74,82 +74,14 @@ import joptsimple.OptionSet;
 
 public class ThreemetricSynchronization {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ThreemetricSynchronization.class);
-    public static ThreemetricSynchronization model;
-
-    private Network speed_network, rpm_network, throttle_network;
-
-    private PublisherSupplier speed_supplier, rpm_supplier, throttle_supplier;
-    private double speed_prev_likelihood, rpm_prev_likelihood, throttle_prev_likelihood;
-    private boolean speed_spatialAnomaly = false, rpm_spatialAnomaly = false, throttle_spatialAnomaly = false;
+   
     private static double SPATIAL_TOLERANCE = 0.05;
-    private AnomalyLikelihood speed_likelihood, rpm_likelihood, throttle_likelihood;
     private static ConcurrentHashMap<String, JSONObject> aggregator;
 
     /**
      * Create HTM Model to be used by NAB
      * @param modelParams OPF Model parameters to parameters from
      */
-    public ThreemetricSynchronization(JsonNode modelParams) {
-        LOGGER.trace("HTMModel({})", modelParams);
-
-        // Create Sensor publisher to push NAB input data to network
-        speed_supplier = PublisherSupplier.builder()
-                .addHeader("timestamp,value")
-                .addHeader("datetime,float")
-                .addHeader("T,B")
-                .build();
-        
-        rpm_supplier = PublisherSupplier.builder()
-                .addHeader("timestamp,value")
-                .addHeader("datetime,float")
-                .addHeader("T,B")
-                .build();
-        
-        throttle_supplier = PublisherSupplier.builder()
-                .addHeader("timestamp,value")
-                .addHeader("datetime,float")
-                .addHeader("T,B")
-                .build();
-
-        // Get updated model parameters
-        Parameters parameters = getModelParameters(modelParams);
-        
-        LOGGER.info("RUNNING WITH NO EXPLICIT P_RADIUS SET");
-
-        // Create NAB Networks
-        speed_network = Network.create("speed Network", parameters)
-            .add(Network.createRegion("speed Region")
-                .add(Network.createLayer("speed Layer", parameters)
-                    .add(Anomaly.create())
-                    .add(new TemporalMemory())
-                    .add(new SpatialPooler())
-                    .add(Sensor.create(ObservableSensor::create,
-                            SensorParams.create(SensorParams.Keys::obs, "Manual Input speed", speed_supplier)))));
-        
-        speed_prev_likelihood = 0.;
-        
-        rpm_network = Network.create("rpm Network", parameters)
-                .add(Network.createRegion("rpm Region")
-                    .add(Network.createLayer("rpm Layer", parameters)
-                        .add(Anomaly.create())
-                        .add(new TemporalMemory())
-                        .add(new SpatialPooler())
-                        .add(Sensor.create(ObservableSensor::create,
-                                SensorParams.create(SensorParams.Keys::obs, "Manual Input rpm", rpm_supplier)))));
-        
-        rpm_prev_likelihood = 0.;
-        
-        throttle_network = Network.create("throttle Network", parameters)
-                .add(Network.createRegion("throttle Region")
-                    .add(Network.createLayer("throttle Layer", parameters)
-                        .add(Anomaly.create())
-                        .add(new TemporalMemory())
-                        .add(new SpatialPooler())
-                        .add(Sensor.create(ObservableSensor::create,
-                                SensorParams.create(SensorParams.Keys::obs, "Manual Input throttle", throttle_supplier)))));
-     
-        throttle_prev_likelihood = 0.;
-    }
 
     /**
      * Update encoders parameters
@@ -326,30 +258,6 @@ public class ThreemetricSynchronization {
         return p;
     }
 
-    public Publisher getSpeedPublisher() {
-        return speed_supplier.get();
-    }
-    
-    public Publisher getRPMPublisher() {
-        return rpm_supplier.get();
-    }
-    
-    public Publisher getThrottlePublisher() {
-        return throttle_supplier.get();
-    }
-
-    public Network getSpeedNetwork() {
-        return speed_network;
-    }
-    
-    public Network getRPMNetwork() {
-        return rpm_network;
-    }
-    
-    public Network getThrottleNetwork() {
-        return throttle_network;
-    }
-
     /**
      * Launch htm.java NAB detector
      *
@@ -400,6 +308,9 @@ public class ThreemetricSynchronization {
     private static void threadrun(String carnum, int threadnum) {
     		new Thread("thread-"+threadnum+"-for car-"+carnum) {
     			public void run() {
+    				ThreemetricSynchronization model = new ThreemetricSynchronization();
+    				Network speed_network, rpm_network, throttle_network;
+    				PublisherSupplier speed_supplier, rpm_supplier, throttle_supplier;
     				
     				String arg1 = "{\"aggregationInfo\": {\"seconds\": 0, \"fields\": [], \"months\": 0, \"days\": 0, \"years\": 0, \"hours\": 0, \"microseconds\": 0, \"weeks\": 0, \"minutes\": 0, \"milliseconds\": 0}, "
     	    				+ "\"model\": \"HTMPrediction\", \"version\": 1, \"predictAheadTime\": null, \"modelParams\": {\"sensorParams\": {\"sensorAutoReset\": null, \"encoders\": {\"value\": {\"name\": \"value\", "
@@ -450,19 +361,78 @@ public class ThreemetricSynchronization {
     	        	  			params = mapper.readTree((String)options.nonOptionArguments().get(0));
     	        	  		}
     	          } catch(Exception e) {}
+    	          
+    	          
+    	          // Create Sensor publisher to push NAB input data to network
+  		        speed_supplier = PublisherSupplier.builder()
+  		                .addHeader("timestamp,value")
+  		                .addHeader("datetime,float")
+  		                .addHeader("T,B")
+  		                .build();
+  		        
+  		        rpm_supplier = PublisherSupplier.builder()
+  		                .addHeader("timestamp,value")
+  		                .addHeader("datetime,float")
+  		                .addHeader("T,B")
+  		                .build();
+  		        
+  		        throttle_supplier = PublisherSupplier.builder()
+  		                .addHeader("timestamp,value")
+  		                .addHeader("datetime,float")
+  		                .addHeader("T,B")
+  		                .build();
 
+  		        // Get updated model parameters
+  		        Parameters parameters = model.getModelParameters(params);
+  		        
+  		        LOGGER.info("RUNNING WITH NO EXPLICIT P_RADIUS SET");
+
+  		        // Create NAB Networks
+  		        speed_network = Network.create("speed Network", parameters)
+  		            .add(Network.createRegion("speed Region")
+  		                .add(Network.createLayer("speed Layer", parameters)
+  		                    .add(Anomaly.create())
+  		                    .add(new TemporalMemory())
+  		                    .add(new SpatialPooler())
+  		                    .add(Sensor.create(ObservableSensor::create,
+  		                            SensorParams.create(SensorParams.Keys::obs, "Manual Input speed", speed_supplier)))));
+  		        
+  		        rpm_network = Network.create("rpm Network", parameters)
+  		                .add(Network.createRegion("rpm Region")
+  		                    .add(Network.createLayer("rpm Layer", parameters)
+  		                        .add(Anomaly.create())
+  		                        .add(new TemporalMemory())
+  		                        .add(new SpatialPooler())
+  		                        .add(Sensor.create(ObservableSensor::create,
+  		                                SensorParams.create(SensorParams.Keys::obs, "Manual Input rpm", rpm_supplier)))));
+  		        
+  		        throttle_network = Network.create("throttle Network", parameters)
+  		                .add(Network.createRegion("throttle Region")
+  		                    .add(Network.createLayer("throttle Layer", parameters)
+  		                        .add(Anomaly.create())
+  		                        .add(new TemporalMemory())
+  		                        .add(new SpatialPooler())
+  		                        .add(Sensor.create(ObservableSensor::create,
+  		                                SensorParams.create(SensorParams.Keys::obs, "Manual Input throttle", throttle_supplier)))));
+    	          
+  		        
+  		      Publisher speed_publisher = speed_supplier.get();
+  	          Publisher rpm_publisher = rpm_supplier.get();
+  	          Publisher throttle_publisher = throttle_supplier.get();
+  		        
     	          // Force timezone to UTC
     	          DateTimeZone.setDefault(DateTimeZone.UTC);
     	          
-    	          model = new ThreemetricSynchronization(params);
-    				
-    			  model.callhtm(carnum, String.valueOf(threadnum), params);
+    			  model.callhtm(carnum, String.valueOf(threadnum), params, speed_network, rpm_network, throttle_network, 
+    					  	speed_publisher, rpm_publisher, throttle_publisher);
     			}
     		}.start();
     }
     
-    private void callhtm(String carnum, String thread, JsonNode params) {
+    private void callhtm(String carnum, String thread, JsonNode params, Network speed_network, Network rpm_network, 
+    					Network throttle_network, Publisher speed_publisher, Publisher rpm_publisher, Publisher throttle_publisher) {
     	try {
+    		AnomalyLikelihood speed_likelihood, rpm_likelihood, throttle_likelihood;
     		File logfile = new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log");
     		FileInputStream inp = new FileInputStream(logfile);
           
@@ -472,6 +442,9 @@ public class ThreemetricSynchronization {
   		  inpw = new PrintWriter(infile);
   		  File outfile = new File(fileloc + "/output-" + carnum + "-" + thread + ".csv");
   		  outpw = new PrintWriter(outfile);
+  		  
+  		  boolean speed_spatialAnomaly = false, rpm_spatialAnomaly = false, throttle_spatialAnomaly = false;
+  		  double speed_prev_likelihood=0., rpm_prev_likelihood=0., throttle_prev_likelihood=0.;
           
           //anomaly likelihood calculation
           speed_likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
@@ -482,11 +455,6 @@ public class ThreemetricSynchronization {
           starthtmnetworks(speed_network, speed_spatialAnomaly, params, speed_likelihood, carnum, "vehicleSpeed");
           starthtmnetworks(rpm_network, rpm_spatialAnomaly, params, rpm_likelihood, carnum, "engineSpeed");
           starthtmnetworks(throttle_network, throttle_spatialAnomaly, params, throttle_likelihood, carnum, "throttle");
-          
-          // Pipe data to network
-          Publisher speed_publisher = model.getSpeedPublisher();
-          Publisher rpm_publisher = model.getRPMPublisher();
-          Publisher throttle_publisher = model.getThrottlePublisher();
           
           BufferedReader in = new BufferedReader(new InputStreamReader(inp));
           String line;
@@ -641,13 +609,13 @@ public class ThreemetricSynchronization {
     	            DateTime timestamp = (DateTime)inference.getClassifierInput().get("timestamp").get("inputValue");
     	            
     	            double anomaly_likelihood = likelihood.anomalyProbability(value, score, timestamp);
-    	            if (anomaly_likelihood >=0.99999 && speed_prev_likelihood >= 0.99999){
-    	            		speed_prev_likelihood = anomaly_likelihood;
-    	            		anomaly_likelihood = 0.999;
-    	            }
-    	            else{
-    	            		speed_prev_likelihood = anomaly_likelihood;
-    	            }
+//    	            if (anomaly_likelihood >=0.99999 && speed_prev_likelihood >= 0.99999){
+//    	            		speed_prev_likelihood = anomaly_likelihood;
+//    	            		anomaly_likelihood = 0.999;
+//    	            }
+//    	            else{
+//    	            		speed_prev_likelihood = anomaly_likelihood;
+//    	            }
     	            
     	            double logscore=0L;
     	            if(spatialAnomaly) {
@@ -688,13 +656,13 @@ public class ThreemetricSynchronization {
     	            DateTime timestamp = (DateTime)inference.getClassifierInput().get("timestamp").get("inputValue");
     	            
     	            double anomaly_likelihood = likelihood.anomalyProbability(value, score, timestamp);
-    	            if (anomaly_likelihood >=0.99999 && rpm_prev_likelihood >= 0.99999){
-    	            		rpm_prev_likelihood = anomaly_likelihood;
-    	            		anomaly_likelihood = 0.999;
-    	            }
-    	            else{
-    	            		rpm_prev_likelihood = anomaly_likelihood;
-    	            }
+//    	            if (anomaly_likelihood >=0.99999 && rpm_prev_likelihood >= 0.99999){
+//    	            		rpm_prev_likelihood = anomaly_likelihood;
+//    	            		anomaly_likelihood = 0.999;
+//    	            }
+//    	            else{
+//    	            		rpm_prev_likelihood = anomaly_likelihood;
+//    	            }
     	            
     	            double logscore=0L;
     	            if(spatialAnomaly) {
@@ -734,13 +702,13 @@ public class ThreemetricSynchronization {
     	            DateTime timestamp = (DateTime)inference.getClassifierInput().get("timestamp").get("inputValue");
     	            
     	            double anomaly_likelihood = likelihood.anomalyProbability(value, score, timestamp);
-    	            if (anomaly_likelihood >=0.99999 && throttle_prev_likelihood >= 0.99999){
-    	            		throttle_prev_likelihood = anomaly_likelihood;
-    	            		anomaly_likelihood = 0.999;
-    	            }
-    	            else{
-    	            		throttle_prev_likelihood = anomaly_likelihood;
-    	            }
+//    	            if (anomaly_likelihood >=0.99999 && throttle_prev_likelihood >= 0.99999){
+//    	            		throttle_prev_likelihood = anomaly_likelihood;
+//    	            		anomaly_likelihood = 0.999;
+//    	            }
+//    	            else{
+//    	            		throttle_prev_likelihood = anomaly_likelihood;
+//    	            }
     	            
     	            double logscore=0L;
     	            if(spatialAnomaly) {
