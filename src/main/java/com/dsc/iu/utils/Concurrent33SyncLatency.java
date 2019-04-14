@@ -39,9 +39,9 @@ public class Concurrent33SyncLatency {
 			inputdatamap(carnum);
 			outputdatamap(carnum);
 			
-			for(Map.Entry<String, Long> set : inmap.entrySet()) {
+			for(Map.Entry<String, Long> set : outmap.entrySet()) {
 				String key = set.getKey();
-				pw.println(key + "," + (outmap.get(key) - set.getValue()));
+				pw.println(key + "," + (set.getValue() - inmap.get(key)));
 			}
 			pw.flush();
 			pw.close();
