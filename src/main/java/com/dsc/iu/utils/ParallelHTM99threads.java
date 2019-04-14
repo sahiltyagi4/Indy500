@@ -387,7 +387,8 @@ public class ParallelHTM99threads {
 		        	              				&& recordobj.containsKey("throttle")) {
 		        	              			
 		        	              			outpw.println(recordobj.get("carnum") + "_" + recordobj.get("datetime") + "," + metric 
-		        	              					+ "," + recordobj.get(metric + "_Anomaly") + "," + recordobj.get(metric + "_timestamp") 
+		        	              					+ "," + recordobj.get(metric + "_Anomaly") + "," + recordobj.get("vehicleSpeed_timestamp") 
+		        	              					+ "," + recordobj.get("engineSpeed_timestamp") + "," + recordobj.get("throttle_timestamp")
 		        	              					+ "," + System.currentTimeMillis());
 		        	              			itr.remove();
 		        	              		}
