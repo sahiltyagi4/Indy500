@@ -465,8 +465,6 @@ public class ThreemetricSynchronization {
     	try {
     		File logfile = new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log");
     		FileInputStream inp = new FileInputStream(logfile);
-    		
-    		
           
           PrintWriter inpw, outpw;
           String fileloc = "/scratch_ssd/sahil/parallelsync";
@@ -474,8 +472,6 @@ public class ThreemetricSynchronization {
   		  inpw = new PrintWriter(infile);
   		  File outfile = new File(fileloc + "/output-" + carnum + "-" + thread + ".csv");
   		  outpw = new PrintWriter(outfile);
-
-          
           
           //anomaly likelihood calculation
           speed_likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
