@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Parallel99SyncLatency {
-	//baseline HTM for 33 cars on 3 metrics. Calculation of latency when a tuple gets synchronized across all 3 metrics for a car
+	//baseline HTM for 33 cars on 3 metrics. each HTM running as a separate thread. Calculation of latency when a tuple gets synchronized across all 3 metrics for a car
 	
 	private static String fileloc = "/scratch_ssd/sahil/parallelsync/";
 	private static String[] metrics = {"vehicleSpeed", "engineSpeed", "throttle"};
