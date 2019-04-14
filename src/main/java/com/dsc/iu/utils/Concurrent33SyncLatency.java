@@ -41,6 +41,8 @@ public class Concurrent33SyncLatency {
 			
 			for(Map.Entry<String, Long> set : outmap.entrySet()) {
 				String key = set.getKey();
+				System.out.println("OUTmap key:" + key);
+				System.out.println("INmap key:" + inmap.get(key));
 				pw.println(key + "," + (set.getValue() - inmap.get(key)));
 			}
 			pw.flush();
@@ -61,6 +63,7 @@ public class Concurrent33SyncLatency {
 				while ((line = in.readLine()) != null && line.split(",").length == 7) {
 					if(carnum.equalsIgnoreCase(line.split("_")[0])) {
 						String key = line.split(",")[0];
+						System.out.println("in:" + key);
 						inmap.put(key, Long.parseLong(line.split(",")[2]));
 					}
 				}
