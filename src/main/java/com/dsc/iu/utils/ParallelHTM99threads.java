@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -45,7 +46,7 @@ public class ParallelHTM99threads {
 	static List<String> carlist = new ArrayList<String>();
 	
 	private static Map<String, Double> prev_lhood_thd = new HashMap<String, Double>();
-	private static Map<String, JSONObject> aggregator = new HashMap<String, JSONObject>();
+	private static ConcurrentHashMap<String, JSONObject> aggregator = new ConcurrentHashMap<String, JSONObject>();
 	
 	public static void main(String[] args) {
 		carlist.add("13");
