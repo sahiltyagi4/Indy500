@@ -65,6 +65,7 @@ import org.numenta.nupic.util.UniversalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -75,13 +76,13 @@ public class ThreemetricSynchronization {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ThreemetricSynchronization.class);
     public static ThreemetricSynchronization model;
 
-    private static Network speed_network, rpm_network, throttle_network;
+    private Network speed_network, rpm_network, throttle_network;
 
     private PublisherSupplier speed_supplier, rpm_supplier, throttle_supplier;
-    private static double speed_prev_likelihood, rpm_prev_likelihood, throttle_prev_likelihood;
-    private static boolean speed_spatialAnomaly = false, rpm_spatialAnomaly = false, throttle_spatialAnomaly = false;
+    private double speed_prev_likelihood, rpm_prev_likelihood, throttle_prev_likelihood;
+    private boolean speed_spatialAnomaly = false, rpm_spatialAnomaly = false, throttle_spatialAnomaly = false;
     private static double SPATIAL_TOLERANCE = 0.05;
-    private static AnomalyLikelihood speed_likelihood, rpm_likelihood, throttle_likelihood;
+    private AnomalyLikelihood speed_likelihood, rpm_likelihood, throttle_likelihood;
     private static ConcurrentHashMap<String, JSONObject> aggregator;
 
     /**
@@ -399,47 +400,73 @@ public class ThreemetricSynchronization {
     private static void threadrun(String carnum, int threadnum) {
     		new Thread("thread-"+threadnum+"-for car-"+carnum) {
     			public void run() {
-    				callhtm(carnum, String.valueOf(threadnum));
+    				
+    				String arg1 = "{\"aggregationInfo\": {\"seconds\": 0, \"fields\": [], \"months\": 0, \"days\": 0, \"years\": 0, \"hours\": 0, \"microseconds\": 0, \"weeks\": 0, \"minutes\": 0, \"milliseconds\": 0}, "
+    	    				+ "\"model\": \"HTMPrediction\", \"version\": 1, \"predictAheadTime\": null, \"modelParams\": {\"sensorParams\": {\"sensorAutoReset\": null, \"encoders\": {\"value\": {\"name\": \"value\", "
+    	    				+ "\"resolution\": 2.5143999999999997, \"seed\": 42, \"fieldname\": \"value\", \"type\": \"RandomDistributedScalarEncoder\"}, \"timestamp_dayOfWeek\": null, "
+    	    				+ "\"timestamp_timeOfDay\": {\"fieldname\": \"timestamp\", \"timeOfDay\": [21, 9.49], \"type\": \"DateEncoder\", \"name\": \"timestamp\"}, \"timestamp_weekend\": null}, \"verbosity\": 0}, "
+    	    				+ "\"anomalyParams\": {\"anomalyCacheRecords\": null, \"autoDetectThreshold\": null, \"autoDetectWaitRecords\": 5030}, \"spParams\": {\"columnCount\": 2048, \"synPermInactiveDec\": 0.0005, "
+    	    				+ "\"spatialImp\": \"cpp\", \"inputWidth\": 0, \"spVerbosity\": 0, \"synPermConnected\": 0.2, \"synPermActiveInc\": 0.003, \"potentialPct\": 0.8, \"numActiveColumnsPerInhArea\": 40, "
+    	    				+ "\"boostStrength\": 0.0, \"globalInhibition\": 1, \"seed\": 1956}, \"trainSPNetOnlyIfRequested\": false, \"clParams\": {\"alpha\": 0.035828933612158, \"verbosity\": 0, \"steps\": \"1\", "
+    	    				+ "\"regionName\": \"SDRClassifierRegion\"}, \"tmParams\": {\"columnCount\": 2048, \"activationThreshold\": 20, \"cellsPerColumn\": 32, \"permanenceDec\": 0.008, \"minThreshold\": 13, "
+    	    				+ "\"inputWidth\": 2048, \"maxSynapsesPerSegment\": 128, \"outputType\": \"normal\", \"initialPerm\": 0.24, \"globalDecay\": 0.0, \"maxAge\": 0, \"newSynapseCount\": 31, "
+    	    				+ "\"maxSegmentsPerCell\": 128, \"permanenceInc\": 0.04, \"temporalImp\": \"tm_cpp\", \"seed\": 1960, \"verbosity\": 0, \"predictedSegmentDecrement\": 0.001}, \"tmEnable\": true, "
+    	    				+ "\"clEnable\": false, \"spEnable\": true, \"inferenceType\": \"TemporalAnomaly\"}}";
+    	      	
+    	          // Parse command line args
+    	          OptionParser parser = new OptionParser();
+    	          parser.nonOptions("OPF parameters object (JSON)");
+    	          parser.acceptsAll(Arrays.asList("p", "params"), "OPF parameters file (JSON).\n(default: first non-option argument)")
+    	              .withOptionalArg()
+    	              .ofType(File.class);
+    	          parser.acceptsAll(Arrays.asList("i", "input"), "Input data file (csv).\n(default: stdin)")
+    	              .withOptionalArg()
+    	              .ofType(File.class);
+    	          parser.acceptsAll(Arrays.asList("o", "output"), "Output results file (csv).\n(default: stdout)")
+    	              .withOptionalArg()
+    	              .ofType(File.class);
+    	          parser.acceptsAll(Arrays.asList("s", "skip"), "Header lines to skip")
+    	              .withOptionalArg()
+    	              .ofType(Integer.class)
+    	              .defaultsTo(0);
+    	          parser.acceptsAll(Arrays.asList("h", "?", "help"), "Help");
+    	          
+    	          OptionSet options = parser.parse(arg1);
+    	          
+    	       // Parse OPF Model Parameters
+    	          JsonNode params=null;
+    	          ObjectMapper mapper = new ObjectMapper();
+    	          try {
+    	        	  		if (options.has("p")) {
+    	        	  			params = mapper.readTree((File)options.valueOf("p"));
+    	        	  		}	 
+    	        	  		else if (options.nonOptionArguments().isEmpty()) {
+    	        	  			//try { inp.close(); }catch(Exception ignore) {}
+    	        	  			if(options.has("o")) {
+//        	                  try { outpw.flush(); outpw.close(); }catch(Exception ignore) {}
+    	        	  			}
+    	        	  			throw new IllegalArgumentException("Expecting OPF parameters. See 'help' for more information");
+    	        	  		} else {
+    	        	  			params = mapper.readTree((String)options.nonOptionArguments().get(0));
+    	        	  		}
+    	          } catch(Exception e) {}
+
+    	          // Force timezone to UTC
+    	          DateTimeZone.setDefault(DateTimeZone.UTC);
+    	          
+    	          model = new ThreemetricSynchronization(params);
+    				
+    			  model.callhtm(carnum, String.valueOf(threadnum), params);
     			}
     		}.start();
     }
     
-    private static void callhtm(String carnum, String thread) {
+    private void callhtm(String carnum, String thread, JsonNode params) {
     	try {
     		File logfile = new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log");
     		FileInputStream inp = new FileInputStream(logfile);
     		
-    		String arg1 = "{\"aggregationInfo\": {\"seconds\": 0, \"fields\": [], \"months\": 0, \"days\": 0, \"years\": 0, \"hours\": 0, \"microseconds\": 0, \"weeks\": 0, \"minutes\": 0, \"milliseconds\": 0}, "
-    				+ "\"model\": \"HTMPrediction\", \"version\": 1, \"predictAheadTime\": null, \"modelParams\": {\"sensorParams\": {\"sensorAutoReset\": null, \"encoders\": {\"value\": {\"name\": \"value\", "
-    				+ "\"resolution\": 2.5143999999999997, \"seed\": 42, \"fieldname\": \"value\", \"type\": \"RandomDistributedScalarEncoder\"}, \"timestamp_dayOfWeek\": null, "
-    				+ "\"timestamp_timeOfDay\": {\"fieldname\": \"timestamp\", \"timeOfDay\": [21, 9.49], \"type\": \"DateEncoder\", \"name\": \"timestamp\"}, \"timestamp_weekend\": null}, \"verbosity\": 0}, "
-    				+ "\"anomalyParams\": {\"anomalyCacheRecords\": null, \"autoDetectThreshold\": null, \"autoDetectWaitRecords\": 5030}, \"spParams\": {\"columnCount\": 2048, \"synPermInactiveDec\": 0.0005, "
-    				+ "\"spatialImp\": \"cpp\", \"inputWidth\": 0, \"spVerbosity\": 0, \"synPermConnected\": 0.2, \"synPermActiveInc\": 0.003, \"potentialPct\": 0.8, \"numActiveColumnsPerInhArea\": 40, "
-    				+ "\"boostStrength\": 0.0, \"globalInhibition\": 1, \"seed\": 1956}, \"trainSPNetOnlyIfRequested\": false, \"clParams\": {\"alpha\": 0.035828933612158, \"verbosity\": 0, \"steps\": \"1\", "
-    				+ "\"regionName\": \"SDRClassifierRegion\"}, \"tmParams\": {\"columnCount\": 2048, \"activationThreshold\": 20, \"cellsPerColumn\": 32, \"permanenceDec\": 0.008, \"minThreshold\": 13, "
-    				+ "\"inputWidth\": 2048, \"maxSynapsesPerSegment\": 128, \"outputType\": \"normal\", \"initialPerm\": 0.24, \"globalDecay\": 0.0, \"maxAge\": 0, \"newSynapseCount\": 31, "
-    				+ "\"maxSegmentsPerCell\": 128, \"permanenceInc\": 0.04, \"temporalImp\": \"tm_cpp\", \"seed\": 1960, \"verbosity\": 0, \"predictedSegmentDecrement\": 0.001}, \"tmEnable\": true, "
-    				+ "\"clEnable\": false, \"spEnable\": true, \"inferenceType\": \"TemporalAnomaly\"}}";
-      	
-          // Parse command line args
-          OptionParser parser = new OptionParser();
-          parser.nonOptions("OPF parameters object (JSON)");
-          parser.acceptsAll(Arrays.asList("p", "params"), "OPF parameters file (JSON).\n(default: first non-option argument)")
-              .withOptionalArg()
-              .ofType(File.class);
-          parser.acceptsAll(Arrays.asList("i", "input"), "Input data file (csv).\n(default: stdin)")
-              .withOptionalArg()
-              .ofType(File.class);
-          parser.acceptsAll(Arrays.asList("o", "output"), "Output results file (csv).\n(default: stdout)")
-              .withOptionalArg()
-              .ofType(File.class);
-          parser.acceptsAll(Arrays.asList("s", "skip"), "Header lines to skip")
-              .withOptionalArg()
-              .ofType(Integer.class)
-              .defaultsTo(0);
-          parser.acceptsAll(Arrays.asList("h", "?", "help"), "Help");
-          
-          OptionSet options = parser.parse(arg1);
+    		
           
           PrintWriter inpw, outpw;
           String fileloc = "/scratch_ssd/sahil/parallelsync";
@@ -448,27 +475,7 @@ public class ThreemetricSynchronization {
   		  File outfile = new File(fileloc + "/output-" + carnum + "-" + thread + ".csv");
   		  outpw = new PrintWriter(outfile);
 
-          // Parse OPF Model Parameters
-          JsonNode params;
-          ObjectMapper mapper = new ObjectMapper();
-          if (options.has("p")) {
-              params = mapper.readTree((File)options.valueOf("p"));
-          } 
-          else if (options.nonOptionArguments().isEmpty()) {
-              try { inp.close(); }catch(Exception ignore) {}
-              if(options.has("o")) {
-//                  try { outpw.flush(); outpw.close(); }catch(Exception ignore) {}
-              }
-              throw new IllegalArgumentException("Expecting OPF parameters. See 'help' for more information");
-          } else {
-              params = mapper.readTree((String)options.nonOptionArguments().get(0));
-          }
-
-          // Number of header lines to skip
-          int skip = (int) options.valueOf("s");
-
-          // Force timezone to UTC
-          DateTimeZone.setDefault(DateTimeZone.UTC);
+          
           
           //anomaly likelihood calculation
           speed_likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
@@ -476,7 +483,6 @@ public class ThreemetricSynchronization {
           throttle_likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
           
           // Create NAB Network Models
-          model = new ThreemetricSynchronization(params);
           starthtmnetworks(speed_network, speed_spatialAnomaly, params, speed_likelihood, carnum, "vehicleSpeed");
           starthtmnetworks(rpm_network, rpm_spatialAnomaly, params, rpm_likelihood, carnum, "engineSpeed");
           starthtmnetworks(throttle_network, throttle_spatialAnomaly, params, throttle_likelihood, carnum, "throttle");
@@ -509,12 +515,6 @@ public class ThreemetricSynchronization {
         	  			} catch(ParseException p) {}
         	  			
         	  			if(dtformat.getTime() > dt.getTime()) {
-        	  				
-        	  				// Skip header lines
-          	            if (skip > 0) {
-          	                  skip--;
-          	                  continue;
-          	            }
           	              
           	            //SPEED
           	              //spatial anomaly logic. if spatialAnomaly is TRUE, then logscore = 1.0
@@ -631,7 +631,7 @@ public class ThreemetricSynchronization {
       }
     }
     
-    private static void starthtmnetworks(Network htmnetwork, boolean spatialAnomaly, JsonNode params, AnomalyLikelihood likelihood, 
+    private void starthtmnetworks(Network htmnetwork, boolean spatialAnomaly, JsonNode params, AnomalyLikelihood likelihood, 
     								String carnum, String metric) {
     		
     		System.out.println("going to start htm..");
