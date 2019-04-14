@@ -377,17 +377,9 @@ public class ThreemetricSynchronization {
      *
      */
     
-    private static PrintWriter inpw, outpw;
-    
     @SuppressWarnings("resource")
     public static void main(String[] args) throws IOException {
     		aggregator = new ConcurrentHashMap<String, JSONObject>();
-    		
-    		String fileloc = "/scratch_ssd/sahil/parallelsync";
-    		File infile = new File(fileloc + "/data-escience.csv");
-        inpw = new PrintWriter(infile);
-        File outfile = new File(fileloc + "/inference-escience.csv");
-        outpw = new PrintWriter(outfile);
         
         List<String> carlist = new LinkedList<String>();
 //		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");carlist.add("7");carlist.add("6");
@@ -409,12 +401,12 @@ public class ThreemetricSynchronization {
     private static void threadrun(String carnum, int threadnum) {
     		new Thread("thread-"+threadnum+"-for car-"+carnum) {
     			public void run() {
-    				callhtm(carnum);
+    				callhtm(carnum, String.valueOf(threadnum));
     			}
     		}.start();
     }
     
-    private static void callhtm(String carnum) {
+    private static void callhtm(String carnum, String thread) {
     	try {
     		File logfile = new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log");
     		FileInputStream inp = new FileInputStream(logfile);
@@ -451,7 +443,12 @@ public class ThreemetricSynchronization {
           
           OptionSet options = parser.parse(arg1);
           
-          
+          PrintWriter inpw, outpw;
+          String fileloc = "/scratch_ssd/sahil/parallelsync";
+  		  File infile = new File(fileloc + "/input-" + carnum + "-" + thread + ".csv");
+  		  inpw = new PrintWriter(infile);
+  		  File outfile = new File(fileloc + "/output-" + carnum + "-" + thread + ".csv");
+  		  outpw = new PrintWriter(outfile);
 
           // Parse OPF Model Parameters
           JsonNode params;
