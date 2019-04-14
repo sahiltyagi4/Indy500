@@ -395,7 +395,7 @@ public class ParallelHTM99threads {
 		        	              	}
 		                	 		
 		                	 		try {
-		                	 			Thread.sleep(10);
+		                	 			Thread.sleep(100);
 		                	 		} catch(InterruptedException ex) {}
 	            	  				
 	            	  			}
