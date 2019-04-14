@@ -383,7 +383,7 @@ public class ThreemetricSynchronization {
     public static void main(String[] args) throws IOException {
     		aggregator = new ConcurrentHashMap<String, JSONObject>();
     		
-    		String fileloc = "/scratch_ssd/sahil/syncHTM";
+    		String fileloc = "/scratch_ssd/sahil/parallelsync";
     		File infile = new File(fileloc + "/data-escience.csv");
         inpw = new PrintWriter(infile);
         File outfile = new File(fileloc + "/inference-escience.csv");

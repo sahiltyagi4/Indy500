@@ -6,14 +6,19 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.json.simple.JSONObject;
 import org.numenta.nupic.Parameters;
 import org.numenta.nupic.Parameters.KEY;
 import org.numenta.nupic.algorithms.Anomaly;
@@ -38,21 +43,22 @@ import joptsimple.OptionSet;
 
 public class ParallelHTM99threads {
 	static List<String> carlist = new ArrayList<String>();
-	public static Map<String, Double> prev_lhood_thd = new HashMap<String, Double>();
-	public static Map<String, PrintWriter> wrtrmap = new HashMap<String, PrintWriter>();
+	
+	private static Map<String, Double> prev_lhood_thd = new HashMap<String, Double>();
+	private static Map<String, JSONObject> aggregator = new HashMap<String, JSONObject>();
 	
 	public static void main(String[] args) {
 		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("6");carlist.add("33");carlist.add("24");carlist.add("26");carlist.add("7");carlist.add("60");carlist.add("27");
 		carlist.add("22");carlist.add("18");carlist.add("3");carlist.add("4");carlist.add("28");carlist.add("32");carlist.add("59");carlist.add("25");carlist.add("64");carlist.add("10");carlist.add("15");carlist.add("17");
 		carlist.add("12");carlist.add("1");carlist.add("9");carlist.add("14");carlist.add("23");carlist.add("30");carlist.add("29");carlist.add("88");carlist.add("66");
 		
-		String[] metrics = {"speed", "RPM", "throttle"};
+		String[] metrics = {"vehicleSpeed", "engineSpeed", "throttle"};
 		int threadnum=0;
 		for(int j=0; j<metrics.length; j++) {
 			for(int i=0; i<carlist.size(); i++) {
 				prev_lhood_thd.put(carlist.get(i)+"_"+metrics[j], 0.0);
-				threadnum++;
 				runHTM(carlist.get(i), metrics[j], threadnum);
+				threadnum++;
 			}
 		}
 	}
@@ -174,8 +180,7 @@ public class ParallelHTM99threads {
             if (node.has("timeOfDay")) {
                 JsonNode timeOfDay = node.get("timeOfDay");
                 fieldMap.put("fieldType", "datetime");
-                //fieldMap.put(KEY.DATEFIELD_PATTERN.getFieldName(), "YYYY-MM-dd HH:mm:ss.SSS");
-                fieldMap.put(KEY.DATEFIELD_PATTERN.getFieldName(), "YYYY-MM-dd HH:mm:ss");
+                fieldMap.put(KEY.DATEFIELD_PATTERN.getFieldName(), "YYYY-MM-dd HH:mm:ss.SSS");
                 fieldMap.put(KEY.DATEFIELD_TOFD.getFieldName(),
                         new Tuple(timeOfDay.get(0).asInt(), timeOfDay.get(1).asDouble()));
             } else {
@@ -192,15 +197,13 @@ public class ParallelHTM99threads {
 	private static void runHTM(String carnum, String metric, int threadnum) {
 		new Thread("thread-"+threadnum+"-for car-"+carnum) {
 			public void run() {
-				File outfile = new File("/scratch_ssd/sahil/bolts99/out-"+carnum+"-"+metric+".csv");
-				File infile = new File("/scratch_ssd/sahil/bolts99/in-"+carnum+"-"+metric+".csv");
-				
-				PrintWriter outpw=null;
-				PrintWriter inpw=null;
+				String fileloc = "/scratch_ssd/sahil/parallelsync/";
+				File outfile = new File(fileloc + "out-"+carnum+"-"+metric+".csv");
+				File infile = new File(fileloc + "in-"+carnum+"-"+metric+".csv");
+				PrintWriter inpw=null, outpw=null;
 				try {
-					outpw = new PrintWriter(outfile);
-					wrtrmap.put(carnum + "_" + metric, outpw);
 					inpw = new PrintWriter(infile);
+					outpw = new PrintWriter(outfile);
 				} catch(IOException e) {
 					e.printStackTrace();
 				}
@@ -292,10 +295,10 @@ public class ParallelHTM99threads {
 	                     double score = inference.getAnomalyScore();
 	                     int record = inference.getRecordNum();
 	                     double value = (Double)inference.getClassifierInput().get("value").get("inputValue");
-	                     DateTime timestamp = (DateTime)inference.getClassifierInput().get("timestamp").get("inputValue");
+	                     DateTime datetime = (DateTime)inference.getClassifierInput().get("timestamp").get("inputValue");
 	                     
 	                     
-	                     double anomaly_likelihood = likelihood.anomalyProbability(value, score, timestamp);
+	                     double anomaly_likelihood = likelihood.anomalyProbability(value, score, datetime);
 	                     double prev_likelihood = prev_lhood_thd.get(carnum+"_"+metric);
 	                     if (anomaly_likelihood >=0.99999 && prev_likelihood >= 0.99999){
 	                         prev_likelihood = anomaly_likelihood;
@@ -309,8 +312,27 @@ public class ParallelHTM99threads {
 	                     double logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
 	                     long ts = System.currentTimeMillis();
 	                     
-	                     wrtrmap.get(carnum + "_" + metric).println(record + "," + String.valueOf(value) + "," + timestamp.toString() + "," + 
-	                    		 	logscore + "," + String.valueOf(ts));
+	                     JSONObject jsonob = null;
+	                     if(aggregator.containsKey(carnum + "_" + datetime.toString())) {
+	                    	 	jsonob = aggregator.get(carnum + "_" + datetime.toString());
+	                     } else {
+	                    	 	jsonob = new JSONObject();
+	                     }
+	                     
+	                     jsonob.put(metric, value);
+	                     
+	                     if(!jsonob.containsKey("carnum")) {
+	                    	 	jsonob.put("carnum", carnum);
+	                     }
+	                     
+	                     if(!jsonob.containsKey("datetime")) {
+	                    	 	jsonob.put("datetime", datetime.toString());
+	                     }
+	                     
+	                     jsonob.put(metric + "_Anomaly", logscore);
+	                     jsonob.put(metric + "_timestamp", ts);
+	                     
+	                     aggregator.put(carnum + "_" + datetime.toString(), jsonob);
 	                     
 	                 }, (error) -> {
 	                     
@@ -323,28 +345,67 @@ public class ParallelHTM99threads {
 	                 BufferedReader rdr = new BufferedReader(new InputStreamReader(inp));
 	                 String line;
 	                 int counter=1;
-	                 while((line=rdr.readLine()) != null) {
+	                 
+	                 SimpleDateFormat df = new SimpleDateFormat("YYYY-mm-dd HH:mm:ss.SSS");
+	                 Date dt=null;
+	                 try {
+	               	  		dt = df.parse("2018-05-27 16:23:00.000");
+	                 } catch(ParseException p) {}
+	                 
+	                 while((line=rdr.readLine()) != null && line.trim().length() > 0) {
 	                	 	if(line.startsWith("$P") && line.split("�")[2].matches("\\d+:\\d+:\\d+.\\d+") && line.split("�")[1].equalsIgnoreCase(carnum)) {
+	                	 		
+	                	 		String racetime = "2018-05-27 " + line.split("�")[2].trim();
 	                	 		String data=null;
-	                	 		if(carnum.equals("speed")) {
-	                	 			data = line.split("�")[3];
-	                	 		} else if(carnum.equals("rpm")) {
-	                	 			data = line.split("�")[4];
-	                	 		} else if(carnum.equals("throttle")) {
-	                	 			data = line.split("�")[5];
-	                	 		}
 	                	 		
-	                	 		publisher.onNext("2018-05-27 " + line.split("�")[2] + "," + data);
-	                	 		
-	                	 		inpw.println("2018-05-27 " + line.split("�")[2] + "," + data + "," + System.currentTimeMillis());
-	                	 		
-	                	 		try {
-	                	 			Thread.sleep(100);
-	                	 		} catch(InterruptedException ex) {}
+	                	 		Date dtformat = null;
+	            	  			try {
+	            	  				dtformat = df.parse(racetime);
+	            	  			} catch(ParseException p) {}
+	            	  			
+	            	  			if(dtformat.getTime() > dt.getTime()) {
+	            	  				
+	            	  				if(metric.equals("vehicleSpeed")) {
+		                	 			data = line.split("�")[4];
+		                	 		} else if(metric.equals("engineSpeed")) {
+		                	 			data = line.split("�")[5];
+		                	 		} else if(metric.equals("throttle")) {
+		                	 			data = line.split("�")[6];
+		                	 		}
+		                	 		
+		                	 		publisher.onNext(racetime + "," + data);
+		                	 		inpw.println(carnum + "_" + racetime + "," + data + "," + System.currentTimeMillis());
+		                	 		
+		                	 		//JSON AGGREGATION AND SYNCHRONIZATION COMES HERE
+		        	              	JSONObject recordobj=null;
+		        	              	Iterator<Map.Entry<String, JSONObject>> itr = aggregator.entrySet().iterator();
+		        	              	while(itr.hasNext()) {
+		        	              		Map.Entry<String, JSONObject> entry = itr.next();
+		        	              		recordobj = entry.getValue();
+		        	              		if(recordobj !=null && recordobj.containsKey("engineSpeed") && recordobj.containsKey("vehicleSpeed") 
+		        	              				&& recordobj.containsKey("throttle")) {
+		        	              			
+		        	              			outpw.println(recordobj.get("carnum") + "_" + recordobj.get("datetime") + "," + metric 
+		        	              					+ "," + recordobj.get(metric + "_Anomaly") + "," + recordobj.get(metric + "_timestamp") 
+		        	              					+ "," + System.currentTimeMillis());
+		        	              			itr.remove();
+		        	              		}
+		        	              	}
+		                	 		
+		                	 		try {
+		                	 			Thread.sleep(10);
+		                	 		} catch(InterruptedException ex) {}
+	            	  				
+	            	  			}
 	                	 	}
 	                 }
 	                 
 	                 publisher.onComplete();
+	                 inpw.flush();
+	                 inpw.close();
+	                 outpw.flush();
+	                 outpw.close();
+	                 
 	                 System.out.println("completed publishing data for car-" + carnum + " and metric: " + metric);
 	                 
 	            } catch(IOException e) {
