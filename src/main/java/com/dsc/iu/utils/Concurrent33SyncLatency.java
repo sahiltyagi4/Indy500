@@ -61,7 +61,7 @@ public class Concurrent33SyncLatency {
 				while ((line = in.readLine()) != null && line.split(",").length == 7) {
 					if(carnum.equalsIgnoreCase(line.split("_")[0])) {
 						String key = line.split(",")[0];
-						System.out.println("INmap key:" + key);
+						//System.out.println("INmap key:" + key);
 						inmap.put(key, Long.parseLong(line.split(",")[2]));
 					}
 				}
@@ -70,6 +70,7 @@ public class Concurrent33SyncLatency {
 		}
 	}
 	
+	//INmap key:20_2018-05-27 19:24:50.658
 	private static void outputdatamap(String carnum) throws IOException {
 		File[] files = new File(fileloc).listFiles();
 		for(File f : files) {
@@ -80,7 +81,7 @@ public class Concurrent33SyncLatency {
 				while ((line = in.readLine()) != null && line.split(",").length == 12) {
 					if(carnum.equalsIgnoreCase(line.split(",")[0])) {
 						String key = line.split(",")[0] + "_" + line.split(",")[1].replaceAll("T", " ").replaceAll("Z", "");
-						//System.out.println("OUTmap key:" + key);
+						System.out.println("OUTmap key:" + key);
 						outmap.put(key, Long.parseLong(line.split(",")[11]));
 					}
 				}
