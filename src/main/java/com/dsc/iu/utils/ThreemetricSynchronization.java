@@ -289,6 +289,7 @@ public class ThreemetricSynchronization {
     		
     		ThreemetricSynchronization ob = new ThreemetricSynchronization();
     		thread_specific_map = new ConcurrentHashMap<Integer, ConcurrentHashMap<String, JSONObject>>();
+    		wrtr_threadmap = new ConcurrentHashMap<Integer, PrintWriter>();
         
     		List<String> carlist = new LinkedList<String>();
 		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");carlist.add("7");carlist.add("6");
