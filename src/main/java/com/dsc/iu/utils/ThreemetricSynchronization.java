@@ -307,7 +307,6 @@ public class ThreemetricSynchronization {
     private void threadrun(String carnum, int threadnum) {
     		new Thread("thread-"+threadnum+"-for car-"+carnum) {
     			public void run() {
-    				aggregator = new ConcurrentHashMap<String, JSONObject>();
     				ThreemetricSynchronization model = new ThreemetricSynchronization();
     				Network speed_network, rpm_network, throttle_network;
     				PublisherSupplier speed_supplier, rpm_supplier, throttle_supplier;
@@ -432,6 +431,7 @@ public class ThreemetricSynchronization {
     private void callhtm(String carnum, String thread, JsonNode params, Network speed_network, Network rpm_network, 
     					Network throttle_network, Publisher speed_publisher, Publisher rpm_publisher, Publisher throttle_publisher) {
     	try {
+    		aggregator = new ConcurrentHashMap<String, JSONObject>();
     		AnomalyLikelihood speed_likelihood, rpm_likelihood, throttle_likelihood;
     		File logfile = new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log");
     		FileInputStream inp = new FileInputStream(logfile);
