@@ -76,7 +76,7 @@ public class ThreemetricSynchronization {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ThreemetricSynchronization.class);
    
     private static double SPATIAL_TOLERANCE = 0.05;
-    private static ConcurrentHashMap<String, JSONObject> aggregator;
+    private ConcurrentHashMap<String, JSONObject> aggregator;
 
     /**
      * Create HTM Model to be used by NAB
@@ -288,8 +288,7 @@ public class ThreemetricSynchronization {
     
     @SuppressWarnings("resource")
     public static void main(String[] args) throws IOException {
-    		aggregator = new ConcurrentHashMap<String, JSONObject>();
-        
+    		ThreemetricSynchronization ob = new ThreemetricSynchronization();
         List<String> carlist = new LinkedList<String>();
 		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");carlist.add("7");carlist.add("6");
 	    carlist.add("60");carlist.add("27");carlist.add("22");carlist.add("18");carlist.add("3");carlist.add("4");carlist.add("28");carlist.add("32");carlist.add("59");carlist.add("25");
@@ -299,15 +298,16 @@ public class ThreemetricSynchronization {
         //FIRST CALL SEQUENTIAL, THEN WRITE PARALLEL VERSION OF IT
 	    int thread=0;
         for(String carnum : carlist) {
-        		threadrun(carnum, thread);
+        		ob.threadrun(carnum, thread);
         		thread++;
         		System.out.println("completed HTM SEQUENTIAL EXECUTION FOR CAR:" + carnum);
         }
     }
     
-    private static void threadrun(String carnum, int threadnum) {
+    private void threadrun(String carnum, int threadnum) {
     		new Thread("thread-"+threadnum+"-for car-"+carnum) {
     			public void run() {
+    				aggregator = new ConcurrentHashMap<String, JSONObject>();
     				ThreemetricSynchronization model = new ThreemetricSynchronization();
     				Network speed_network, rpm_network, throttle_network;
     				PublisherSupplier speed_supplier, rpm_supplier, throttle_supplier;
@@ -578,7 +578,7 @@ public class ThreemetricSynchronization {
         	              	}
           	              
           	            try {
-          	            	 	Thread.sleep(100);
+          	            	 	Thread.sleep(50);
           	            } catch(InterruptedException i) {}
         	  				
         	  			}
