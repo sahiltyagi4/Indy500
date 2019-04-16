@@ -81,13 +81,22 @@ public class Concurrent33SyncLatency {
 				FileInputStream inp = new FileInputStream(f);
 				BufferedReader in = new BufferedReader(new InputStreamReader(inp));
 				String line;
-				while ((line = in.readLine()) != null && line.split(",").length == 12) {
+//				while ((line = in.readLine()) != null && line.split(",").length == 12) {
+//					if(carnum.equalsIgnoreCase(line.split(",")[0])) {
+//						String key = line.split(",")[0] + "_" + line.split(",")[1].replaceAll("T", " ").replaceAll("Z", "");
+//						//System.out.println("OUTmap key:" + key);
+//						outmap.put(key, Long.parseLong(line.split(",")[11]));
+//					}
+//				}
+				
+				while ((line = in.readLine()) != null && line.split(",").length == 9) {
 					if(carnum.equalsIgnoreCase(line.split(",")[0])) {
 						String key = line.split(",")[0] + "_" + line.split(",")[1].replaceAll("T", " ").replaceAll("Z", "");
 						//System.out.println("OUTmap key:" + key);
-						outmap.put(key, Long.parseLong(line.split(",")[11]));
+						outmap.put(key, Long.parseLong(line.split(",")[8]));
 					}
 				}
+				
 				in.close();
 			}
 		}

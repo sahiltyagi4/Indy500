@@ -653,6 +653,26 @@ public class ThreemetricSynchronization {
     	            ob.put(metric+"_timestamp", System.currentTimeMillis());
     	            agg.put(carnum + "_" +timestamp.toString(), ob);
     	            thread_specific_map.put(thread_num, agg);
+    	            
+    	          //JSON AGGREGATION AND SYNCHRONIZATION COMES HERE
+	              	JSONObject recordobj=null;
+	              	Iterator<Map.Entry<String, JSONObject>> itr = agg.entrySet().iterator();
+	              	while(itr.hasNext()) {
+	              		Map.Entry<String, JSONObject> entry = itr.next();
+	              		recordobj = entry.getValue();
+	              		if(recordobj !=null && recordobj.containsKey("engineSpeed") && recordobj.containsKey("vehicleSpeed") 
+	              				&& recordobj.containsKey("throttle")) {
+	              			
+	              			//WRITE TO OUTPUT FILE
+	              			pw.println(recordobj.get("carnum") + "," + recordobj.get("datetime") + "," + recordobj.get("vehicleSpeed") + "," 
+	              					+ recordobj.get("engineSpeed") + "," + recordobj.get("throttle") + ","
+	              					+ recordobj.get("vehicleSpeed_timestamp") + "," + recordobj.get("engineSpeed_timestamp") + "," 
+	              					+ recordobj.get("throttle_timestamp") + "," + System.currentTimeMillis());
+	              			
+	              			itr.remove();
+	              		}
+	              	}
+	              	thread_specific_map.put(thread_num, agg);
     	           
     	        }, (error) -> {
     	            LOGGER.error("Error processing data", error);
@@ -700,6 +720,26 @@ public class ThreemetricSynchronization {
     	            ob.put(metric+"_timestamp", System.currentTimeMillis());
     	            agg.put(carnum + "_" +timestamp.toString(), ob);
     	            thread_specific_map.put(thread_num, agg);
+    	            
+    	          //JSON AGGREGATION AND SYNCHRONIZATION COMES HERE
+	              	JSONObject recordobj=null;
+	              	Iterator<Map.Entry<String, JSONObject>> itr = agg.entrySet().iterator();
+	              	while(itr.hasNext()) {
+	              		Map.Entry<String, JSONObject> entry = itr.next();
+	              		recordobj = entry.getValue();
+	              		if(recordobj !=null && recordobj.containsKey("engineSpeed") && recordobj.containsKey("vehicleSpeed") 
+	              				&& recordobj.containsKey("throttle")) {
+	              			
+	              			//WRITE TO OUTPUT FILE
+	              			pw.println(recordobj.get("carnum") + "," + recordobj.get("datetime") + "," + recordobj.get("vehicleSpeed") + "," 
+	              					+ recordobj.get("engineSpeed") + "," + recordobj.get("throttle") + ","
+	              					+ recordobj.get("vehicleSpeed_timestamp") + "," + recordobj.get("engineSpeed_timestamp") + "," 
+	              					+ recordobj.get("throttle_timestamp") + "," + System.currentTimeMillis());
+	              			
+	              			itr.remove();
+	              		}
+	              	}
+	              	thread_specific_map.put(thread_num, agg);
     	           
     	        }, (error) -> {
     	            LOGGER.error("Error processing data", error);
@@ -760,8 +800,7 @@ public class ThreemetricSynchronization {
 	              			
 	              			//WRITE TO OUTPUT FILE
 	              			pw.println(recordobj.get("carnum") + "," + recordobj.get("datetime") + "," + recordobj.get("vehicleSpeed") + "," 
-	              					+ recordobj.get("engineSpeed") + "," + recordobj.get("throttle") + "," + recordobj.get("vehicleSpeed_Anomaly") + "," 
-	              					+ recordobj.get("engineSpeed_Anomaly") + "," + recordobj.get("throttle_Anomaly") + "," 
+	              					+ recordobj.get("engineSpeed") + "," + recordobj.get("throttle") + ","
 	              					+ recordobj.get("vehicleSpeed_timestamp") + "," + recordobj.get("engineSpeed_timestamp") + "," 
 	              					+ recordobj.get("throttle_timestamp") + "," + System.currentTimeMillis());
 	              			
