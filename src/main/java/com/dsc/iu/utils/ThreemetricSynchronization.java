@@ -608,11 +608,12 @@ public class ThreemetricSynchronization {
     								String carnum, String metric, int thread_num) {
     		
     		System.out.println("going to start htm..");
-    		ConcurrentHashMap<String, JSONObject> agg = thread_specific_map.get(thread_num);
     		PrintWriter pw = wrtr_threadmap.get(thread_num);
     		
     		if(metric.equalsIgnoreCase("vehicleSpeed")) {
     			htmnetwork.observe().subscribe((Inference inference) -> {
+    				
+    				ConcurrentHashMap<String, JSONObject> agg = thread_specific_map.get(thread_num);
     	        	
     	            double score = inference.getAnomalyScore();
     	            //int record = inference.getRecordNum();
@@ -656,6 +657,7 @@ public class ThreemetricSynchronization {
     	            
     	          //JSON AGGREGATION AND SYNCHRONIZATION COMES HERE
 	              	JSONObject recordobj=null;
+	              	//agg = thread_specific_map.get(thread_num);
 	              	Iterator<Map.Entry<String, JSONObject>> itr = agg.entrySet().iterator();
 	              	while(itr.hasNext()) {
 	              		Map.Entry<String, JSONObject> entry = itr.next();
@@ -681,6 +683,8 @@ public class ThreemetricSynchronization {
     	        });
     		} else if(metric.equalsIgnoreCase("engineSpeed")) {
     			htmnetwork.observe().subscribe((Inference inference) -> {
+    				
+    				ConcurrentHashMap<String, JSONObject> agg = thread_specific_map.get(thread_num);
     	        	
     	            double score = inference.getAnomalyScore();
     	            //int record = inference.getRecordNum();
@@ -748,6 +752,8 @@ public class ThreemetricSynchronization {
     	        });
     		} else if(metric.equalsIgnoreCase("throttle")) {
     			htmnetwork.observe().subscribe((Inference inference) -> {
+    				
+    				ConcurrentHashMap<String, JSONObject> agg = thread_specific_map.get(thread_num);
     	        	
     	            double score = inference.getAnomalyScore();
     	            //int record = inference.getRecordNum();
