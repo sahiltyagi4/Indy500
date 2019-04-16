@@ -587,7 +587,7 @@ public class ThreemetricSynchronization {
 //        	              	thread_specific_map.put(thread, agg);
           	              
           	            try {
-          	            	 	Thread.sleep(100);
+          	            	 	Thread.sleep(50);
           	            } catch(InterruptedException i) {}
         	  				
         	  			}
