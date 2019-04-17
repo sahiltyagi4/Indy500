@@ -292,11 +292,12 @@ public class ThreemetricSynchronization {
     		wrtr_threadmap = new ConcurrentHashMap<Integer, PrintWriter>();
         
     		List<String> carlist = new LinkedList<String>();
+    		carlist.add("22");
     		
-		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");carlist.add("7");carlist.add("6");
-	    carlist.add("60");carlist.add("27");carlist.add("22");carlist.add("18");carlist.add("3");carlist.add("4");carlist.add("28");carlist.add("32");carlist.add("59");carlist.add("25");
-	    carlist.add("64");carlist.add("10");carlist.add("15");carlist.add("17");carlist.add("12");carlist.add("1");carlist.add("9");carlist.add("14");carlist.add("23");carlist.add("30");
-	    carlist.add("29");carlist.add("88");carlist.add("66");
+//		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");carlist.add("7");carlist.add("6");
+//	    carlist.add("60");carlist.add("27");carlist.add("22");carlist.add("18");carlist.add("3");carlist.add("4");carlist.add("28");carlist.add("32");carlist.add("59");carlist.add("25");
+//	    carlist.add("64");carlist.add("10");carlist.add("15");carlist.add("17");carlist.add("12");carlist.add("1");carlist.add("9");carlist.add("14");carlist.add("23");carlist.add("30");
+//	    carlist.add("29");carlist.add("88");carlist.add("66");
         
         //FIRST CALL SEQUENTIAL, THEN WRITE PARALLEL VERSION OF IT
 	    int thread=0;
@@ -308,7 +309,8 @@ public class ThreemetricSynchronization {
     }
     
     private void threadrun(String carnum, int threadnum) {
-    		new Thread("thread-"+threadnum+"-for car-"+carnum) {
+//    		new Thread("thread-"+threadnum+"-for car-"+carnum) {
+    		new Thread() {
     			public void run() {
     				ThreemetricSynchronization model = new ThreemetricSynchronization();
     				
@@ -439,11 +441,13 @@ public class ThreemetricSynchronization {
     	try {
     		AnomalyLikelihood speed_likelihood, rpm_likelihood, throttle_likelihood;
     		File logfile = new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log");
+    		//File logfile = new File("/Users/sahiltyagi/Downloads/Indy_500_2018/IPBroadcaster_Input_2018-05-27_0.log");
     		FileInputStream inp = new FileInputStream(logfile);
         ConcurrentHashMap<String, JSONObject> agg = thread_specific_map.get(thread);  
     		
           PrintWriter inpw, outpw;
           String fileloc = "/scratch_ssd/sahil/parallelsync";
+          //String fileloc = "/Users/sahiltyagi/Desktop";
   		  
           File infile = new File(fileloc + "/input-" + carnum + "-" + thread + ".csv");
   		  inpw = new PrintWriter(infile);
@@ -513,6 +517,7 @@ public class ThreemetricSynchronization {
           	              
           	              long speed_timestamp = System.currentTimeMillis();
           	              speed_publisher.onNext(racetime + "," + speed);
+          	              System.out.println("publisher thread:" + Thread.currentThread().getName() + "," + Thread.currentThread().getId());
           	              
           	            //RPM
           	            double rpm  = Double.parseDouble(line.split("�")[5]);
@@ -676,6 +681,7 @@ public class ThreemetricSynchronization {
 	              		}
 	              	}
 	              	thread_specific_map.put(thread_num, agg);
+	              	System.out.println("speed subscriber thread:" + Thread.currentThread().getName() + "," + Thread.currentThread().getId());
     	           
     	        }, (error) -> {
     	            LOGGER.error("Error processing data", error);
