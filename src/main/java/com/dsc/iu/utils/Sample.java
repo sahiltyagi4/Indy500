@@ -10,6 +10,12 @@ public class Sample {
 		data.put("carnum", 23);
 		data.put("score", 0.5);
 		System.out.println(data.toJSONString());
-		
+		int x=3;
+		int y = 3;
+		while(true) {
+			System.out.println(x+y);
+			x++;
+			y--;
+		}
 	}
 }
