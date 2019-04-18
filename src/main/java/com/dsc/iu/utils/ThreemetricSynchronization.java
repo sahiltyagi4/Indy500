@@ -517,7 +517,7 @@ public class ThreemetricSynchronization {
           	              
           	              long speed_timestamp = System.currentTimeMillis();
           	              speed_publisher.onNext(racetime + "," + speed);
-          	              System.out.println("publisher thread:" + Thread.currentThread().getName() + "," + Thread.currentThread().getId());
+          	              //System.out.println("publisher thread:" + Thread.currentThread().getName() + "," + Thread.currentThread().getId());
           	              
           	            //RPM
           	            double rpm  = Double.parseDouble(line.split("�")[5]);
@@ -680,7 +680,7 @@ public class ThreemetricSynchronization {
 	              		}
 	              	}
 	              	thread_specific_map.put(thread_num, agg);
-	              	System.out.println("speed subscriber thread:" + Thread.currentThread().getName() + "," + Thread.currentThread().getId());
+	              	//System.out.println("speed subscriber thread:" + Thread.currentThread().getName() + "," + Thread.currentThread().getId());
     	           
     	        }, (error) -> {
     	            LOGGER.error("Error processing data", error);
