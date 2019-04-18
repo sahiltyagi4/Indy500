@@ -595,7 +595,6 @@ public class ThreemetricSynchronization {
           	            try {
           	            	 	Thread.sleep(50);
           	            } catch(InterruptedException i) {}
-        	  				
         	  			}
         	  		}
           }
