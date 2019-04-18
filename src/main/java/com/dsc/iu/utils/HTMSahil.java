@@ -318,8 +318,8 @@ public class HTMSahil {
      *
      */
     
-//    public static String inpfileloc = "/scratch_ssd/sahil/results/";
-    public static String inpfileloc = "/Users/sahiltyagi/Desktop/results1/";
+    public static String inpfileloc = "/scratch_ssd/sahil/results1/";
+ //   public static String inpfileloc = "/Users/sahiltyagi/Desktop/results1/";
     
     @SuppressWarnings("resource")
     public static void main(String[] args) {
