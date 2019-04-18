@@ -652,7 +652,7 @@ public class ThreemetricSynchronization {
 	              			
 	              			//WRITE TO OUTPUT FILE
 	              			pw.println(recordobj.get("carnum") + "," + recordobj.get("datetime") + "," + recordobj.get("vehicleSpeed") + "," 
-	              					+ "enginespeed" + "," + "throttle" + "," + recordobj.get("vehicleSpeed_timestamp") + "," + "enginespeed_ts" + "," 
+	              					+ recordobj.get("vehicleSpeed_Anomaly") + "," + "throttle" + "," + recordobj.get("vehicleSpeed_timestamp") + "," + "enginespeed_ts" + "," 
 	              					+ "throttle_ts" + "," + System.currentTimeMillis());
 	              			
 	              			itr.remove();
