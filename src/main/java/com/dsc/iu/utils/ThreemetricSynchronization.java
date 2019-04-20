@@ -71,9 +71,11 @@ import joptsimple.OptionSet;
 public class ThreemetricSynchronization {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ThreemetricSynchronization.class);
    
-    private static double SPATIAL_TOLERANCE = 0.05;
-    private static Map<Integer, ConcurrentHashMap<String, JSONObject>> thread_specific_map;
-    private static Map<Integer, PrintWriter> wrtr_threadmap;;
+    private double SPATIAL_TOLERANCE = 0.05;
+    ConcurrentHashMap<String, JSONObject> agg = new ConcurrentHashMap<String, JSONObject>();
+    
+    //private static Map<Integer, ConcurrentHashMap<String, JSONObject>> thread_specific_map;
+    //private static Map<Integer, PrintWriter> wrtr_threadmap;;
 
     /**
      * Create HTM Model to be used by NAB
@@ -243,37 +245,13 @@ public class ThreemetricSynchronization {
         return p;
     }
     
-    @SuppressWarnings("resource")
-    public static void main(String[] args) throws IOException {
-    		
-    		ThreemetricSynchronization ob = new ThreemetricSynchronization();
-    		thread_specific_map = new ConcurrentHashMap<Integer, ConcurrentHashMap<String, JSONObject>>();
-    		wrtr_threadmap = new ConcurrentHashMap<Integer, PrintWriter>();
-        
-    		List<String> carlist = new LinkedList<String>();
-    		carlist.add("22");
-    		
-//		carlist.add("20");carlist.add("21");carlist.add("13");carlist.add("98");carlist.add("19");carlist.add("33");carlist.add("24");carlist.add("26");carlist.add("7");carlist.add("6");
-//	    carlist.add("60");carlist.add("27");carlist.add("22");carlist.add("18");carlist.add("3");carlist.add("4");carlist.add("28");carlist.add("32");carlist.add("59");carlist.add("25");
-//	    carlist.add("64");carlist.add("10");carlist.add("15");carlist.add("17");carlist.add("12");carlist.add("1");carlist.add("9");carlist.add("14");carlist.add("23");carlist.add("30");
-//	    carlist.add("29");carlist.add("88");carlist.add("66");
-        
-        //FIRST CALL SEQUENTIAL, THEN WRITE PARALLEL VERSION OF IT
-	    int thread=0;
-        for(String carnum : carlist) {
-        		ob.threadrun(carnum, thread);
-        		thread++;
-        		System.out.println("completed HTM SEQUENTIAL EXECUTION FOR CAR:" + carnum);
-        }
-    }
-    
-    private void threadrun(String carnum, int threadnum) {
+    protected void threadrun(String carnum, int threadnum) {
     		new Thread("thread-"+threadnum+"-for car-"+carnum) {
     			public void run() {
     				ThreemetricSynchronization model = new ThreemetricSynchronization();
     				
-    				ConcurrentHashMap<String, JSONObject> aggregator = new ConcurrentHashMap<String, JSONObject>();
-    				thread_specific_map.put(threadnum, aggregator);
+//    				ConcurrentHashMap<String, JSONObject> aggregator = new ConcurrentHashMap<String, JSONObject>();
+//    				thread_specific_map.put(threadnum, aggregator);
     				//Network speed_network, rpm_network, throttle_network;
     				//PublisherSupplier speed_supplier, rpm_supplier, throttle_supplier;
     				
@@ -409,7 +387,7 @@ public class ThreemetricSynchronization {
     		File logfile = new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log");
     		//File logfile = new File("/Users/sahiltyagi/Downloads/Indy_500_2018/IPBroadcaster_Input_2018-05-27_0.log");
     		FileInputStream inp = new FileInputStream(logfile);
-        ConcurrentHashMap<String, JSONObject> agg = thread_specific_map.get(thread);  
+//        ConcurrentHashMap<String, JSONObject> agg = thread_specific_map.get(thread);
     		
           PrintWriter inpw, outpw;
           String fileloc = "/scratch_ssd/sahil/parallelsync";
@@ -420,10 +398,13 @@ public class ThreemetricSynchronization {
   		  
   		  File outfile = new File(fileloc + "/output-" + carnum + "-" + thread + ".csv");
   		  outpw = new PrintWriter(outfile);
-  		  wrtr_threadmap.put(thread, outpw);
+  		  //wrtr_threadmap.put(thread, outpw);
   		  
-  		  boolean speed_spatialAnomaly = false, rpm_spatialAnomaly = false, throttle_spatialAnomaly = false;
-  		  double speed_prev_likelihood=0., rpm_prev_likelihood=0., throttle_prev_likelihood=0.;
+//  		  boolean speed_spatialAnomaly = false, rpm_spatialAnomaly = false, throttle_spatialAnomaly = false;
+//  		  double speed_prev_likelihood=0., rpm_prev_likelihood=0., throttle_prev_likelihood=0.;
+  		  
+  		  boolean speed_spatialAnomaly = false;
+  		  double speed_prev_likelihood=0.;
           
           //anomaly likelihood calculation
           speed_likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
@@ -431,7 +412,7 @@ public class ThreemetricSynchronization {
 //          throttle_likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
           
           // Create NAB Network Models
-          starthtmnetworks(speed_network, speed_spatialAnomaly, params, speed_likelihood, carnum, "vehicleSpeed", thread);
+          starthtmnetworks(speed_network, speed_spatialAnomaly, params, speed_likelihood, carnum, "vehicleSpeed", thread, outpw);
 //          starthtmnetworks(rpm_network, rpm_spatialAnomaly, params, rpm_likelihood, carnum, "engineSpeed", thread);
 //          starthtmnetworks(throttle_network, throttle_spatialAnomaly, params, throttle_likelihood, carnum, "throttle", thread);
           
@@ -579,15 +560,12 @@ public class ThreemetricSynchronization {
     }
     
     private void starthtmnetworks(Network htmnetwork, boolean spatialAnomaly, JsonNode params, AnomalyLikelihood likelihood, 
-    								String carnum, String metric, int thread_num) {
+    								String carnum, String metric, int thread_num, PrintWriter pw) {
     		
     		System.out.println("going to start htm..");
-    		PrintWriter pw = wrtr_threadmap.get(thread_num);
     		
     		if(metric.equalsIgnoreCase("vehicleSpeed")) {
     			htmnetwork.observe().subscribe((Inference inference) -> {
-    				
-    				ConcurrentHashMap<String, JSONObject> agg = thread_specific_map.get(thread_num);
     	        	
     	            double score = inference.getAnomalyScore();
     	            //int record = inference.getRecordNum();
@@ -627,7 +605,7 @@ public class ThreemetricSynchronization {
     	            ob.put(metric+"_Anomaly", logscore);
     	            ob.put(metric+"_timestamp", System.currentTimeMillis());
     	            agg.put(carnum + "_" +timestamp.toString(), ob);
-    	            thread_specific_map.put(thread_num, agg);
+    	            //thread_specific_map.put(thread_num, agg);
     	            
     	          //JSON AGGREGATION AND SYNCHRONIZATION COMES HERE
 	              	JSONObject recordobj=null;
@@ -658,7 +636,7 @@ public class ThreemetricSynchronization {
 	              			itr.remove();
 	              		}
 	              	}
-	              	thread_specific_map.put(thread_num, agg);
+	              	//thread_specific_map.put(thread_num, agg);
 	              	//System.out.println("speed subscriber thread:" + Thread.currentThread().getName() + "," + Thread.currentThread().getId());
     	           
     	        }, (error) -> {
