@@ -553,20 +553,19 @@ public class ThreemetricSynchronization {
     	            }
     	            
     	            System.out.println("speed logscore:"+logscore);
-    	            anomalyScoreouts.get(metrics[0]);//.add(logscore);
-    	            System.out.println("boolean added:");
-    	            System.out.println("in speed: " + anomalyScoreouts.get(metrics[0]).peek());
+    	            anomalyScoreouts.get(metrics[0]).add(logscore);
+    	            //System.out.println("in speed: " + anomalyScoreouts.get(metrics[0]).peek());
     	            
     	            boolean hasRecords = true;
     	            for (int i = 0; i < metrics.length; i++) {
     	            		hasRecords &= !anomalyScoreouts.get(metrics[i]).isEmpty();
-    	            		System.out.println("speed hasrec loop");
+    	            		//System.out.println("speed hasrec loop");
                 }
-    	            System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[0]);
+    	            //System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[0]);
                     
                 if (hasRecords) {
                 		JSONObject obj = jsonqueue.poll();
-                		System.out.println("has records speed");
+                		//System.out.println("has records speed");
                 		for (int i = 0; i < metrics.length; i++) {
                 			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
@@ -597,15 +596,15 @@ public class ThreemetricSynchronization {
     	            		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
     	            }
     	            
-    	            System.out.println("RPM logscore:"+logscore);
+    	            //System.out.println("RPM logscore:"+logscore);
     	            anomalyScoreouts.get(metrics[1]).add(logscore);
-    	            System.out.println("in rpm: " + anomalyScoreouts.get(metrics[1]).peek());
+    	            //System.out.println("in rpm: " + anomalyScoreouts.get(metrics[1]).peek());
     	            boolean hasRecords = true;
     	            for (int i = 0; i < metrics.length; i++) {
     	            		hasRecords &= !anomalyScoreouts.get(metrics[i]).isEmpty();
-    	            		System.out.println("rpm hasrec loop");
+    	            		//System.out.println("rpm hasrec loop");
                 }
-    	            System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[1]);
+    	            //System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[1]);
                     
                 if (hasRecords) {
                 		System.out.println("has records RPM");
@@ -640,18 +639,18 @@ public class ThreemetricSynchronization {
     	            		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
     	            }
     	            
-    	            System.out.println("throttle logscore:"+logscore);
+    	            //System.out.println("throttle logscore:"+logscore);
     	            anomalyScoreouts.get(metrics[2]).add(logscore);
-    	            System.out.println("in throttle: " + anomalyScoreouts.get(metrics[2]).peek());
+    	            //System.out.println("in throttle: " + anomalyScoreouts.get(metrics[2]).peek());
     	            boolean hasRecords = true;
     	            for (int i = 0; i < metrics.length; i++) {
     	            		hasRecords &= !anomalyScoreouts.get(metrics[i]).isEmpty();
-    	            		System.out.println("throttle hasrec loop");
+    	            		//System.out.println("throttle hasrec loop");
                 }
-    	            System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[2]);
+    	            //System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[2]);
                     
                 if (hasRecords) {
-                		System.out.println("has records throttle");
+                		//System.out.println("has records throttle");
                 		JSONObject obj = jsonqueue.poll();
                 		for (int i = 0; i < metrics.length; i++) {
                 			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
