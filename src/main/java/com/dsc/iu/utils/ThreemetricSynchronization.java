@@ -250,7 +250,7 @@ public class ThreemetricSynchronization {
     				Queue<JSONObject> jsonqueue = new LinkedList<>();
     				
     				for(int i=0;i<metrics.length;i++) {
-    					anomalyScoreouts.put(metrics[i], new ConcurrentLinkedQueue<>());
+    					anomalyScoreouts.put(metrics[i], new ConcurrentLinkedQueue<Double>());
     				}
     				
     				Network speed_network, rpm_network, throttle_network;
@@ -553,7 +553,7 @@ public class ThreemetricSynchronization {
     	            }
     	            
     	            System.out.println("speed logscore:"+logscore);
-    	            //boolean added = anomalyScoreouts.get(metrics[0]).add(logscore);
+    	            anomalyScoreouts.get(metrics[0]);//.add(logscore);
     	            System.out.println("boolean added:");
     	            System.out.println("in speed: " + anomalyScoreouts.get(metrics[0]).peek());
     	            
