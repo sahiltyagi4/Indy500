@@ -434,7 +434,7 @@ public class ThreemetricSynchronization {
         	  				obj.put("timeOfDay", racetime);
           	              
         	  				jsonqueue.add(obj);
-        	  				System.out.println("json queue is: " + jsonqueue.peek().toJSONString());
+        	  				//System.out.println("json queue is: " + jsonqueue.peek().toJSONString());
         	  				
           	            //SPEED
           	              //spatial anomaly logic. if spatialAnomaly is TRUE, then logscore = 1.0
@@ -515,7 +515,7 @@ public class ThreemetricSynchronization {
         	              				+ "," + throttle + "," + throttle_timestamp);
           	              
           	            try {
-          	            	 	Thread.sleep(1000000);
+          	            	 	Thread.sleep(50);
           	            } catch(InterruptedException i) {}
         	  			}
         	  		}
@@ -552,7 +552,7 @@ public class ThreemetricSynchronization {
     	            		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
     	            }
     	            
-    	            System.out.println("speed logscore:"+logscore);
+    	            //System.out.println("speed logscore:"+logscore);
     	            anomalyScoreouts.get(metrics[0]).add(logscore);
     	            //System.out.println("in speed: " + anomalyScoreouts.get(metrics[0]).peek());
     	            
