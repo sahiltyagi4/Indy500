@@ -74,7 +74,7 @@ public class ThreemetricSynchronization {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ThreemetricSynchronization.class);
    
     private double SPATIAL_TOLERANCE = 0.05;
-    private ConcurrentHashMap<String, Queue<Double>> anomalyScoreouts = new ConcurrentHashMap<>();
+    public ConcurrentHashMap<String, Queue<Double>> anomalyScoreouts = new ConcurrentHashMap<>();
     private String[] metrics = {"vehicleSpeed", "engineSpeed", "throttle"};
     private Queue<JSONObject> jsonq = new LinkedList<>();
 
@@ -378,10 +378,12 @@ public class ThreemetricSynchronization {
     		AnomalyLikelihood speed_likelihood, rpm_likelihood, throttle_likelihood;
     		
     		File logfile = new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log");
+    		//File logfile = new File("/Users/sahiltyagi/Downloads/Indy_500_2018/IPBroadcaster_Input_2018-05-27_0.log");
     		FileInputStream inp = new FileInputStream(logfile);
     		
           PrintWriter inpw, outpw;
           String fileloc = "/scratch_ssd/sahil/parallelsync";
+//          String fileloc = "/Users/sahiltyagi/Desktop/parallelsync";
   		  
           File infile = new File(fileloc + "/input-" + carnum + "-" + thread + ".csv");
   		  inpw = new PrintWriter(infile);
@@ -398,9 +400,9 @@ public class ThreemetricSynchronization {
           throttle_likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
           
           // Create NAB Network Models
-          starthtmnetworks(speed_network, speed_spatialAnomaly, params, speed_likelihood, carnum, "vehicleSpeed", thread, outpw);
-          starthtmnetworks(rpm_network, rpm_spatialAnomaly, params, rpm_likelihood, carnum, "engineSpeed", thread, outpw);
-          starthtmnetworks(throttle_network, throttle_spatialAnomaly, params, throttle_likelihood, carnum, "throttle", thread, outpw);
+          starthtmnetworks(speed_network, speed_spatialAnomaly, params, speed_likelihood, carnum, metrics[0], thread, outpw);
+          starthtmnetworks(rpm_network, rpm_spatialAnomaly, params, rpm_likelihood, carnum, metrics[1], thread, outpw);
+          starthtmnetworks(throttle_network, throttle_spatialAnomaly, params, throttle_likelihood, carnum, metrics[2], thread, outpw);
           
           BufferedReader in = new BufferedReader(new InputStreamReader(inp));
           String line;
@@ -427,9 +429,9 @@ public class ThreemetricSynchronization {
         	  			if(dtformat.getTime() > dt.getTime()) {
         	  				
         	  				JSONObject obj = new JSONObject();
-        	  				obj.put("vehicleSpeed", Double.parseDouble(line.split("�")[4]));
-        	  				obj.put("engineSpeed", Double.parseDouble(line.split("�")[5]));
-        	  				obj.put("throttle", Double.parseDouble(line.split("�")[6]));
+        	  				obj.put(metrics[0], Double.parseDouble(line.split("�")[4]));
+        	  				obj.put(metrics[1], Double.parseDouble(line.split("�")[5]));
+        	  				obj.put(metrics[2], Double.parseDouble(line.split("�")[6]));
         	  				obj.put("timeOfDay", racetime);
           	              
         	  				jsonq.add(obj);
@@ -513,7 +515,7 @@ public class ThreemetricSynchronization {
         	              				+ "," + throttle + "," + throttle_timestamp);
           	              
           	            try {
-          	            	 	Thread.sleep(50);
+          	            	 	Thread.sleep(25);
           	            } catch(InterruptedException i) {}
         	  			}
         	  		}
@@ -534,7 +536,7 @@ public class ThreemetricSynchronization {
     		
     		System.out.println("going to start htm..");
     		
-    		if(metric.equalsIgnoreCase("vehicleSpeed")) {
+    		if(metric.equalsIgnoreCase(metrics[0])) {
     			htmnetwork.observe().subscribe((Inference inference) -> {
     	        	
     	            double score = inference.getAnomalyScore();
@@ -558,13 +560,14 @@ public class ThreemetricSynchronization {
                     
                 if (hasRecords) {
                 		JSONObject obj = this.jsonq.poll();
+                		System.out.println("has records speed");
                 		for (int i = 0; i < metrics.length; i++) {
                 			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
                 		
-                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get("vehicleSpeed") + "," + obj.get("engineSpeed") 
-        						+ "," + obj.get("throttle") + "," + obj.get("vehicleSpeed_Anomaly") + "," + obj.get("engineSpeed_Anomaly") 
-        						+ "," + obj.get("throttle_Anomaly") + System.currentTimeMillis());
+                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
+							+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "_Anomaly") + "," + obj.get(metrics[1] + "_Anomaly") 
+							+ "," + obj.get(metrics[2] + "_Anomaly") + System.currentTimeMillis());
                 }
     	            
     	        }, (error) -> {
@@ -572,7 +575,7 @@ public class ThreemetricSynchronization {
     	        }, () -> {
     	            LOGGER.trace("Done processing data");
     	        });
-    		} else if(metric.equalsIgnoreCase("engineSpeed")) {
+    		} else if(metric.equalsIgnoreCase(metrics[1])) {
     			htmnetwork.observe().subscribe((Inference inference) -> {
     	        	
     	            double score = inference.getAnomalyScore();
@@ -595,14 +598,15 @@ public class ThreemetricSynchronization {
                 }
                     
                 if (hasRecords) {
+                		System.out.println("has records RPM");
                 		JSONObject obj = this.jsonq.poll();
                 		for (int i = 0; i < metrics.length; i++) {
                 			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
                 		
-                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get("vehicleSpeed") + "," + obj.get("engineSpeed") 
-        						+ "," + obj.get("throttle") + "," + obj.get("vehicleSpeed_Anomaly") + "," + obj.get("engineSpeed_Anomaly") 
-        						+ "," + obj.get("throttle_Anomaly") + System.currentTimeMillis());
+                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
+        						+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "_Anomaly") + "," + obj.get(metrics[1] + "_Anomaly") 
+        						+ "," + obj.get(metrics[2] + "_Anomaly") + System.currentTimeMillis());
                 }
     	           
     	        }, (error) -> {
@@ -610,7 +614,7 @@ public class ThreemetricSynchronization {
     	        }, () -> {
     	            LOGGER.trace("Done processing data");
     	        });
-    		} else if(metric.equalsIgnoreCase("throttle")) {
+    		} else if(metric.equalsIgnoreCase(metrics[2])) {
     			htmnetwork.observe().subscribe((Inference inference) -> {
     	        	
     	            double score = inference.getAnomalyScore();
@@ -633,14 +637,15 @@ public class ThreemetricSynchronization {
                 }
                     
                 if (hasRecords) {
+                	System.out.println("has records throttle");
                 		JSONObject obj = this.jsonq.poll();
                 		for (int i = 0; i < metrics.length; i++) {
                 			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
                 		
-                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get("vehicleSpeed") + "," + obj.get("engineSpeed") 
-                				+ "," + obj.get("throttle") + "," + obj.get("vehicleSpeed_Anomaly") + "," + obj.get("engineSpeed_Anomaly") 
-                				+ "," + obj.get("throttle_Anomaly") + System.currentTimeMillis());
+                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
+							+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "_Anomaly") + "," + obj.get(metrics[1] + "_Anomaly") 
+							+ "," + obj.get(metrics[2] + "_Anomaly") + System.currentTimeMillis());
                 }
     	           
     	        }, (error) -> {
