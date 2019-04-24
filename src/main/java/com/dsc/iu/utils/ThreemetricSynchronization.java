@@ -428,6 +428,7 @@ public class ThreemetricSynchronization {
         	  			if(dtformat.getTime() > dt.getTime()) {
         	  				
         	  				JSONObject obj = new JSONObject();
+        	  				obj.put("carnum", carnum);
         	  				obj.put(metrics[0], Double.parseDouble(line.split("�")[4]));
         	  				obj.put(metrics[1], Double.parseDouble(line.split("�")[5]));
         	  				obj.put(metrics[2], Double.parseDouble(line.split("�")[6]));
@@ -567,7 +568,7 @@ public class ThreemetricSynchronization {
                 		JSONObject obj = jsonqueue.poll();
                 		//System.out.println("has records speed");
                 		for (int i = 0; i < metrics.length; i++) {
-                			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
+                			obj.put(metrics[i]+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
                 		
                 		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
@@ -607,10 +608,10 @@ public class ThreemetricSynchronization {
     	            //System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[1]);
                     
                 if (hasRecords) {
-                		System.out.println("has records RPM");
+                		//System.out.println("has records RPM");
                 		JSONObject obj = jsonqueue.poll();
                 		for (int i = 0; i < metrics.length; i++) {
-                			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
+                			obj.put(metrics[i]+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
                 		
                 		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
@@ -653,7 +654,7 @@ public class ThreemetricSynchronization {
                 		//System.out.println("has records throttle");
                 		JSONObject obj = jsonqueue.poll();
                 		for (int i = 0; i < metrics.length; i++) {
-                			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
+                			obj.put(metrics[i]+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
                 		
                 		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
