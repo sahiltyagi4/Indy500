@@ -75,8 +75,7 @@ public class ThreemetricSynchronization {
    
     private double SPATIAL_TOLERANCE = 0.05;
     public ConcurrentHashMap<String, Queue<Double>> anomalyScoreouts = null;
-    private String[] metrics = {"vehicleSpeed", "engineSpeed", "throttle"};
-    private Queue<JSONObject> jsonq = null;
+    public String[] metrics = {"vehicleSpeed", "engineSpeed", "throttle"};
 
     /**
      * Create HTM Model to be used by NAB
@@ -248,7 +247,7 @@ public class ThreemetricSynchronization {
     			public void run() {
     				ThreemetricSynchronization model = new ThreemetricSynchronization();
     				anomalyScoreouts = new ConcurrentHashMap<>();
-    				jsonq = new LinkedList<>();
+    				Queue<JSONObject> jsonqueue = new LinkedList<>();
     				
     				for(int i=0;i<metrics.length;i++) {
     					anomalyScoreouts.put(metrics[i], new ConcurrentLinkedQueue<>());
@@ -369,23 +368,21 @@ public class ThreemetricSynchronization {
     	          DateTimeZone.setDefault(DateTimeZone.UTC);
     	          
     			  model.callhtm(carnum, threadnum, params, speed_network, rpm_network, throttle_network, 
-    					  	speed_publisher, rpm_publisher, throttle_publisher);
+    					  	speed_publisher, rpm_publisher, throttle_publisher, jsonqueue);
     			}
     		}.start();
     }
     
     private void callhtm(String carnum, int thread, JsonNode params, Network speed_network, Network rpm_network, 
-    					Network throttle_network, Publisher speed_publisher, Publisher rpm_publisher, Publisher throttle_publisher) {
+    					Network throttle_network, Publisher speed_publisher, Publisher rpm_publisher, Publisher throttle_publisher, Queue<JSONObject> jsonqueue) {
     	try {
     		AnomalyLikelihood speed_likelihood, rpm_likelihood, throttle_likelihood;
     		
     		File logfile = new File("/scratch_ssd/sahil/IPBroadcaster_Input_2018-05-27_0.log");
-//    		File logfile = new File("/Users/sahiltyagi/Downloads/Indy_500_2018/IPBroadcaster_Input_2018-05-27_0.log");
     		FileInputStream inp = new FileInputStream(logfile);
     		
           PrintWriter inpw, outpw;
           String fileloc = "/scratch_ssd/sahil/parallelsync";
-//          String fileloc = "/Users/sahiltyagi/Desktop/parallelsync";
   		  
           File infile = new File(fileloc + "/input-" + carnum + "-" + thread + ".csv");
   		  inpw = new PrintWriter(infile);
@@ -402,9 +399,9 @@ public class ThreemetricSynchronization {
           throttle_likelihood = new AnomalyLikelihood(true, 8640, false, 375, 375);
           
           // Create NAB Network Models
-          starthtmnetworks(speed_network, speed_spatialAnomaly, params, speed_likelihood, carnum, metrics[0], thread, outpw);
-          starthtmnetworks(rpm_network, rpm_spatialAnomaly, params, rpm_likelihood, carnum, metrics[1], thread, outpw);
-          starthtmnetworks(throttle_network, throttle_spatialAnomaly, params, throttle_likelihood, carnum, metrics[2], thread, outpw);
+          starthtmnetworks(speed_network, speed_spatialAnomaly, params, speed_likelihood, carnum, metrics[0], thread, outpw, jsonqueue);
+          starthtmnetworks(rpm_network, rpm_spatialAnomaly, params, rpm_likelihood, carnum, metrics[1], thread, outpw, jsonqueue);
+          starthtmnetworks(throttle_network, throttle_spatialAnomaly, params, throttle_likelihood, carnum, metrics[2], thread, outpw, jsonqueue);
           
           BufferedReader in = new BufferedReader(new InputStreamReader(inp));
           String line;
@@ -436,8 +433,8 @@ public class ThreemetricSynchronization {
         	  				obj.put(metrics[2], Double.parseDouble(line.split("�")[6]));
         	  				obj.put("timeOfDay", racetime);
           	              
-        	  				jsonq.add(obj);
-        	  				System.out.println("json queue is: " + jsonq.peek().toJSONString());
+        	  				jsonqueue.add(obj);
+        	  				System.out.println("json queue is: " + jsonqueue.peek().toJSONString());
         	  				
           	            //SPEED
           	              //spatial anomaly logic. if spatialAnomaly is TRUE, then logscore = 1.0
@@ -535,7 +532,7 @@ public class ThreemetricSynchronization {
     }
     
     private void starthtmnetworks(Network htmnetwork, boolean spatialAnomaly, JsonNode params, AnomalyLikelihood likelihood, 
-    								String carnum, String metric, int thread_num, PrintWriter pw) {
+    								String carnum, String metric, int thread_num, PrintWriter pw, Queue<JSONObject> jsonqueue) {
     		
     		System.out.println("going to start htm..");
     		
@@ -566,7 +563,7 @@ public class ThreemetricSynchronization {
     	            System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[0]);
                     
                 if (hasRecords) {
-                		JSONObject obj = this.jsonq.poll();
+                		JSONObject obj = jsonqueue.poll();
                 		System.out.println("has records speed");
                 		for (int i = 0; i < metrics.length; i++) {
                 			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
@@ -610,7 +607,7 @@ public class ThreemetricSynchronization {
                     
                 if (hasRecords) {
                 		System.out.println("has records RPM");
-                		JSONObject obj = this.jsonq.poll();
+                		JSONObject obj = jsonqueue.poll();
                 		for (int i = 0; i < metrics.length; i++) {
                 			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
@@ -653,7 +650,7 @@ public class ThreemetricSynchronization {
                     
                 if (hasRecords) {
                 		System.out.println("has records throttle");
-                		JSONObject obj = this.jsonq.poll();
+                		JSONObject obj = jsonqueue.poll();
                 		for (int i = 0; i < metrics.length; i++) {
                 			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
