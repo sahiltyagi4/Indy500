@@ -6,7 +6,7 @@ import java.util.List;
 public class ExternalThreadSyncRun {
 	
 	public static void main(String[] args) {
-		ThreemetricSynchronization ob = new ThreemetricSynchronization();
+		
 		List<String> carlist = new LinkedList<String>();
 		carlist.add("22");
 		
@@ -17,6 +17,7 @@ public class ExternalThreadSyncRun {
 		
 		int thread=0;
         for(String carnum : carlist) {
+        		ThreemetricSynchronization ob = new ThreemetricSynchronization();
         		ob.threadrun(carnum, thread);
         		thread++;
         		System.out.println("completed HTM SEQUENTIAL EXECUTION FOR CAR:" + carnum);

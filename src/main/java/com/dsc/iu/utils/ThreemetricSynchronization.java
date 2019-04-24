@@ -245,7 +245,7 @@ public class ThreemetricSynchronization {
     protected void threadrun(String carnum, int threadnum) {
     		new Thread("thread-"+threadnum+"-for car-"+carnum) {
     			public void run() {
-    				ThreemetricSynchronization model = new ThreemetricSynchronization();
+    				//ThreemetricSynchronization model = new ThreemetricSynchronization();
     				anomalyScoreouts = new ConcurrentHashMap<>();
     				Queue<JSONObject> jsonqueue = new LinkedList<>();
     				
@@ -327,7 +327,7 @@ public class ThreemetricSynchronization {
   		                .build();
 
   		        // Get updated model parameters
-  		        Parameters parameters = model.getModelParameters(params);
+  		        Parameters parameters = getModelParameters(params);
   		        
   		        LOGGER.info("RUNNING WITH NO EXPLICIT P_RADIUS SET");
 
@@ -367,7 +367,7 @@ public class ThreemetricSynchronization {
     	          // Force timezone to UTC
     	          DateTimeZone.setDefault(DateTimeZone.UTC);
     	          
-    			  model.callhtm(carnum, threadnum, params, speed_network, rpm_network, throttle_network, 
+    			  callhtm(carnum, threadnum, params, speed_network, rpm_network, throttle_network, 
     					  	speed_publisher, rpm_publisher, throttle_publisher, jsonqueue);
     			}
     		}.start();
