@@ -37,7 +37,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -72,10 +74,9 @@ public class ThreemetricSynchronization {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ThreemetricSynchronization.class);
    
     private double SPATIAL_TOLERANCE = 0.05;
-    ConcurrentHashMap<String, JSONObject> agg = new ConcurrentHashMap<String, JSONObject>();
-    
-    //private static Map<Integer, ConcurrentHashMap<String, JSONObject>> thread_specific_map;
-    //private static Map<Integer, PrintWriter> wrtr_threadmap;;
+    private ConcurrentHashMap<String, Queue<Double>> anomalyScoreouts = new ConcurrentHashMap<>();
+    private String[] metrics = {"vehicleSpeed", "engineSpeed", "throttle"};
+    private Queue<JSONObject> jsonq = new LinkedList<>();
 
     /**
      * Create HTM Model to be used by NAB
@@ -238,9 +239,6 @@ public class ThreemetricSynchronization {
             .union(getSensorParams(modelParams));
         
         p.set(KEY.RANDOM, new UniversalRandom(42));
-        // Setting the random above is done as a work-around to this.
-        //p.set(KEY.SEED, 42);
-        
         LOGGER.trace("getModelParameters => {}", p);
         return p;
     }
@@ -250,8 +248,10 @@ public class ThreemetricSynchronization {
     			public void run() {
     				ThreemetricSynchronization model = new ThreemetricSynchronization();
     				
-//    				ConcurrentHashMap<String, JSONObject> aggregator = new ConcurrentHashMap<String, JSONObject>();
-//    				thread_specific_map.put(threadnum, aggregator);
+    				for(int i=0;i<metrics.length;i++) {
+    					anomalyScoreouts.put(metrics[i], new ConcurrentLinkedQueue<>());
+    				}
+    				
     				Network speed_network, rpm_network, throttle_network;
     				PublisherSupplier speed_supplier, rpm_supplier, throttle_supplier;
     				
@@ -425,7 +425,15 @@ public class ThreemetricSynchronization {
         	  			} catch(ParseException p) {}
         	  			
         	  			if(dtformat.getTime() > dt.getTime()) {
+        	  				
+        	  				JSONObject obj = new JSONObject();
+        	  				obj.put("vehicleSpeed", Double.parseDouble(line.split("�")[4]));
+        	  				obj.put("engineSpeed", Double.parseDouble(line.split("�")[5]));
+        	  				obj.put("throttle", Double.parseDouble(line.split("�")[6]));
+        	  				obj.put("timeOfDay", racetime);
           	              
+        	  				jsonq.add(obj);
+        	  				
           	            //SPEED
           	              //spatial anomaly logic. if spatialAnomaly is TRUE, then logscore = 1.0
           	              double speed  = Double.parseDouble(line.split("�")[4]);
@@ -505,7 +513,7 @@ public class ThreemetricSynchronization {
         	              				+ "," + throttle + "," + throttle_timestamp);
           	              
           	            try {
-          	            	 	Thread.sleep(100);
+          	            	 	Thread.sleep(50);
           	            } catch(InterruptedException i) {}
         	  			}
         	  		}
@@ -530,18 +538,10 @@ public class ThreemetricSynchronization {
     			htmnetwork.observe().subscribe((Inference inference) -> {
     	        	
     	            double score = inference.getAnomalyScore();
-    	            //int record = inference.getRecordNum();
     	            double value = (Double)inference.getClassifierInput().get("value").get("inputValue");
     	            DateTime timestamp = (DateTime)inference.getClassifierInput().get("timestamp").get("inputValue");
     	            
     	            double anomaly_likelihood = likelihood.anomalyProbability(value, score, timestamp);
-//    	            if (anomaly_likelihood >=0.99999 && speed_prev_likelihood >= 0.99999){
-//    	            		speed_prev_likelihood = anomaly_likelihood;
-//    	            		anomaly_likelihood = 0.999;
-//    	            }
-//    	            else{
-//    	            		speed_prev_likelihood = anomaly_likelihood;
-//    	            }
     	            
     	            double logscore=0L;
     	            if(spatialAnomaly) {
@@ -550,45 +550,23 @@ public class ThreemetricSynchronization {
     	            		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
     	            }
     	            
-    	            //System.out.println("13," + (record + 1) + ",speed," + value + "," + logscore   );
-    	            //LOGGER.trace("record = {}, score = {}", record, score);
+    	            anomalyScoreouts.get(metric).add(logscore);
+    	            boolean hasRecords = true;
+    	            for (int i = 0; i < metrics.length; i++) {
+    	            		hasRecords &= !this.anomalyScoreouts.get(metrics[i]).isEmpty();
+                }
+                    
+                if (hasRecords) {
+                		JSONObject obj = this.jsonq.poll();
+                		for (int i = 0; i < metrics.length; i++) {
+                			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
+                		}
+                		
+                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get("vehicleSpeed") + "," + obj.get("engineSpeed") 
+        						+ "," + obj.get("throttle") + "," + obj.get("vehicleSpeed_Anomaly") + "," + obj.get("engineSpeed_Anomaly") 
+        						+ "," + obj.get("throttle_Anomaly") + System.currentTimeMillis());
+                }
     	            
-    	            //ADD CORRESPONDING JSONOBJECT TO AGGREGATOR
-    	            JSONObject ob=null;
-    	            if(agg.containsKey(carnum + "_" + timestamp.toString())) {
-    	            		ob = agg.get(carnum + "_" + timestamp.toString());
-    	            } else {
-    	            		ob = new JSONObject();
-    	            }
-    	            
-    	            ob.put(metric, value);
-    	            ob.put("datetime", timestamp.toString());
-    	            ob.put("carnum", carnum);
-    	            ob.put(metric+"_Anomaly", logscore);
-    	            ob.put(metric+"_timestamp", System.currentTimeMillis());
-    	            agg.put(carnum + "_" +timestamp.toString(), ob);
-    	            //thread_specific_map.put(thread_num, agg);
-    	            
-    	          //JSON AGGREGATION AND SYNCHRONIZATION COMES HERE
-	              	JSONObject recordobj=null;
-	              	//agg = thread_specific_map.get(thread_num);
-	              	Iterator<Map.Entry<String, JSONObject>> itr = agg.entrySet().iterator();
-	              	while(itr.hasNext()) {
-	              		Map.Entry<String, JSONObject> entry = itr.next();
-	              		recordobj = entry.getValue();
-	              		if(recordobj !=null && recordobj.containsKey("engineSpeed") && recordobj.containsKey("vehicleSpeed") 
-	              				&& recordobj.containsKey("throttle")) {
-	              			
-	              			//WRITE TO OUTPUT FILE
-	              			pw.println(recordobj.get("carnum") + "," + recordobj.get("datetime") + "," + recordobj.get("vehicleSpeed") + "," 
-	              					+ recordobj.get("engineSpeed") + "," + recordobj.get("throttle") + ","
-	              					+ recordobj.get("vehicleSpeed_timestamp") + "," + recordobj.get("engineSpeed_timestamp") + "," 
-	              					+ recordobj.get("throttle_timestamp") + "," + System.currentTimeMillis());
-	              			
-	              			itr.remove();
-	              		}
-	              	}
-    	           
     	        }, (error) -> {
     	            LOGGER.error("Error processing data", error);
     	        }, () -> {
@@ -598,18 +576,10 @@ public class ThreemetricSynchronization {
     			htmnetwork.observe().subscribe((Inference inference) -> {
     	        	
     	            double score = inference.getAnomalyScore();
-    	            //int record = inference.getRecordNum();
     	            double value = (Double)inference.getClassifierInput().get("value").get("inputValue");
     	            DateTime timestamp = (DateTime)inference.getClassifierInput().get("timestamp").get("inputValue");
     	            
     	            double anomaly_likelihood = likelihood.anomalyProbability(value, score, timestamp);
-//    	            if (anomaly_likelihood >=0.99999 && rpm_prev_likelihood >= 0.99999){
-//    	            		rpm_prev_likelihood = anomaly_likelihood;
-//    	            		anomaly_likelihood = 0.999;
-//    	            }
-//    	            else{
-//    	            		rpm_prev_likelihood = anomaly_likelihood;
-//    	            }
     	            
     	            double logscore=0L;
     	            if(spatialAnomaly) {
@@ -618,41 +588,22 @@ public class ThreemetricSynchronization {
     	            		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
     	            }
     	            
-    	            //System.out.println("13," + (record + 1) + ",speed," + value + "," + logscore   );
-    	            //LOGGER.trace("record = {}, score = {}", record, score);
-    	            
-    	            //ADD CORRESPONDING JSONOBJECT TO AGGREGATOR
-    	            JSONObject ob=null;
-    	            if(agg.containsKey(carnum + "_" + timestamp.toString())) {
-    	            		ob = agg.get(carnum + "_" + timestamp.toString());
-    	            } else {
-    	            		ob = new JSONObject();
-    	            }
-    	            ob.put(metric, value);
-    	            ob.put("datetime", timestamp.toString());
-    	            ob.put("carnum", carnum);
-    	            ob.put(metric+"_Anomaly", logscore);
-    	            ob.put(metric+"_timestamp", System.currentTimeMillis());
-    	            agg.put(carnum + "_" +timestamp.toString(), ob);
-    	            
-    	          //JSON AGGREGATION AND SYNCHRONIZATION COMES HERE
-	              	JSONObject recordobj=null;
-	              	Iterator<Map.Entry<String, JSONObject>> itr = agg.entrySet().iterator();
-	              	while(itr.hasNext()) {
-	              		Map.Entry<String, JSONObject> entry = itr.next();
-	              		recordobj = entry.getValue();
-	              		if(recordobj !=null && recordobj.containsKey("engineSpeed") && recordobj.containsKey("vehicleSpeed") 
-	              				&& recordobj.containsKey("throttle")) {
-	              			
-	              			//WRITE TO OUTPUT FILE
-	              			pw.println(recordobj.get("carnum") + "," + recordobj.get("datetime") + "," + recordobj.get("vehicleSpeed") + "," 
-	              					+ recordobj.get("engineSpeed") + "," + recordobj.get("throttle") + ","
-	              					+ recordobj.get("vehicleSpeed_timestamp") + "," + recordobj.get("engineSpeed_timestamp") + "," 
-	              					+ recordobj.get("throttle_timestamp") + "," + System.currentTimeMillis());
-	              			
-	              			itr.remove();
-	              		}
-	              	}
+    	            anomalyScoreouts.get(metric).add(logscore);
+    	            boolean hasRecords = true;
+    	            for (int i = 0; i < metrics.length; i++) {
+    	            		hasRecords &= !this.anomalyScoreouts.get(metrics[i]).isEmpty();
+                }
+                    
+                if (hasRecords) {
+                		JSONObject obj = this.jsonq.poll();
+                		for (int i = 0; i < metrics.length; i++) {
+                			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
+                		}
+                		
+                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get("vehicleSpeed") + "," + obj.get("engineSpeed") 
+        						+ "," + obj.get("throttle") + "," + obj.get("vehicleSpeed_Anomaly") + "," + obj.get("engineSpeed_Anomaly") 
+        						+ "," + obj.get("throttle_Anomaly") + System.currentTimeMillis());
+                }
     	           
     	        }, (error) -> {
     	            LOGGER.error("Error processing data", error);
@@ -663,18 +614,10 @@ public class ThreemetricSynchronization {
     			htmnetwork.observe().subscribe((Inference inference) -> {
     	        	
     	            double score = inference.getAnomalyScore();
-    	            //int record = inference.getRecordNum();
     	            double value = (Double)inference.getClassifierInput().get("value").get("inputValue");
     	            DateTime timestamp = (DateTime)inference.getClassifierInput().get("timestamp").get("inputValue");
     	            
     	            double anomaly_likelihood = likelihood.anomalyProbability(value, score, timestamp);
-//    	            if (anomaly_likelihood >=0.99999 && throttle_prev_likelihood >= 0.99999){
-//    	            		throttle_prev_likelihood = anomaly_likelihood;
-//    	            		anomaly_likelihood = 0.999;
-//    	            }
-//    	            else{
-//    	            		throttle_prev_likelihood = anomaly_likelihood;
-//    	            }
     	            
     	            double logscore=0L;
     	            if(spatialAnomaly) {
@@ -683,41 +626,22 @@ public class ThreemetricSynchronization {
     	            		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
     	            }
     	            
-    	            //System.out.println("13," + (record + 1) + ",speed," + value + "," + logscore   );
-    	            //LOGGER.trace("record = {}, score = {}", record, score);
-    	            
-    	            //ADD CORRESPONDING JSONOBJECT TO AGGREGATOR
-    	            JSONObject ob=null;
-    	            if(agg.containsKey(carnum + "_" + timestamp.toString())) {
-    	            		ob = agg.get(carnum + "_" + timestamp.toString());
-    	            } else {
-    	            		ob = new JSONObject();
-    	            }
-    	            ob.put(metric, value);
-    	            ob.put("datetime", timestamp.toString());
-    	            ob.put("carnum", carnum);
-    	            ob.put(metric+"_Anomaly", logscore);
-    	            ob.put(metric+"_timestamp", System.currentTimeMillis());
-    	            agg.put(carnum + "_" +timestamp.toString(), ob);
-    	            
-    	          //JSON AGGREGATION AND SYNCHRONIZATION COMES HERE
-	              	JSONObject recordobj=null;
-	              	Iterator<Map.Entry<String, JSONObject>> itr = agg.entrySet().iterator();
-	              	while(itr.hasNext()) {
-	              		Map.Entry<String, JSONObject> entry = itr.next();
-	              		recordobj = entry.getValue();
-	              		if(recordobj !=null && recordobj.containsKey("engineSpeed") && recordobj.containsKey("vehicleSpeed") 
-	              				&& recordobj.containsKey("throttle")) {
-	              			
-	              			//WRITE TO OUTPUT FILE
-	              			pw.println(recordobj.get("carnum") + "," + recordobj.get("datetime") + "," + recordobj.get("vehicleSpeed") + "," 
-	              					+ recordobj.get("engineSpeed") + "," + recordobj.get("throttle") + ","
-	              					+ recordobj.get("vehicleSpeed_timestamp") + "," + recordobj.get("engineSpeed_timestamp") + "," 
-	              					+ recordobj.get("throttle_timestamp") + "," + System.currentTimeMillis());
-	              			
-	              			itr.remove();
-	              		}
-	              	}   
+    	            anomalyScoreouts.get(metric).add(logscore);
+    	            boolean hasRecords = true;
+    	            for (int i = 0; i < metrics.length; i++) {
+    	            		hasRecords &= !this.anomalyScoreouts.get(metrics[i]).isEmpty();
+                }
+                    
+                if (hasRecords) {
+                		JSONObject obj = this.jsonq.poll();
+                		for (int i = 0; i < metrics.length; i++) {
+                			obj.put(metric+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
+                		}
+                		
+                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get("vehicleSpeed") + "," + obj.get("engineSpeed") 
+                				+ "," + obj.get("throttle") + "," + obj.get("vehicleSpeed_Anomaly") + "," + obj.get("engineSpeed_Anomaly") 
+                				+ "," + obj.get("throttle_Anomaly") + System.currentTimeMillis());
+                }
     	           
     	        }, (error) -> {
     	            LOGGER.error("Error processing data", error);
