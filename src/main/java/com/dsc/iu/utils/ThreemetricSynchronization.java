@@ -74,9 +74,9 @@ public class ThreemetricSynchronization {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ThreemetricSynchronization.class);
    
     private double SPATIAL_TOLERANCE = 0.05;
-    public ConcurrentHashMap<String, Queue<Double>> anomalyScoreouts = new ConcurrentHashMap<>();
+    public ConcurrentHashMap<String, Queue<Double>> anomalyScoreouts;
     private String[] metrics = {"vehicleSpeed", "engineSpeed", "throttle"};
-    private Queue<JSONObject> jsonq = new LinkedList<>();
+    private Queue<JSONObject> jsonq;
 
     /**
      * Create HTM Model to be used by NAB
@@ -247,6 +247,8 @@ public class ThreemetricSynchronization {
     		new Thread("thread-"+threadnum+"-for car-"+carnum) {
     			public void run() {
     				ThreemetricSynchronization model = new ThreemetricSynchronization();
+    				anomalyScoreouts = new ConcurrentHashMap<>();
+    				jsonq = new LinkedList<>();
     				
     				for(int i=0;i<metrics.length;i++) {
     					anomalyScoreouts.put(metrics[i], new ConcurrentLinkedQueue<>());
