@@ -553,8 +553,8 @@ public class ThreemetricSynchronization {
     	            }
     	            
     	            System.out.println("speed logscore:"+logscore);
-    	            boolean added = anomalyScoreouts.get(metrics[0]).add(logscore);
-    	            System.out.println("boolean added:" + added);
+    	            //boolean added = anomalyScoreouts.get(metrics[0]).add(logscore);
+    	            System.out.println("boolean added:");
     	            System.out.println("in speed: " + anomalyScoreouts.get(metrics[0]).peek());
     	            
     	            boolean hasRecords = true;
