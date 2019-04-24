@@ -516,7 +516,7 @@ public class ThreemetricSynchronization {
         	              				+ "," + throttle + "," + throttle_timestamp);
           	              
           	            try {
-          	            	 	Thread.sleep(30000);
+          	            	 	Thread.sleep(1000000);
           	            } catch(InterruptedException i) {}
         	  			}
         	  		}
@@ -558,7 +558,7 @@ public class ThreemetricSynchronization {
     	            System.out.println("in speed: " + anomalyScoreouts.get(metrics[0]).peek());
     	            boolean hasRecords = true;
     	            for (int i = 0; i < metrics.length; i++) {
-    	            		hasRecords &= !this.anomalyScoreouts.get(metrics[i]).isEmpty();
+    	            		hasRecords &= !anomalyScoreouts.get(metrics[i]).isEmpty();
     	            		System.out.println("speed hasrec loop");
                 }
     	            System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[0]);
@@ -572,7 +572,7 @@ public class ThreemetricSynchronization {
                 		
                 		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
 							+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "_Anomaly") + "," + obj.get(metrics[1] + "_Anomaly") 
-							+ "," + obj.get(metrics[2] + "_Anomaly") + System.currentTimeMillis());
+							+ "," + obj.get(metrics[2] + "_Anomaly") + "," + System.currentTimeMillis());
                 }
     	            
     	        }, (error) -> {
@@ -601,7 +601,7 @@ public class ThreemetricSynchronization {
     	            System.out.println("in rpm: " + anomalyScoreouts.get(metrics[1]).peek());
     	            boolean hasRecords = true;
     	            for (int i = 0; i < metrics.length; i++) {
-    	            		hasRecords &= !this.anomalyScoreouts.get(metrics[i]).isEmpty();
+    	            		hasRecords &= !anomalyScoreouts.get(metrics[i]).isEmpty();
     	            		System.out.println("rpm hasrec loop");
                 }
     	            System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[1]);
@@ -615,7 +615,7 @@ public class ThreemetricSynchronization {
                 		
                 		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
         						+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "_Anomaly") + "," + obj.get(metrics[1] + "_Anomaly") 
-        						+ "," + obj.get(metrics[2] + "_Anomaly") + System.currentTimeMillis());
+        						+ "," + obj.get(metrics[2] + "_Anomaly") + "," + System.currentTimeMillis());
                 }
     	           
     	        }, (error) -> {
@@ -644,7 +644,7 @@ public class ThreemetricSynchronization {
     	            System.out.println("in throttle: " + anomalyScoreouts.get(metrics[2]).peek());
     	            boolean hasRecords = true;
     	            for (int i = 0; i < metrics.length; i++) {
-    	            		hasRecords &= !this.anomalyScoreouts.get(metrics[i]).isEmpty();
+    	            		hasRecords &= !anomalyScoreouts.get(metrics[i]).isEmpty();
     	            		System.out.println("throttle hasrec loop");
                 }
     	            System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[2]);
@@ -658,7 +658,7 @@ public class ThreemetricSynchronization {
                 		
                 		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
 							+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "_Anomaly") + "," + obj.get(metrics[1] + "_Anomaly") 
-							+ "," + obj.get(metrics[2] + "_Anomaly") + System.currentTimeMillis());
+							+ "," + obj.get(metrics[2] + "_Anomaly") + "," + System.currentTimeMillis());
                 }
     	           
     	        }, (error) -> {
