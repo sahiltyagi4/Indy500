@@ -568,12 +568,12 @@ public class ThreemetricSynchronization {
                 		JSONObject obj = jsonqueue.poll();
                 		//System.out.println("has records speed");
                 		for (int i = 0; i < metrics.length; i++) {
-                			obj.put(metrics[i]+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
+                			obj.put(metrics[i]+"anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
                 		
                 		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
-							+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "_Anomaly") + "," + obj.get(metrics[1] + "_Anomaly") 
-							+ "," + obj.get(metrics[2] + "_Anomaly") + "," + System.currentTimeMillis());
+							+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "anomaly") + "," + obj.get(metrics[1] + "anomaly") 
+							+ "," + obj.get(metrics[2] + "anomaly") + "," + System.currentTimeMillis());
                 }
     	            
     	        }, (error) -> {
@@ -611,12 +611,12 @@ public class ThreemetricSynchronization {
                 		//System.out.println("has records RPM");
                 		JSONObject obj = jsonqueue.poll();
                 		for (int i = 0; i < metrics.length; i++) {
-                			obj.put(metrics[i]+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
+                			obj.put(metrics[i]+"anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
                 		
                 		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
-        						+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "_Anomaly") + "," + obj.get(metrics[1] + "_Anomaly") 
-        						+ "," + obj.get(metrics[2] + "_Anomaly") + "," + System.currentTimeMillis());
+        						+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "anomaly") + "," + obj.get(metrics[1] + "anomaly") 
+        						+ "," + obj.get(metrics[2] + "anomaly") + "," + System.currentTimeMillis());
                 }
     	           
     	        }, (error) -> {
@@ -654,12 +654,12 @@ public class ThreemetricSynchronization {
                 		//System.out.println("has records throttle");
                 		JSONObject obj = jsonqueue.poll();
                 		for (int i = 0; i < metrics.length; i++) {
-                			obj.put(metrics[i]+"_Anomaly", anomalyScoreouts.get(metrics[i]).poll());
+                			obj.put(metrics[i]+"anomaly", anomalyScoreouts.get(metrics[i]).poll());
                 		}
                 		
                 		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
-							+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "_Anomaly") + "," + obj.get(metrics[1] + "_Anomaly") 
-							+ "," + obj.get(metrics[2] + "_Anomaly") + "," + System.currentTimeMillis());
+							+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "anomaly") + "," + obj.get(metrics[1] + "anomaly") 
+							+ "," + obj.get(metrics[2] + "anomaly") + "," + System.currentTimeMillis());
                 }
     	           
     	        }, (error) -> {
