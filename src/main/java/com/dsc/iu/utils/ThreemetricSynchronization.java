@@ -38,6 +38,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -74,6 +75,8 @@ public class ThreemetricSynchronization {
     private double SPATIAL_TOLERANCE = 0.05;
     ConcurrentHashMap<String, JSONObject> agg = new ConcurrentHashMap<String, JSONObject>();
     Publisher speed_publisher, rpm_publisher, throttle_publisher;
+    ConcurrentLinkedQueue<String> rpmpubqueue = new ConcurrentLinkedQueue<>();
+    ConcurrentLinkedQueue<String> throttlepubqueue = new ConcurrentLinkedQueue<>();
     
     //private static Map<Integer, ConcurrentHashMap<String, JSONObject>> thread_specific_map;
     //private static Map<Integer, PrintWriter> wrtr_threadmap;;
@@ -470,7 +473,7 @@ public class ThreemetricSynchronization {
         	              	}
         	              
         	              	long rpm_timestamp = System.currentTimeMillis();
-        	              	rpm_publisher.onNext(racetime + "," + rpm);
+        	              	rpmpubqueue.add(racetime + "," + rpm);
           	              
         	              //THROTTLE
         	              	double throttle  = Double.parseDouble(line.split("�")[6]);
@@ -494,7 +497,7 @@ public class ThreemetricSynchronization {
         	              	}
         	              
         	              	long throttle_timestamp = System.currentTimeMillis();
-        	              	throttle_publisher.onNext(racetime + "," + throttle);
+        	              	throttlepubqueue.add(racetime + "," + throttle);
         	              	
         	              	//FILE WRITE --> INPUT DATA FOR POST-PROCESSING
         	              	inpw.println(carnum + "_" + racetime + "," + speed + "," + speed_timestamp + "," + rpm + "," + rpm_timestamp 
@@ -584,6 +587,10 @@ public class ThreemetricSynchronization {
 	              			itr.remove();
 	              		}
 	              	}
+	              	
+	              	if(!rpmpubqueue.isEmpty()) {
+	              		rpm_publisher.onNext(rpmpubqueue.poll());
+	              	}
     	           
     	        }, (error) -> {
     	            LOGGER.error("Error processing data", error);
@@ -648,6 +655,10 @@ public class ThreemetricSynchronization {
 	              			
 	              			itr.remove();
 	              		}
+	              	}
+	              	
+	              	if(!throttlepubqueue.isEmpty()) {
+	              		throttle_publisher.onNext(throttlepubqueue.poll());
 	              	}
     	           
     	        }, (error) -> {
