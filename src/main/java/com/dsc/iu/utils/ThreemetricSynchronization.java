@@ -597,27 +597,7 @@ public class ThreemetricSynchronization {
     	            		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
     	            }
     	            
-    	            //System.out.println("RPM logscore:"+logscore);
     	            anomalyScoreouts.get(metrics[1]).add(logscore);
-    	            //System.out.println("in rpm: " + anomalyScoreouts.get(metrics[1]).peek());
-    	            boolean hasRecords = true;
-    	            for (int i = 0; i < metrics.length; i++) {
-    	            		hasRecords &= !anomalyScoreouts.get(metrics[i]).isEmpty();
-    	            		//System.out.println("rpm hasrec loop");
-                }
-    	            //System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[1]);
-                    
-                if (hasRecords) {
-                		//System.out.println("has records RPM");
-                		JSONObject obj = jsonqueue.poll();
-                		for (int i = 0; i < metrics.length; i++) {
-                			obj.put(metrics[i]+"anomaly", anomalyScoreouts.get(metrics[i]).poll());
-                		}
-                		
-                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
-        						+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "anomaly") + "," + obj.get(metrics[1] + "anomaly") 
-        						+ "," + obj.get(metrics[2] + "anomaly") + "," + System.currentTimeMillis());
-                }
     	           
     	        }, (error) -> {
     	            LOGGER.error("Error processing data", error);
@@ -640,27 +620,7 @@ public class ThreemetricSynchronization {
     	            		logscore = AnomalyLikelihood.computeLogLikelihood(anomaly_likelihood);
     	            }
     	            
-    	            //System.out.println("throttle logscore:"+logscore);
     	            anomalyScoreouts.get(metrics[2]).add(logscore);
-    	            //System.out.println("in throttle: " + anomalyScoreouts.get(metrics[2]).peek());
-    	            boolean hasRecords = true;
-    	            for (int i = 0; i < metrics.length; i++) {
-    	            		hasRecords &= !anomalyScoreouts.get(metrics[i]).isEmpty();
-    	            		//System.out.println("throttle hasrec loop");
-                }
-    	            //System.out.println("hasrecords condition is:"+hasRecords + " in metric " + metrics[2]);
-                    
-                if (hasRecords) {
-                		//System.out.println("has records throttle");
-                		JSONObject obj = jsonqueue.poll();
-                		for (int i = 0; i < metrics.length; i++) {
-                			obj.put(metrics[i]+"anomaly", anomalyScoreouts.get(metrics[i]).poll());
-                		}
-                		
-                		pw.println(obj.get("carnum") + "," + obj.get("timeOfDay") + "," + obj.get(metrics[0]) + "," + obj.get(metrics[1]) 
-							+ "," + obj.get(metrics[2]) + "," + obj.get(metrics[0] + "anomaly") + "," + obj.get(metrics[1] + "anomaly") 
-							+ "," + obj.get(metrics[2] + "anomaly") + "," + System.currentTimeMillis());
-                }
     	           
     	        }, (error) -> {
     	            LOGGER.error("Error processing data", error);
