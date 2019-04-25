@@ -20,7 +20,7 @@ public class ExternalThreadSyncRun {
         		ThreemetricSynchronization ob = new ThreemetricSynchronization();
         		ob.threadrun(carnum, thread);
         		thread++;
-        		System.out.println("completed HTM SEQUENTIAL EXECUTION FOR CAR:" + carnum);
+        		System.out.println("launched HTM SEQUENTIAL EXECUTION fo car:" + carnum);
         }
 		
 	}
