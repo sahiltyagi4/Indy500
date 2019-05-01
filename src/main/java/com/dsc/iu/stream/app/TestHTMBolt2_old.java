@@ -33,7 +33,7 @@ import com.dsc.iu.utils.HTMStruct;
 
 import rx.Subscriber;
 
-public class TestHTMBolt2 extends BaseRichBolt {
+public class TestHTMBolt2_old extends BaseRichBolt {
 
 	private final long serialVersionUID = 1L;
 	private OutputCollector collector;
@@ -47,7 +47,7 @@ public class TestHTMBolt2 extends BaseRichBolt {
 
 	private Lock lock = new ReentrantLock();
 
-	public TestHTMBolt2(String metric, String min, String max) {
+	public TestHTMBolt2_old(String metric, String min, String max) {
 		this.metric = metric;
 		this.min = Integer.parseInt(min);
 		this.max = Integer.parseInt(max);
